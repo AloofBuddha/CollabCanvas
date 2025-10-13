@@ -1,12 +1,17 @@
+import { useState } from 'react'
 import { signOut } from '../utils/auth'
 import useUserStore from '../stores/useUserStore'
+import Canvas from './Canvas'
+import Toolbar from './Toolbar'
+
+type Tool = 'select' | 'rectangle'
 
 /**
  * Canvas Page - Main collaborative canvas view
- * This will be expanded in PR #4 with React Konva
  */
 export default function CanvasPage() {
   const { displayName, color } = useUserStore()
+  const [selectedTool, setSelectedTool] = useState<Tool>('select')
 
   const handleSignOut = async () => {
     await signOut()
@@ -38,16 +43,10 @@ export default function CanvasPage() {
         </div>
       </header>
 
-      {/* Canvas area - will be implemented in PR #4 */}
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-700 mb-2">
-            Canvas View
-          </h2>
-          <p className="text-gray-500">
-            React Konva canvas will be implemented in PR #4
-          </p>
-        </div>
+      {/* Canvas */}
+      <div className="flex-1 relative overflow-hidden">
+        <Canvas tool={selectedTool} onToolChange={setSelectedTool} />
+        <Toolbar selectedTool={selectedTool} onSelectTool={setSelectedTool} />
       </div>
     </div>
   )

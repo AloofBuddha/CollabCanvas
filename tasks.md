@@ -39,15 +39,22 @@
 
 ---
 
-## PR #4 - Basic Canvas & Local Shape Rendering
+## PR #4 - Basic Canvas & Local Shape Rendering ✅
 
-* [ ] Add React Konva Stage and Layer
-* [ ] Implement rectangle creation using toolbar click+drag
-* [ ] Implement local rectangle dragging
-* [ ] Show rectangle border in user color during drag
-* [ ] Add toolbar (bottom-center) with rectangle/select tools
-* [ ] Unit tests for local shape creation and movement
-* [ ] Manual test rectangle creation and dragging
+* [x] Add React Konva Stage and Layer
+* [x] Implement rectangle creation using toolbar click+drag
+* [x] Implement local rectangle dragging
+* [x] Selection system: light blue border on select, disappears during drag
+* [x] Add toolbar (bottom-center) with rectangle/select tools
+* [x] Unit tests for local shape creation, movement, selection, and panning
+* [x] Manual test rectangle creation and dragging
+* [x] Implement mouse/wheel canvas controls (middle-click pan, wheel scroll, ctrl+wheel zoom)
+* [x] Auto-switch to select tool after creating rectangle
+* [x] Implement contextual cursors (pointer, crosshair, grabbing)
+* [x] Auto-select newly created rectangles
+* [x] Fixed coordinate system for panning (use getRelativePointerPosition)
+* [x] Document-level mouse listeners for smooth panning outside window
+* [x] Comprehensive test coverage (109 tests passing)
 
 ---
 
@@ -102,3 +109,15 @@
 * [ ] Unit tests for cursor store (local/remote update, throttle)
 * [ ] Unit tests for user store (login/logout, presence, authStatus)
 * [ ] Manual multi-browser smoke tests: login, canvas, shapes, cursors, persistence
+
+---
+
+## Future Enhancements
+
+### Multi-Select Feature
+* [ ] Implement translucent selection box on canvas drag
+* [ ] Detect shapes within selection box
+* [ ] Support multi-shape selection state
+* [ ] Allow group dragging of selected shapes
+* [ ] Clear selection on click outside
+* [ ] Unit tests for multi-select logic

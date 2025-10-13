@@ -22,7 +22,8 @@
     "konva": "^9.3.14",
     "zustand": "^4.5.2",
     "firebase": "^10.12.2",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "lucide-react": "^0.263.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
