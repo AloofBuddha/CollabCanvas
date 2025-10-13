@@ -23,19 +23,19 @@
 
 ---
 
-## PR #3 - Authentication & Auth Page
+## PR #3 - Authentication & Auth Page ✅
 
-* [ ] Create login/signup Auth page/component
-* [ ] Add input fields: email, password, displayName (signup)
-* [ ] Add validation: required fields, email format, password min length
-* [ ] Display validation errors and login/signup errors
-* [ ] Implement Firebase Auth for login/signup
-* [ ] Connect auth state to `useUserStore`
-* [ ] Save displayName and color in Firestore on signup
-* [ ] Implement logout functionality
-* [ ] Protect canvas route for authenticated users only
-* [ ] Unit tests for login, signup, logout, store updates, route protection
-* [ ] Manual test login, signup, logout flows across browsers
+* [x] Create login/signup Auth page/component
+* [x] Add input fields: email, password, displayName (signup)
+* [x] Add validation: required fields, email format, password min length
+* [x] Display validation errors and login/signup errors
+* [x] Implement Firebase Auth for login/signup
+* [x] Connect auth state to `useUserStore`
+* [x] Save displayName and color in Firestore on signup
+* [x] Implement logout functionality
+* [x] Protect canvas route for authenticated users only
+* [x] Unit tests for login, signup, logout, store updates, route protection
+* [x] Manual test login, signup, logout flows across browsers
 
 ---
 
