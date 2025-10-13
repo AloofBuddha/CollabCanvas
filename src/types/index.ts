@@ -1,14 +1,11 @@
 /**
  * Type definitions for CollabCanvas MVP
- * 
- * This file will be populated in PR #2 with:
- * - Shape types
- * - User types
- * - Cursor types
- * - Store interfaces
  */
 
-// Placeholder - will be implemented in PR #2
+// ============================================================================
+// Shape Types
+// ============================================================================
+
 export interface Shape {
   id: string
   type: 'rectangle'
@@ -21,12 +18,22 @@ export interface Shape {
   lockedBy: string | null
 }
 
+// ============================================================================
+// User Types
+// ============================================================================
+
+export type AuthStatus = 'authenticated' | 'unauthenticated' | 'loading'
+
 export interface User {
   userId: string
   displayName: string
   color: string
   online: boolean
 }
+
+// ============================================================================
+// Cursor Types
+// ============================================================================
 
 export interface Cursor {
   x: number
@@ -39,3 +46,37 @@ export interface RemoteCursor extends Cursor {
   name: string
 }
 
+// ============================================================================
+// Store State Types
+// ============================================================================
+
+export interface UserState {
+  userId: string | null
+  displayName: string
+  color: string
+  online: boolean
+  authStatus: AuthStatus
+  setUser: (userId: string, displayName: string, color: string) => void
+  setAuthStatus: (status: AuthStatus) => void
+  setOnline: (online: boolean) => void
+  logout: () => void
+}
+
+export interface CursorState {
+  localCursor: Cursor
+  remoteCursors: Record<string, RemoteCursor>
+  setLocalCursor: (cursor: Cursor) => void
+  setRemoteCursor: (userId: string, cursor: RemoteCursor) => void
+  removeRemoteCursor: (userId: string) => void
+  clearRemoteCursors: () => void
+}
+
+export interface ShapeState {
+  shapes: Record<string, Shape>
+  addShape: (shape: Shape) => void
+  updateShape: (id: string, userId: string, updates: Partial<Shape>) => void
+  removeShape: (id: string) => void
+  lockShape: (id: string, userId: string) => void
+  unlockShape: (id: string) => void
+  clearShapes: () => void
+}

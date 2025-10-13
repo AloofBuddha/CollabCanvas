@@ -12,14 +12,14 @@
 
 ---
 
-## PR #2 - Zustand Stores Setup
+## PR #2 - Zustand Stores Setup ✅
 
-* [ ] Implement `useUserStore` (userId, displayName, color, online, authStatus)
-* [ ] Implement `useCursorStore` (localCursor, remoteCursors)
-* [ ] Implement `useShapeStore` (shapes dictionary, add/update/remove methods)
-* [ ] Define TypeScript types for Shape, Cursor, User
-* [ ] Unit tests for all stores using Vitest
-* [ ] Verify store state updates correctly on local actions
+* [x] Implement `useUserStore` (userId, displayName, color, online, authStatus)
+* [x] Implement `useCursorStore` (localCursor, remoteCursors)
+* [x] Implement `useShapeStore` (shapes dictionary, add/update/remove methods)
+* [x] Define TypeScript types for Shape, Cursor, User
+* [x] Unit tests for all stores using Vitest
+* [x] Verify store state updates correctly on local actions
 
 ---
 
