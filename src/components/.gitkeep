@@ -1,0 +1,5 @@
+# React components will be implemented in subsequent PRs:
+# PR #4: Canvas.tsx, Toolbar.tsx
+# PR #5: Cursor.tsx, AvatarBar.tsx
+# PR #3: AuthForm.tsx (optional)
+
