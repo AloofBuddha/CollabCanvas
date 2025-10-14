@@ -41,9 +41,7 @@ describe('useShapeDragging', () => {
         useShapeDragging({
           isPanning: false,
           isAltPressed,
-          selectedShapeId: 'shape-1',
           updateShape,
-          userId: 'user-1',
           onCursorMove,
         })
       )
@@ -65,9 +63,7 @@ describe('useShapeDragging', () => {
         useShapeDragging({
           isPanning: false,
           isAltPressed,
-          selectedShapeId: 'shape-1',
           updateShape,
-          userId: 'user-1',
           onCursorMove,
         })
       )
@@ -92,9 +88,7 @@ describe('useShapeDragging', () => {
         useShapeDragging({
           isPanning: false,
           isAltPressed,
-          selectedShapeId: 'shape-1',
           updateShape,
-          userId: 'user-1',
         })
       )
 
@@ -113,9 +107,7 @@ describe('useShapeDragging', () => {
         useShapeDragging({
           isPanning: false,
           isAltPressed,
-          selectedShapeId: 'shape-1',
           updateShape,
-          userId: 'user-1',
           onCursorMove,
         })
       )
@@ -137,9 +129,7 @@ describe('useShapeDragging', () => {
         useShapeDragging({
           isPanning: false,
           isAltPressed,
-          selectedShapeId: 'shape-1',
           updateShape,
-          userId: 'user-1',
           onDragUpdate,
           onCursorMove,
         })
@@ -161,9 +151,7 @@ describe('useShapeDragging', () => {
         useShapeDragging({
           isPanning: true,
           isAltPressed,
-          selectedShapeId: 'shape-1',
           updateShape,
-          userId: 'user-1',
         })
       )
 
@@ -186,9 +174,7 @@ describe('useShapeDragging', () => {
         useShapeDragging({
           isPanning: false,
           isAltPressed,
-          selectedShapeId: 'shape-1',
           updateShape,
-          userId: 'user-1',
         })
       )
 
@@ -211,9 +197,7 @@ describe('useShapeDragging', () => {
         useShapeDragging({
           isPanning: false,
           isAltPressed,
-          selectedShapeId: 'shape-1',
           updateShape,
-          userId: 'user-1',
         })
       )
 
@@ -249,9 +233,7 @@ describe('useShapeDragging', () => {
         useShapeDragging({
           isPanning: false,
           isAltPressed,
-          selectedShapeId: 'shape-1',
           updateShape,
-          userId: 'user-1',
           onShapeCreated,
         })
       )
@@ -302,9 +284,7 @@ describe('useShapeDragging', () => {
         useShapeDragging({
           isPanning: false,
           isAltPressed,
-          selectedShapeId: 'shape-1',
           updateShape,
-          userId: 'user-1',
           onShapeCreated,
         })
       )
@@ -329,9 +309,7 @@ describe('useShapeDragging', () => {
         useShapeDragging({
           isPanning: false,
           isAltPressed,
-          selectedShapeId: 'shape-1',
           updateShape,
-          userId: 'user-1',
           onDragUpdate,
         })
       )

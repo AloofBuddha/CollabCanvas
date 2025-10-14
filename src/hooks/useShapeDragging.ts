@@ -5,7 +5,6 @@
  * Also handles Alt+drag duplication
  */
 
-import { useRef } from 'react'
 import Konva from 'konva'
 import { Shape, Cursor } from '../types'
 import useShapeStore from '../stores/useShapeStore'
@@ -13,29 +12,19 @@ import useShapeStore from '../stores/useShapeStore'
 interface UseShapeDraggingProps {
   isPanning: boolean
   isAltPressed: React.MutableRefObject<boolean>
-  selectedShapeId: string | null
   updateShape: (id: string, updates: Partial<Shape>) => void
-  userId: string
   onDragUpdate?: (id: string, updates: Partial<Shape>) => void
   onCursorMove?: (cursor: Cursor) => void
   onShapeCreated?: (shape: Shape) => void
-  onShapeLock?: (shapeId: string) => void
-  onShapeUnlock?: (shapeId: string) => void
-  selectShape?: (shapeId: string) => void
 }
 
 export function useShapeDragging({
   isPanning,
   isAltPressed,
-  selectedShapeId,
   updateShape,
-  userId,
   onDragUpdate,
   onCursorMove,
   onShapeCreated,
-  onShapeLock,
-  onShapeUnlock,
-  selectShape,
 }: UseShapeDraggingProps) {
   const { addShape } = useShapeStore()
   

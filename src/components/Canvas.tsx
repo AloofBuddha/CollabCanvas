@@ -131,18 +131,13 @@ export default function Canvas({
   } = useShapeDragging({
     isPanning,
     isAltPressed,
-    selectedShapeId,
     updateShape,
-    userId: userId || '',
     onDragUpdate: (id, updates) => {
       // Sync shape position to Firestore during drag
       onShapeCreated?.({ ...shapes[id], ...updates })
     },
     onCursorMove, // Track cursor position during drag
     onShapeCreated, // For creating duplicates
-    onShapeLock, // Lock duplicate after creation
-    onShapeUnlock, // Unlock original after duplication
-    selectShape, // Select duplicate after creation
   })
   
   const { handleWheel } = useCanvasZoom({
