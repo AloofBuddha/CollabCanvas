@@ -27,6 +27,7 @@ import useShapeStore from '../stores/useShapeStore'
 import Canvas from './Canvas'
 import Toolbar from './Toolbar'
 import Header from './Header'
+import LoadingSpinner from './LoadingSpinner'
 import { Cursor, User, Shape } from '../types'
 
 type Tool = 'select' | 'rectangle'
@@ -40,6 +41,7 @@ export default function CanvasPage() {
   const { setShapes, lockShape, unlockShape } = useShapeStore()
   const [selectedTool, setSelectedTool] = useState<Tool>('select')
   const [onlineUsers, setOnlineUsers] = useState<User[]>([])
+  const [isPresenceReady, setIsPresenceReady] = useState(false)
   const updateCursorRef = useRef<((cursor: Cursor) => void) | null>(null)
   const isFirstLoadRef = useRef(true)
 
@@ -61,6 +63,9 @@ export default function CanvasPage() {
       // Initialize cursor sync with assigned color
       const updateCursor = initCursorSync(userId, displayName, assignedColor)
       updateCursorRef.current = updateCursor
+      
+      // Mark presence as ready
+      setIsPresenceReady(true)
     }
     
     setupPresence()
@@ -236,6 +241,11 @@ export default function CanvasPage() {
 
   const handleSignOut = async () => {
     await signOut()
+  }
+
+  // Show loading spinner until presence is initialized and color is assigned
+  if (!isPresenceReady || color === '#000000') {
+    return <LoadingSpinner message="Initializing workspace..." />
   }
 
   return (
