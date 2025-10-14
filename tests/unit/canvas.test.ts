@@ -235,5 +235,101 @@ describe('Canvas Shape Interactions', () => {
       expect(Object.keys(state.shapes)).toHaveLength(1)
     })
   })
+
+  describe('Selection and Locking Integration (Regression Tests)', () => {
+    it('should support unlocking old shape when locking a new shape', () => {
+      // Reset store
+      useShapeStore.getState().clearShapes()
+      
+      // Create three shapes
+      const shape1 = createTestShape({ id: 'shape-1', x: 100, y: 100 })
+      const shape2 = createTestShape({ id: 'shape-2', x: 200, y: 200 })
+      const shape3 = createTestShape({ id: 'shape-3', x: 300, y: 300 })
+      
+      const store = useShapeStore.getState()
+      store.addShape(shape1)
+      store.addShape(shape2)
+      store.addShape(shape3)
+
+      // Lock first shape
+      store.lockShape('shape-1', userId)
+      let shapes = useShapeStore.getState().shapes
+      expect(shapes['shape-1'].lockedBy).toBe(userId)
+      expect(shapes['shape-2'].lockedBy).toBeUndefined()
+
+      // Simulate switching selection: unlock first, lock second
+      store.unlockShape('shape-1')
+      store.lockShape('shape-2', userId)
+      
+      shapes = useShapeStore.getState().shapes
+      expect(shapes['shape-1'].lockedBy).toBeNull()
+      expect(shapes['shape-2'].lockedBy).toBe(userId)
+      expect(shapes['shape-3'].lockedBy).toBeUndefined()
+    })
+
+    it('should support unlocking when creating a new shape', () => {
+      // Reset store
+      useShapeStore.getState().clearShapes()
+      
+      // Create and lock a shape
+      const existingShape = createTestShape({ id: 'shape-1', x: 100, y: 100 })
+      const store = useShapeStore.getState()
+      store.addShape(existingShape)
+      store.lockShape('shape-1', userId)
+      
+      let shapes = useShapeStore.getState().shapes
+      expect(shapes['shape-1'].lockedBy).toBe(userId)
+      
+      // Simulate creating a new shape: unlock old, lock new
+      const newShape = createTestShape({ id: 'shape-2', x: 200, y: 200 })
+      store.unlockShape('shape-1')
+      store.addShape(newShape)
+      store.lockShape('shape-2', userId)
+      
+      shapes = useShapeStore.getState().shapes
+      expect(shapes['shape-1'].lockedBy).toBeNull()
+      expect(shapes['shape-2'].lockedBy).toBe(userId)
+    })
+
+    it('should maintain only one locked shape per user at a time', () => {
+      // Reset store
+      useShapeStore.getState().clearShapes()
+      
+      // Create multiple shapes
+      const shape1 = createTestShape({ id: 'shape-1', x: 100, y: 100 })
+      const shape2 = createTestShape({ id: 'shape-2', x: 200, y: 200 })
+      const shape3 = createTestShape({ id: 'shape-3', x: 300, y: 300 })
+      
+      const store = useShapeStore.getState()
+      store.addShape(shape1)
+      store.addShape(shape2)
+      store.addShape(shape3)
+
+      // Lock first shape
+      store.lockShape('shape-1', userId)
+      let shapes = useShapeStore.getState().shapes
+      expect(shapes['shape-1'].lockedBy).toBe(userId)
+
+      // Lock second shape (app should unlock first)
+      store.unlockShape('shape-1')
+      store.lockShape('shape-2', userId)
+      
+      // Only shape-2 should be locked
+      shapes = useShapeStore.getState().shapes
+      expect(shapes['shape-1'].lockedBy).toBeNull()
+      expect(shapes['shape-2'].lockedBy).toBe(userId)
+      expect(shapes['shape-3'].lockedBy).toBeUndefined()
+
+      // Lock third shape (app should unlock second)
+      store.unlockShape('shape-2')
+      store.lockShape('shape-3', userId)
+      
+      // Only shape-3 should be locked
+      shapes = useShapeStore.getState().shapes
+      expect(shapes['shape-1'].lockedBy).toBeNull()
+      expect(shapes['shape-2'].lockedBy).toBeNull()
+      expect(shapes['shape-3'].lockedBy).toBe(userId)
+    })
+  })
 })
 

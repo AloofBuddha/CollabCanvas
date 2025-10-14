@@ -2,6 +2,12 @@
 
 Real-time collaborative whiteboard application built with React, TypeScript, Konva, Zustand, and Firebase.
 
+## 🚀 Live Demo
+
+**[https://collab-canvas-ben-cohen.vercel.app/](https://collab-canvas-ben-cohen.vercel.app/)**
+
+Try it out! Create an account and test real-time collaboration by opening the app in multiple browser windows.
+
 ## Features (MVP)
 
 - ✅ **Real-time Collaboration:** Multi-user cursor tracking and shape synchronization
@@ -127,11 +133,13 @@ firebase deploy --only database:rules
 
 See [tasks.md](./tasks.md) for the full development checklist organized by PRs.
 
-**Current Status:** PR #7 Complete ✅ | PR #8 In Progress (Deployment)
+**Current Status:** 🎉 **MVP COMPLETE** - All 8 PRs deployed to production!
+
+**Live Demo:** [https://collab-canvas-ben-cohen.vercel.app/](https://collab-canvas-ben-cohen.vercel.app/)
 
 ## Architecture
 
-See [PRD.md](./PRD.md) for detailed product requirements and [architecture.md](./architecture.md) for technical architecture details.
+See [PRD.md](./PRD.md) for detailed product requirements.
 
 ## Testing
 

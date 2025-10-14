@@ -455,5 +455,69 @@ describe('useShapeSelection', () => {
       expect(removeEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function))
     })
   })
+
+  describe('Selection Switching (Regression Tests)', () => {
+    const mockEvent = {
+      evt: { button: 0 },
+    } as any // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    it('should track when selection changes from one shape to another', () => {
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      
+      // Select first shape
+      act(() => {
+        result.current.handleShapeClick(mockEvent, 'shape-1')
+      })
+      expect(result.current.selectedShapeId).toBe('shape-1')
+      
+      // Select second shape - should track the change
+      const previousSelection = result.current.selectedShapeId
+      act(() => {
+        result.current.handleShapeClick(mockEvent, 'shape-2')
+      })
+      
+      expect(previousSelection).toBe('shape-1')
+      expect(result.current.selectedShapeId).toBe('shape-2')
+    })
+
+    it('should allow checking if a shape is currently selected', () => {
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      
+      act(() => {
+        result.current.handleShapeClick(mockEvent, 'shape-1')
+      })
+      
+      // The selectedShapeId should be accessible for parent component to check
+      expect(result.current.selectedShapeId).toBe('shape-1')
+      
+      // Parent can use this to determine if unlock is needed
+      const needsUnlock = result.current.selectedShapeId === 'shape-1'
+      expect(needsUnlock).toBe(true)
+    })
+
+    it('should deselect when clicking stage even with a selected shape', () => {
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      
+      // Select a shape
+      act(() => {
+        result.current.handleShapeClick(mockEvent, 'shape-1')
+      })
+      expect(result.current.selectedShapeId).toBe('shape-1')
+      
+      // Click stage - target must equal stage for deselection to work
+      const stage = { id: 'stage' }
+      const stageEvent = {
+        target: stage,
+        evt: { button: 0 },
+      } as any // eslint-disable-line @typescript-eslint/no-explicit-any
+      stageEvent.target.getStage = () => stage
+      
+      act(() => {
+        result.current.handleStageClick(stageEvent)
+      })
+      
+      expect(result.current.selectedShapeId).toBeNull()
+    })
+  })
 })
 

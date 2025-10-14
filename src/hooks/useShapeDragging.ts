@@ -5,18 +5,20 @@
  */
 
 import Konva from 'konva'
-import { Shape } from '../types'
+import { Shape, Cursor } from '../types'
 
 interface UseShapeDraggingProps {
   isPanning: boolean
   updateShape: (id: string, updates: Partial<Shape>) => void
   onDragUpdate?: (id: string, updates: Partial<Shape>) => void
+  onCursorMove?: (cursor: Cursor) => void
 }
 
 export function useShapeDragging({
   isPanning,
   updateShape,
   onDragUpdate,
+  onCursorMove,
 }: UseShapeDraggingProps) {
   const handleDragStart = (e: Konva.KonvaEventObject<DragEvent>) => {
     // Prevent shape drag if middle mouse button is being used for panning
@@ -35,6 +37,15 @@ export function useShapeDragging({
     }
     updateShape(shape.id, updates)
     onDragUpdate?.(shape.id, updates)
+    
+    // Update cursor position during drag
+    const stage = e.target.getStage()
+    if (stage && onCursorMove) {
+      const pos = stage.getRelativePointerPosition()
+      if (pos) {
+        onCursorMove({ x: pos.x, y: pos.y })
+      }
+    }
   }
 
   const handleDragEnd = () => {

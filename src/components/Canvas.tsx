@@ -73,9 +73,14 @@ export default function Canvas({
   
   // Handle shape creation and auto-select
   const handleShapeCreatedLocal = (shape: Shape) => {
+    // If there's a currently selected shape, unlock it first
+    if (selectedShapeId) {
+      onShapeUnlock?.(selectedShapeId)
+    }
+    
     onShapeCreated?.(shape)
     selectShape(shape.id)
-    onShapeLock?.(shape.id) // Lock the shape when created
+    onShapeLock?.(shape.id) // Lock the newly created shape
   }
   
   const {
@@ -101,6 +106,7 @@ export default function Canvas({
       // Sync shape position to Firestore during drag
       onShapeCreated?.({ ...shapes[id], ...updates })
     },
+    onCursorMove, // Track cursor position during drag
   })
   
   const { handleWheel } = useCanvasZoom({
@@ -171,7 +177,12 @@ export default function Canvas({
       return
     }
     
-    // Handle selection and lock
+    // If switching selection, unlock the old shape first
+    if (selectedShapeId && selectedShapeId !== shapeId) {
+      onShapeUnlock?.(selectedShapeId)
+    }
+    
+    // Handle selection and lock the new shape
     handleShapeClick(e, shapeId)
     if (tool === 'select' && evt.button === 0) {
       onShapeLock?.(shapeId)
