@@ -1,0 +1,11 @@
+# Don't deploy these to Vercel
+.env.local
+.env
+*.log
+node_modules/
+tests/
+*.test.ts
+*.test.tsx
+.vscode/
+.idea/
+

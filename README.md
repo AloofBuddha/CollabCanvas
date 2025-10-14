@@ -4,10 +4,14 @@ Real-time collaborative whiteboard application built with React, TypeScript, Kon
 
 ## Features (MVP)
 
-- Real-time cursor and shape synchronization
-- Rectangle creation, selection, and movement
-- User presence with colored cursors and avatars
-- Minimal Figma-style toolbar UI
+- ✅ **Real-time Collaboration:** Multi-user cursor tracking and shape synchronization
+- ✅ **Canvas Controls:** Pan (middle-click), zoom (Ctrl+wheel), and vertical scroll (wheel)
+- ✅ **Shape Creation:** Rectangle tool with drag-to-create
+- ✅ **Shape Manipulation:** Select, drag, and delete shapes
+- ✅ **Locking System:** Prevents concurrent editing conflicts with visual feedback
+- ✅ **User Presence:** Online user avatars in header with overflow indicator
+- ✅ **Authentication:** Email/password signup and login with persistent sessions
+- ✅ **Multiplayer Cursors:** Real-time cursor positions with names and colors
 
 ## Tech Stack
 
@@ -93,11 +97,37 @@ collab-canvas/
 └── ...config files
 ```
 
+## Deployment
+
+### Production Deployment (Vercel + Firebase)
+
+This project is deployed on Vercel with Firebase backend services.
+
+**Quick Deploy:**
+1. Fork/clone this repository
+2. Set up Firebase project (Firestore, Realtime DB, Auth)
+3. Deploy to Vercel:
+   - Connect your GitHub repository
+   - Add Firebase environment variables
+   - Deploy!
+
+**Detailed Instructions:** See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment guide.
+
+**Firebase Security Rules:**
+- `firestore.rules` - Firestore security rules (shapes and users)
+- `database.rules.json` - Realtime Database rules (cursors and presence)
+
+Deploy rules with:
+```bash
+firebase deploy --only firestore:rules
+firebase deploy --only database:rules
+```
+
 ## Development Roadmap
 
 See [tasks.md](./tasks.md) for the full development checklist organized by PRs.
 
-**Current Status:** PR #1 - Project Initialization ✅
+**Current Status:** PR #7 Complete ✅ | PR #8 In Progress (Deployment)
 
 ## Architecture
 
