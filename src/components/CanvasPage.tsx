@@ -48,13 +48,22 @@ export default function CanvasPage() {
     if (!userId) return
 
     let unsubscribeRTDBShapes: (() => void) | null = null
+    let unsubscribePresence: (() => void) | null = null
 
-    // Initialize presence (returns unsubscribe function)
-    const unsubscribePresence = initUserPresence(userId, displayName, color)
+    // Initialize presence and get assigned color
+    const setupPresence = async () => {
+      const { unsubscribe, color: assignedColor } = await initUserPresence(userId, displayName)
+      unsubscribePresence = unsubscribe
+      
+      // Update user store with assigned color
+      useUserStore.getState().setUser(userId, displayName, assignedColor)
 
-    // Initialize cursor sync
-    const updateCursor = initCursorSync(userId, displayName, color)
-    updateCursorRef.current = updateCursor
+      // Initialize cursor sync with assigned color
+      const updateCursor = initCursorSync(userId, displayName, assignedColor)
+      updateCursorRef.current = updateCursor
+    }
+    
+    setupPresence()
 
     // Listen to remote cursors
     const unsubscribeCursors = listenToRemoteCursors(userId, (cursors) => {
@@ -116,7 +125,9 @@ export default function CanvasPage() {
         )
       }
       
-      unsubscribePresence()
+      if (unsubscribePresence) {
+        unsubscribePresence()
+      }
       unsubscribeCursors()
       unsubscribeUsers()
       unsubscribeFirestoreShapes()
@@ -125,7 +136,7 @@ export default function CanvasPage() {
       }
       clearRemoteCursors()
     }
-  }, [userId, displayName, color, setRemoteCursor, clearRemoteCursors, setShapes])
+  }, [userId, displayName, setRemoteCursor, clearRemoteCursors, setShapes])
 
   const handleCursorMove = useCallback((cursor: Cursor) => {
     if (updateCursorRef.current) {

@@ -56,7 +56,7 @@ export interface UserState {
   color: string
   online: boolean
   authStatus: AuthStatus
-  setUser: (userId: string, displayName: string, color: string) => void
+  setUser: (userId: string, displayName: string, color?: string) => void
   setAuthStatus: (status: AuthStatus) => void
   setOnline: (online: boolean) => void
   logout: () => void

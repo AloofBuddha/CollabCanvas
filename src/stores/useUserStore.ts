@@ -17,7 +17,8 @@ const useUserStore = create<UserState>((set) => ({
   authStatus: 'loading',
 
   // Set user information (called after successful authentication)
-  setUser: (userId: string, displayName: string, color: string) => {
+  // Color defaults to black and will be updated by presence system
+  setUser: (userId: string, displayName: string, color: string = '#000000') => {
     set({
       userId,
       displayName,

@@ -13,6 +13,10 @@ vi.mock('firebase/database', () => ({
     remove: vi.fn(() => Promise.resolve()),
   })),
   serverTimestamp: vi.fn(() => ({ '.sv': 'timestamp' })),
+  get: vi.fn(() => Promise.resolve({
+    exists: () => false,
+    val: () => null,
+  })),
 }))
 
 vi.mock('../../src/utils/firebase', () => ({
@@ -138,12 +142,11 @@ describe('firebasePresence', () => {
   })
 
   describe('initUserPresence', () => {
-    it('should set up presence with connection listener', () => {
+    it('should set up presence with connection listener and assign color', async () => {
       const userId = 'user123'
       const displayName = 'John Doe'
-      const color = '#ff0000'
 
-      const unsubscribe = initUserPresence(userId, displayName, color)
+      const result = await initUserPresence(userId, displayName)
 
       // Should create references
       expect(ref).toHaveBeenCalledWith(expect.anything(), `presence/${userId}`)
@@ -152,11 +155,13 @@ describe('firebasePresence', () => {
       // Should set up connection listener
       expect(onValue).toHaveBeenCalled()
 
-      // Should return unsubscribe function
-      expect(typeof unsubscribe).toBe('function')
+      // Should return unsubscribe function and color
+      expect(typeof result.unsubscribe).toBe('function')
+      expect(typeof result.color).toBe('string')
+      expect(result.color).toMatch(/^#[0-9A-F]{6}$/i)
     })
 
-    it('should set up disconnect handler when connected', () => {
+    it('should set up disconnect handler when connected', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.mocked(onValue).mockImplementation((ref: any, callback) => {
         // Simulate being connected
@@ -167,13 +172,13 @@ describe('firebasePresence', () => {
         return vi.fn()
       })
 
-      initUserPresence('user123', 'John', '#ff0000')
+      await initUserPresence('user123', 'John')
 
       // Should set up disconnect handler
       expect(onDisconnect).toHaveBeenCalled()
     })
 
-    it('should not set presence when disconnected', () => {
+    it('should not set presence when disconnected', async () => {
       const setMock = vi.mocked(set)
       setMock.mockClear()
 
@@ -187,7 +192,7 @@ describe('firebasePresence', () => {
         return vi.fn()
       })
 
-      initUserPresence('user123', 'John', '#ff0000')
+      await initUserPresence('user123', 'John')
 
       // Should not call set when disconnected
       expect(setMock).not.toHaveBeenCalled()

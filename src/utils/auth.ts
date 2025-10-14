@@ -16,15 +16,6 @@ import { unlockUserShapes } from './firebaseShapes'
  * Authentication utilities for Firebase
  */
 
-// Helper to generate a random user color
-const generateUserColor = (): string => {
-  const colors = [
-    '#FF5733', '#33FF57', '#3357FF', '#F033FF', '#FF33F0',
-    '#33FFF0', '#F0FF33', '#FF8C33', '#8C33FF', '#33FF8C',
-  ]
-  return colors[Math.floor(Math.random() * colors.length)]
-}
-
 /**
  * Sign up a new user
  */
@@ -38,18 +29,14 @@ export const signUp = async (
     const userCredential = await createUserWithEmailAndPassword(auth, email, password)
     const userId = userCredential.user.uid
 
-    // Generate a color for the user
-    const color = generateUserColor()
-
-    // Save user profile to Firestore
+    // Save user profile to Firestore (no color - assigned dynamically on presence)
     await setDoc(doc(db, 'users', userId), {
       displayName,
-      color,
       createdAt: new Date().toISOString(),
     })
 
-    // Update local store
-    useUserStore.getState().setUser(userId, displayName, color)
+    // Update local store (color will be set when presence initializes)
+    useUserStore.getState().setUser(userId, displayName)
 
     return { success: true }
   } catch (error) {
@@ -81,8 +68,8 @@ export const signIn = async (
 
     const userData = userDoc.data()
     
-    // Update local store
-    useUserStore.getState().setUser(userId, userData.displayName, userData.color)
+    // Update local store (color will be assigned when presence initializes)
+    useUserStore.getState().setUser(userId, userData.displayName)
 
     return { success: true }
   } catch (error) {
@@ -138,7 +125,8 @@ export const initAuthListener = (): (() => void) => {
         
         if (userDoc.exists()) {
           const userData = userDoc.data()
-          useUserStore.getState().setUser(user.uid, userData.displayName, userData.color)
+          // Color will be assigned when presence initializes
+          useUserStore.getState().setUser(user.uid, userData.displayName)
         } else {
           // Profile doesn't exist, sign out
           useUserStore.getState().setAuthStatus('unauthenticated')

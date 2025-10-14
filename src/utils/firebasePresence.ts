@@ -4,9 +4,53 @@
  * Utilities for syncing cursor positions and user presence via Firebase Realtime Database
  */
 
-import { ref, onValue, set, onDisconnect, serverTimestamp, remove } from 'firebase/database'
+import { ref, onValue, set, onDisconnect, serverTimestamp, remove, get } from 'firebase/database'
 import { rtdb } from './firebase'
 import { Cursor, RemoteCursor } from '../types'
+
+// Available colors for online users (10 unique colors)
+const AVAILABLE_COLORS = [
+  '#FF5733', // Red-Orange
+  '#33FF57', // Green
+  '#3357FF', // Blue
+  '#F033FF', // Magenta
+  '#FF33F0', // Pink
+  '#33FFF0', // Cyan
+  '#F0FF33', // Yellow
+  '#FF8C33', // Orange
+  '#8C33FF', // Purple
+  '#33FF8C', // Mint
+]
+
+/**
+ * Select an available color for a new user
+ * Picks the first color not currently in use by online users
+ * If all colors are taken, picks a random one (for 11+ concurrent users)
+ */
+async function selectAvailableColor(): Promise<string> {
+  const presenceRef = ref(rtdb, 'presence')
+  const snapshot = await get(presenceRef)
+  
+  if (!snapshot.exists()) {
+    // No one online, return first color
+    return AVAILABLE_COLORS[0]
+  }
+  
+  // Get all colors currently in use
+  const data = snapshot.val()
+  const usedColors = new Set<string>()
+  Object.values(data).forEach((userData) => {
+    if (userData && typeof userData === 'object' && 'color' in userData) {
+      usedColors.add(userData.color as string)
+    }
+  })
+  
+  // Find first available color
+  const availableColor = AVAILABLE_COLORS.find(color => !usedColors.has(color))
+  
+  // If all colors taken (11+ users), pick a random one
+  return availableColor || AVAILABLE_COLORS[Math.floor(Math.random() * AVAILABLE_COLORS.length)]
+}
 
 /**
  * Initialize cursor position sync for current user
@@ -74,16 +118,19 @@ export function listenToRemoteCursors(
 
 /**
  * Initialize user presence
- * Adds user to presence and sets up disconnect handler to remove them
+ * Adds user to presence with an available color and sets up disconnect handler to remove them
  * Uses Firebase's recommended presence pattern with .info/connected
+ * Returns unsubscribe function and the assigned color
  */
-export function initUserPresence(
+export async function initUserPresence(
   userId: string,
-  displayName: string,
-  color: string
-): () => void {
+  displayName: string
+): Promise<{ unsubscribe: () => void; color: string }> {
   const userStatusRef = ref(rtdb, `presence/${userId}`)
   const connectedRef = ref(rtdb, '.info/connected')
+  
+  // Select an available color based on current online users
+  const color = await selectAvailableColor()
   
   const userData = {
     displayName,
@@ -108,7 +155,7 @@ export function initUserPresence(
       })
   })
 
-  return unsubscribe
+  return { unsubscribe, color }
 }
 
 /**
