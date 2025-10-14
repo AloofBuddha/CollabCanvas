@@ -54,15 +54,16 @@
 
 ---
 
-## PR #5 - Cursor & Presence Rendering
+## PR #5 - Cursor & Presence Rendering ✅
 
-* [ ] Display cursors with user initials label
-* [ ] Sync cursor positions via Realtime DB
-* [ ] Show avatars for online users at top-right
-* [ ] Ensure cursors disappear instantly on disconnect
-* [ ] Throttle cursor updates (~20Hz)
-* [ ] Unit tests for cursor store and presence updates
-* [ ] Manual test multi-user cursors and disconnect handling
+* [x] Display remote cursors with users full name and color
+* [x] Sync cursor positions via Realtime DB
+* [x] Show avatars for online users at top-right
+* [x] Ensure cursors disappear instantly on disconnect
+* [x] Throttle cursor updates (~20Hz = 50ms)
+* [x] Unit tests for cursor store, throttle, and presence updates
+* [x] Firebase Realtime DB integration complete
+* [x] Manual test multi-user cursors and disconnect handling
 
 ---
 

@@ -3,11 +3,15 @@ import { Stage, Layer, Rect } from 'react-konva'
 import Konva from 'konva'
 import useShapeStore from '../stores/useShapeStore'
 import useUserStore from '../stores/useUserStore'
+import useCursorStore from '../stores/useCursorStore'
 import { useCanvasPanning } from '../hooks/useCanvasPanning'
 import { useShapeCreation } from '../hooks/useShapeCreation'
 import { useShapeDragging } from '../hooks/useShapeDragging'
 import { useCanvasZoom } from '../hooks/useCanvasZoom'
+import { useCursorTracking } from '../hooks/useCursorTracking'
+import RemoteCursor from './RemoteCursor'
 import { getCursorStyle } from '../utils/canvasUtils'
+import { Cursor } from '../types'
 import {
   HEADER_HEIGHT,
   SHAPE_OPACITY,
@@ -21,16 +25,22 @@ type Tool = 'select' | 'rectangle'
 interface CanvasProps {
   tool: Tool
   onToolChange: (tool: Tool) => void
+  onCursorMove?: (cursor: Cursor) => void
 }
 
-export default function Canvas({ tool, onToolChange }: CanvasProps) {
+export default function Canvas({ tool, onToolChange, onCursorMove }: CanvasProps) {
   const stageRef = useRef<Konva.Stage>(null)
   
   const { shapes, addShape, updateShape } = useShapeStore()
   const { userId, color } = useUserStore()
+  const { remoteCursors } = useCursorStore()
 
   // Custom hooks for different canvas behaviors
   const { isPanning, setIsPanning } = useCanvasPanning({ stageRef })
+  
+  const { handleMouseMove: handleCursorMove } = useCursorTracking({
+    onCursorMove,
+  })
   
   const {
     isDrawing,
@@ -72,8 +82,12 @@ export default function Canvas({ tool, onToolChange }: CanvasProps) {
     }
   }
 
-  // Handle mouse move - update rectangle size while drawing
+  // Handle mouse move - update rectangle size while drawing and track cursor
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    // Track cursor position
+    handleCursorMove(e)
+    
+    // Update shape being created
     if (isDrawing) {
       updateSize(e)
     }
@@ -105,7 +119,7 @@ export default function Canvas({ tool, onToolChange }: CanvasProps) {
 
   return (
     <div
-      className="w-full h-full bg-canvas-bg"
+      className="w-full h-full bg-canvas-bg relative"
       style={{ cursor: getCursorStyle(isPanning, isDrawing, tool) }}
     >
       <Stage
@@ -153,6 +167,11 @@ export default function Canvas({ tool, onToolChange }: CanvasProps) {
           )}
         </Layer>
       </Stage>
+
+      {/* Render remote cursors */}
+      {Object.values(remoteCursors).map((cursor) => (
+        <RemoteCursor key={cursor.userId} cursor={cursor} />
+      ))}
     </div>
   )
 }
