@@ -1,4 +1,4 @@
-import { useRef, useState, Fragment } from 'react'
+import { useRef, useState, useEffect, Fragment } from 'react'
 import { Stage, Layer, Rect } from 'react-konva'
 import Konva from 'konva'
 import useShapeStore from '../stores/useShapeStore'
@@ -51,10 +51,34 @@ export default function Canvas({
   const [stageScale, setStageScale] = useState(1)
   const [currentCursor, setCurrentCursor] = useState<string>('default')
   const justFinishedManipulation = useRef(false)
+  const isAltPressed = useRef(false)
   
   const { shapes, updateShape } = useShapeStore()
   const { userId, color } = useUserStore()
   const { remoteCursors } = useCursorStore()
+
+  // Track Alt key state for duplication
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Alt') {
+        isAltPressed.current = true
+      }
+    }
+    
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Alt') {
+        isAltPressed.current = false
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
+  }, [])
 
   // Custom hooks for different canvas behaviors
   const { isPanning, setIsPanning } = useCanvasPanning({ stageRef })
@@ -106,12 +130,19 @@ export default function Canvas({
     handleDragEnd,
   } = useShapeDragging({
     isPanning,
+    isAltPressed,
+    selectedShapeId,
     updateShape,
+    userId: userId || '',
     onDragUpdate: (id, updates) => {
       // Sync shape position to Firestore during drag
       onShapeCreated?.({ ...shapes[id], ...updates })
     },
     onCursorMove, // Track cursor position during drag
+    onShapeCreated, // For creating duplicates
+    onShapeLock, // Lock duplicate after creation
+    onShapeUnlock, // Unlock original after duplication
+    selectShape, // Select duplicate after creation
   })
   
   const { handleWheel } = useCanvasZoom({
@@ -294,9 +325,9 @@ export default function Canvas({
   }
 
   // Combined drag handlers
-  const handleCombinedDragStart = (e: Konva.KonvaEventObject<DragEvent>) => {
+  const handleCombinedDragStart = (e: Konva.KonvaEventObject<DragEvent>, shape: Shape) => {
     handleSelectionDragStart()
-    handleDragStart(e)
+    handleDragStart(e, shape)
     // Note: Shape should already be locked from mouse down, don't re-lock
   }
 
@@ -391,7 +422,7 @@ export default function Canvas({
                   onMouseDown={(e) => handleShapeMouseDown(e, shape.id, isLockedByOther, shape)}
                   onMouseMove={(e) => handleManipulationMouseMove(e, shape, isSelected)}
                   onMouseLeave={handleShapeMouseLeave}
-                  onDragStart={handleCombinedDragStart}
+                  onDragStart={(e) => handleCombinedDragStart(e, shape)}
                   onDragMove={(e) => handleDragMove(e, shape)}
                   onDragEnd={handleCombinedDragEnd}
                   stroke={showBorder ? borderColor : undefined}

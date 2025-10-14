@@ -3,11 +3,28 @@
 ## Current Status
 
 **Phase**: Post-MVP Enhancement Phase  
-**Version**: v1.1 (In Progress)  
-**Last Completed**: PR #9 - Rectangle Manipulation (Resize & Rotate)  
+**Version**: v1.2 (In Progress)  
+**Last Completed**: PR #10 - Alt+Drag Shape Duplication  
 **Live Production**: https://collab-canvas-ben-cohen.vercel.app/
 
-## Recent Changes (PR #9 - Completed)
+## Recent Changes (PR #10 - Just Completed) ✅
+
+### Alt+Drag Duplication Feature
+- **User Experience**: Hold Alt and drag a selected shape to duplicate it
+- **Original stays in place**: The original shape never moves during duplication
+- **Duplicate follows cursor**: New shape is created and follows the drag
+- **Auto-selection**: Duplicate is automatically selected and locked after creation
+- **Multi-user sync**: Duplicates sync to Firestore immediately
+
+### Technical Implementation
+- Alt key tracking with window-level event listeners (keydown/keyup)
+- Duplication logic in `useShapeDragging` hook
+- During drag: original position reset each frame, duplicate updates to cursor position
+- Duplicate created with new ID: `shape-${Date.now()}-${Math.random()}`
+- Selection and lock automatically switched from original to duplicate
+- 6 new unit tests covering all duplication scenarios (207 total tests passing)
+
+## Previous Changes (PR #9 - Completed)
 
 ### Rectangle Manipulation Features ✅
 - **Dimension Display**: Width × height labels below selected rectangles
@@ -38,45 +55,7 @@
 
 ## Current Work Focus
 
-### Next Feature: Alt+Drag Duplication 🔄
-
-**Goal**: Allow users to duplicate shapes by holding Alt while dragging
-
-**User Experience**:
-1. User selects a shape
-2. User holds Alt key and starts dragging
-3. Original shape stays in place
-4. New duplicate shape follows cursor
-5. On release, duplicate is created at new position
-6. Auto-select the new duplicate
-
-**Technical Approach**:
-- Detect Alt key in `onMouseDown` handler
-- If Alt held, create new shape with same properties but new ID
-- Change drag target from original to duplicate
-- Original shape releases lock immediately
-- New shape acquires lock automatically
-- Write duplicate to Firestore on `onMouseUp`
-
-**Implementation Tasks**:
-1. [ ] Add keyboard state tracking (Alt key down/up)
-2. [ ] Modify shape `onMouseDown` to detect Alt+click
-3. [ ] Create duplicate shape with new ID in store
-4. [ ] Swap drag target from original to duplicate
-5. [ ] Update cursor to show "duplicate" visual feedback (optional)
-6. [ ] Handle edge cases:
-   - Alt released during drag (cancel duplication?)
-   - Alt pressed after drag started (ignore)
-   - Duplicate while shape locked by another user (prevent)
-7. [ ] Write unit tests for duplication logic
-8. [ ] Manual testing in multi-user scenario
-
-**Open Questions**:
-- Should releasing Alt mid-drag cancel duplication or commit it?
-- Should we show visual indicator that duplication mode is active?
-- Should duplicate be created with slight offset from original?
-
-### After Duplication: Additional Shape Types 📋
+### Next Feature: Additional Shape Types 📋
 
 **Priority Order**:
 1. **Circle/Ellipse**
@@ -104,17 +83,6 @@
 - Manipulation zone differences per shape type
 
 ## Active Decisions & Considerations
-
-### Alt+Drag Duplication Decisions
-- **Decision needed**: Cancel or commit duplication if Alt released mid-drag?
-  - **Option A**: Cancel and revert to moving original (complex undo logic)
-  - **Option B**: Commit duplication regardless (simpler, predictable)
-  - **Recommendation**: Option B (commit regardless, simpler UX)
-
-- **Decision needed**: Offset duplicate from original?
-  - **Option A**: Place exactly under cursor (user explicitly positions it)
-  - **Option B**: Offset by 20px down-right (avoids perfect overlap)
-  - **Recommendation**: Option A (cursor position is explicit, user can offset manually)
 
 ### Shape Type Architecture Decisions
 - **Decision needed**: How to extend shape rendering?

@@ -27,6 +27,7 @@
 - ✅ Resize from corners (diagonal resize with smooth flipping)
 - ✅ Resize from edges (single-axis resize)
 - ✅ Rotate from corner zones (30px hit areas, pivots around center)
+- ✅ Alt+drag to duplicate (original stays in place, duplicate follows cursor)
 - ✅ Delete with Delete key
 - ✅ Dimension labels below selected shapes (width × height)
 - ✅ Auto-switch to select tool after creation
@@ -63,10 +64,11 @@
 - ✅ Real-time listeners for Firestore and RTDB
 
 **Testing**
-- ✅ 203 unit tests passing (Vitest)
+- ✅ 207 unit tests passing (Vitest)
   - 146 tests for core stores and utilities
   - 34 tests for manipulation logic
-  - 23 tests for shape/cursor/user logic
+  - 6 tests for duplication logic
+  - 21 tests for shape/cursor/user logic
 - ✅ 4 integration tests (Firebase connectivity)
 - ✅ Anonymous auth for safe testing
 - ✅ Test coverage for all critical paths
@@ -88,15 +90,7 @@
 
 ### Next Up (Planned)
 
-**PR #10: Alt+Drag Duplication** 🔄 (NEXT)
-- [ ] Keyboard state tracking (Alt key)
-- [ ] Duplication logic in Rectangle component
-- [ ] Create duplicate with new ID
-- [ ] Auto-select duplicate after creation
-- [ ] Unit tests for duplication
-- [ ] Multi-user duplication testing
-
-**PR #11: Circle/Ellipse Shape**
+**PR #11: Circle/Ellipse Shape** 🔄 (NEXT)
 - [ ] Circle component with Konva Circle/Ellipse
 - [ ] Circle creation tool (click-drag from center or corner?)
 - [ ] Reuse manipulation logic (resize, rotate)

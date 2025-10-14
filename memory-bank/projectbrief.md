@@ -80,9 +80,10 @@ Create a production-ready MVP that demonstrates real-time collaboration fundamen
   - PR #7: Real-time shape sync
   - PR #8: Deployment & production
   - PR #9: Rectangle manipulation (resize & rotate)
-- **v1.1** - Enhancement Phase (IN PROGRESS)
-  - Next: Alt+drag duplication
-  - Next: Additional shape types
+- **v1.1** - Enhancement Phase Part 1 (COMPLETE)
+  - PR #10: Alt+drag duplication
+- **v1.2** - Enhancement Phase Part 2 (IN PROGRESS)
+  - Next: Additional shape types (circle, line, text)
 
 ## Author
 Benjamin Cohen - October 2025
