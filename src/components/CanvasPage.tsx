@@ -12,6 +12,14 @@ import {
   deleteShape,
   lockShape as lockShapeInFirestore,
   unlockShape as unlockShapeInFirestore,
+  // RTDB functions for real-time updates
+  listenToRTDBShapes,
+  syncShapeToRTDB,
+  populateRTDBFromFirestore,
+  removeShapeFromRTDB,
+  // Cleanup functions
+  unlockAllShapes,
+  unlockUserShapes,
 } from '../utils/firebaseShapes'
 import useUserStore from '../stores/useUserStore'
 import useCursorStore from '../stores/useCursorStore'
@@ -33,10 +41,13 @@ export default function CanvasPage() {
   const [selectedTool, setSelectedTool] = useState<Tool>('select')
   const [onlineUsers, setOnlineUsers] = useState<User[]>([])
   const updateCursorRef = useRef<((cursor: Cursor) => void) | null>(null)
+  const isFirstLoadRef = useRef(true)
 
   // Initialize cursor sync and presence
   useEffect(() => {
     if (!userId) return
+
+    let unsubscribeRTDBShapes: (() => void) | null = null
 
     // Initialize presence (returns unsubscribe function)
     const unsubscribePresence = initUserPresence(userId, displayName, color)
@@ -60,16 +71,58 @@ export default function CanvasPage() {
       setOnlineUsers(users)
     })
 
-    // Listen to Firestore shapes
-    const unsubscribeShapes = listenToShapes((shapes) => {
-      setShapes(shapes)
+    // Load shapes from Firestore ONCE, then subscribe to RTDB for real-time updates
+    const unsubscribeFirestoreShapes = listenToShapes(async (firestoreShapes) => {
+      // On first load, unlock all shapes (cleanup stale locks from crashed sessions)
+      if (isFirstLoadRef.current) {
+        await unlockAllShapes(firestoreShapes)
+        isFirstLoadRef.current = false
+        
+        // Re-fetch shapes after unlocking to get the updated state
+        // This ensures RTDB is populated with unlocked shapes
+        const unlockedShapes = Object.fromEntries(
+          Object.entries(firestoreShapes).map(([id, shape]) => [id, { ...shape, lockedBy: null }])
+        )
+        setShapes(unlockedShapes)
+        await populateRTDBFromFirestore(unlockedShapes)
+      } else {
+        // Set initial shapes in Zustand
+        setShapes(firestoreShapes)
+        
+        // Populate RTDB with Firestore shapes (this makes RTDB the cache)
+        await populateRTDBFromFirestore(firestoreShapes)
+      }
+      
+      // Now subscribe to RTDB for real-time updates
+      // Only do this once (on first Firestore load)
+      if (!unsubscribeRTDBShapes) {
+        unsubscribeRTDBShapes = listenToRTDBShapes((rtdbShapes) => {
+          setShapes(rtdbShapes)
+        })
+      }
+      
+      // After initial setup, we can unsubscribe from Firestore
+      // Keep it for now to detect external changes (e.g., admin edits)
+      // TODO: Consider unsubscribing after first load for better performance
     })
 
     return () => {
+      // Unlock all shapes owned by this user before disconnecting
+      if (userId) {
+        // Get current shapes from store (don't use closure to avoid stale reference)
+        const currentShapes = useShapeStore.getState().shapes
+        unlockUserShapes(userId, currentShapes).catch(err => 
+          console.error('Failed to unlock user shapes on disconnect:', err)
+        )
+      }
+      
       unsubscribePresence()
       unsubscribeCursors()
       unsubscribeUsers()
-      unsubscribeShapes()
+      unsubscribeFirestoreShapes()
+      if (unsubscribeRTDBShapes) {
+        unsubscribeRTDBShapes()
+      }
       clearRemoteCursors()
     }
   }, [userId, displayName, color, setRemoteCursor, clearRemoteCursors, setShapes])
@@ -80,21 +133,39 @@ export default function CanvasPage() {
     }
   }, [])
 
-  // Handle shape creation - save to Firestore
+  // Handle shape creation - save to both Firestore (persistence) and RTDB (real-time)
   const handleShapeCreated = useCallback(async (shape: Shape) => {
     try {
-      await saveShape(shape)
+      // Write to both databases
+      await Promise.all([
+        saveShape(shape),          // Firestore for persistence
+        syncShapeToRTDB(shape),    // RTDB for real-time sync
+      ])
     } catch (error) {
       console.error('Failed to save shape:', error)
     }
   }, [])
 
-  // Handle shape deletion - remove from Firestore
+  // Handle shape deletion - remove from both Firestore and RTDB
   const handleShapeDeleted = useCallback(async (shapeId: string) => {
     try {
-      await deleteShape(shapeId)
+      // Remove from both databases
+      await Promise.all([
+        deleteShape(shapeId),           // Firestore
+        removeShapeFromRTDB(shapeId),   // RTDB
+      ])
     } catch (error) {
       console.error('Failed to delete shape:', error)
+    }
+  }, [])
+
+  // Handle drag/manipulation end - persist final state to Firestore
+  const handleShapeUpdate = useCallback(async (shape: Shape) => {
+    try {
+      // Persist to Firestore (RTDB already updated during drag/manipulation)
+      await saveShape(shape)
+    } catch (error) {
+      console.error('Failed to update shape:', error)
     }
   }, [])
 
@@ -175,6 +246,7 @@ export default function CanvasPage() {
           onCursorMove={handleCursorMove}
           onShapeCreated={handleShapeCreated}
           onShapeDeleted={handleShapeDeleted}
+          onShapeUpdate={handleShapeUpdate}
           onShapeLock={handleShapeLock}
           onShapeUnlock={handleShapeUnlock}
           onlineUsers={onlineUsers}

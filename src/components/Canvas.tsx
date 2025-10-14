@@ -32,6 +32,7 @@ interface CanvasProps {
   onCursorMove?: (cursor: Cursor) => void
   onShapeCreated?: (shape: Shape) => void
   onShapeDeleted?: (shapeId: string) => void
+  onShapeUpdate?: (shape: Shape) => void // For drag/manipulation end -> Firestore persistence
   onShapeLock?: (shapeId: string) => void
   onShapeUnlock?: (shapeId: string) => void
   onlineUsers: import('../types').User[]
@@ -43,6 +44,7 @@ export default function Canvas({
   onCursorMove,
   onShapeCreated,
   onShapeDeleted,
+  onShapeUpdate,
   onShapeLock,
   onShapeUnlock,
   onlineUsers,
@@ -132,12 +134,9 @@ export default function Canvas({
     isPanning,
     isAltPressed,
     updateShape,
-    onDragUpdate: (id, updates) => {
-      // Sync shape position to Firestore during drag
-      onShapeCreated?.({ ...shapes[id], ...updates })
-    },
     onCursorMove, // Track cursor position during drag
     onShapeCreated, // For creating duplicates
+    onDragEnd: onShapeUpdate, // Persist to Firestore on drag end
   })
   
   const { handleWheel } = useCanvasZoom({
@@ -158,7 +157,7 @@ export default function Canvas({
   } = useShapeManipulation({
     selectedShapeId,
     updateShape,
-    onShapeUpdate: onShapeCreated,
+    onShapeUpdate, // Persist to Firestore on manipulation end
     stageRef,
     stageScale,
   })
@@ -170,6 +169,7 @@ export default function Canvas({
     // Middle mouse button (button 1) - start panning
     if (evt.button === 1) {
       setIsPanning(true)
+      setCurrentCursor('grabbing') // Update cursor immediately
       return
     }
     
@@ -225,6 +225,12 @@ export default function Canvas({
       return
     }
     
+    // Panning has highest priority for cursor (even if shape is selected)
+    if (isPanning) {
+      setCurrentCursor('grabbing')
+      return
+    }
+    
     // Check for manipulation zones on selected shape (for rotation zones outside shape)
     if (shape && tool === 'select') {
       handleManipulationStageMouseMove(shape, pos.x, pos.y)
@@ -254,6 +260,7 @@ export default function Canvas({
     // Stop panning
     if (isPanning) {
       setIsPanning(false)
+      setCurrentCursor(getCursorStyle(false, isDrawing, tool)) // Reset cursor immediately
     }
 
     // Finish creating rectangle
@@ -274,6 +281,7 @@ export default function Canvas({
     // Middle mouse button - set panning state
     if (evt.button === 1) {
       setIsPanning(true)
+      setCurrentCursor('grabbing') // Update cursor immediately
       return
     }
     
@@ -326,9 +334,9 @@ export default function Canvas({
     // Note: Shape should already be locked from mouse down, don't re-lock
   }
 
-  const handleCombinedDragEnd = () => {
+  const handleCombinedDragEnd = (shape: Shape) => {
     handleSelectionDragEnd()
-    handleDragEnd()
+    handleDragEnd(shape)
     // Note: Keep shape locked after drag - only unlock on deselect
   }
   
@@ -419,7 +427,7 @@ export default function Canvas({
                   onMouseLeave={handleShapeMouseLeave}
                   onDragStart={(e) => handleCombinedDragStart(e, shape)}
                   onDragMove={(e) => handleDragMove(e, shape)}
-                  onDragEnd={handleCombinedDragEnd}
+                  onDragEnd={() => handleCombinedDragEnd(shape)}
                   stroke={showBorder ? borderColor : undefined}
                   strokeWidth={showBorder ? 2 : 0}
                 />

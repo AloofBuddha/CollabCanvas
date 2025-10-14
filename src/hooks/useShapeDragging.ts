@@ -3,11 +3,16 @@
  * 
  * Manages shape dragging interactions with collision avoidance for panning
  * Also handles Alt+drag duplication
+ * 
+ * Real-time updates: Writes to RTDB (throttled) during drag, Firestore on drag end
  */
 
+import { useRef } from 'react'
 import Konva from 'konva'
 import { Shape, Cursor } from '../types'
 import useShapeStore from '../stores/useShapeStore'
+import { syncShapeToRTDB } from '../utils/firebaseShapes'
+import { throttle, CURSOR_THROTTLE_MS } from '../utils/throttle'
 
 interface UseShapeDraggingProps {
   isPanning: boolean
@@ -16,6 +21,7 @@ interface UseShapeDraggingProps {
   onDragUpdate?: (id: string, updates: Partial<Shape>) => void
   onCursorMove?: (cursor: Cursor) => void
   onShapeCreated?: (shape: Shape) => void
+  onDragEnd?: (shape: Shape) => void // Called on drag end to persist to Firestore
 }
 
 export function useShapeDragging({
@@ -25,8 +31,17 @@ export function useShapeDragging({
   onDragUpdate,
   onCursorMove,
   onShapeCreated,
+  onDragEnd,
 }: UseShapeDraggingProps) {
-  const { addShape } = useShapeStore()
+  const { addShape, shapes } = useShapeStore()
+  
+  // Throttled RTDB sync for real-time updates (50ms, same as cursor)
+  const throttledRTDBSync = useRef<((shape: Shape) => void) | null>(null)
+  if (!throttledRTDBSync.current) {
+    throttledRTDBSync.current = throttle((shape: Shape) => {
+      syncShapeToRTDB(shape)
+    }, CURSOR_THROTTLE_MS)
+  }
   
   const handleDragStart = (e: Konva.KonvaEventObject<DragEvent>, draggedShape: Shape) => {
     // Prevent shape drag if middle mouse button is being used for panning
@@ -65,8 +80,18 @@ export function useShapeDragging({
       y: node.y() - shape.height / 2,
     }
     
-    // Normal drag - always update the shape being dragged
+    // Update local Zustand store immediately (optimistic)
     updateShape(shape.id, updates)
+    
+    // Get the updated shape from store for RTDB sync
+    const updatedShape = { ...shapes[shape.id], ...updates }
+    
+    // Sync to RTDB for real-time updates (throttled to 50ms)
+    if (throttledRTDBSync.current) {
+      throttledRTDBSync.current(updatedShape)
+    }
+    
+    // Legacy: keep onDragUpdate for backward compatibility (can be removed later)
     onDragUpdate?.(shape.id, updates)
     
     // Update cursor position during drag
@@ -79,9 +104,14 @@ export function useShapeDragging({
     }
   }
 
-  const handleDragEnd = () => {
-    // Drag completed - nothing special needed for duplication
-    // The duplicate was already created on drag start
+  const handleDragEnd = (shape: Shape) => {
+    // Get final position from Zustand store
+    const finalShape = shapes[shape.id]
+    
+    if (finalShape && onDragEnd) {
+      // Persist final position to Firestore
+      onDragEnd(finalShape)
+    }
   }
 
   return {

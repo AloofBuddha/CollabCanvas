@@ -11,6 +11,12 @@
       "$userId": {
         ".write": "auth != null && $userId === auth.uid"
       }
+    },
+    "shapes": {
+      ".read": "auth != null",
+      "$shapeId": {
+        ".write": "auth != null"
+      }
     }
   }
 }

@@ -8,6 +8,9 @@ import {
 import { doc, setDoc, getDoc } from 'firebase/firestore'
 import { auth, db } from './firebase'
 import useUserStore from '../stores/useUserStore'
+import useShapeStore from '../stores/useShapeStore'
+import { cleanupUserPresence } from './firebasePresence'
+import { unlockUserShapes } from './firebaseShapes'
 
 /**
  * Authentication utilities for Firebase
@@ -95,8 +98,24 @@ export const signIn = async (
  */
 export const signOut = async (): Promise<{ success: boolean; error?: string }> => {
   try {
+    // Get current userId and shapes before signing out
+    const userId = useUserStore.getState().userId
+    const shapes = useShapeStore.getState().shapes
+    
+    // Clean up before signing out
+    if (userId) {
+      await Promise.all([
+        cleanupUserPresence(userId),        // Remove presence and cursor from RTDB
+        unlockUserShapes(userId, shapes),   // Unlock all shapes owned by this user
+      ])
+    }
+    
+    // Sign out from Firebase Auth
     await firebaseSignOut(auth)
+    
+    // Clear local state
     useUserStore.getState().logout()
+    
     return { success: true }
   } catch (error) {
     if (error instanceof Error) {

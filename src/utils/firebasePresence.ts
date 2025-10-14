@@ -4,7 +4,7 @@
  * Utilities for syncing cursor positions and user presence via Firebase Realtime Database
  */
 
-import { ref, onValue, set, onDisconnect, serverTimestamp } from 'firebase/database'
+import { ref, onValue, set, onDisconnect, serverTimestamp, remove } from 'firebase/database'
 import { rtdb } from './firebase'
 import { Cursor, RemoteCursor } from '../types'
 
@@ -147,5 +147,20 @@ export function listenToOnlineUsers(
   })
 
   return unsubscribe
+}
+
+/**
+ * Clean up user presence and cursor data on explicit logout
+ * This ensures immediate cleanup when user signs out (not just on disconnect)
+ */
+export async function cleanupUserPresence(userId: string): Promise<void> {
+  const cursorRef = ref(rtdb, `cursors/${userId}`)
+  const presenceRef = ref(rtdb, `presence/${userId}`)
+  
+  // Remove both cursor and presence data
+  await Promise.all([
+    remove(cursorRef),
+    remove(presenceRef),
+  ])
 }
 

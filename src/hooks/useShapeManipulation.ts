@@ -2,12 +2,16 @@
  * useShapeManipulation Hook
  * 
  * Manages resize and rotation interactions for shapes.
+ * 
+ * Real-time updates: Writes to RTDB (throttled) during manipulation, Firestore on end
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import Konva from 'konva'
 import { Shape } from '../types'
 import useShapeStore from '../stores/useShapeStore'
+import { syncShapeToRTDB } from '../utils/firebaseShapes'
+import { throttle, CURSOR_THROTTLE_MS } from '../utils/throttle'
 import { 
   ManipulationZone, 
   detectManipulationZone,
@@ -39,6 +43,14 @@ export function useShapeManipulation({
   stageScale,
 }: UseShapeManipulationProps) {
   const { shapes } = useShapeStore()
+  
+  // Throttled RTDB sync for real-time updates (50ms, same as cursor)
+  const throttledRTDBSync = useRef<((shape: Shape) => void) | null>(null)
+  if (!throttledRTDBSync.current) {
+    throttledRTDBSync.current = throttle((shape: Shape) => {
+      syncShapeToRTDB(shape)
+    }, CURSOR_THROTTLE_MS)
+  }
   
   const [manipulationState, setManipulationState] = useState<ManipulationState>({
     isManipulating: false,
@@ -155,6 +167,12 @@ export function useShapeManipulation({
         originalShape.rotation || 0
       )
       updateShape(shape.id, { rotation })
+      
+      // Sync to RTDB for real-time updates (throttled)
+      const updatedShape = { ...shapes[shape.id], rotation }
+      if (throttledRTDBSync.current) {
+        throttledRTDBSync.current(updatedShape)
+      }
     } 
     // Handle resize
     else {
@@ -168,8 +186,14 @@ export function useShapeManipulation({
         originalShape
       )
       updateShape(shape.id, updates)
+      
+      // Sync to RTDB for real-time updates (throttled)
+      const updatedShape = { ...shapes[shape.id], ...updates }
+      if (throttledRTDBSync.current) {
+        throttledRTDBSync.current(updatedShape)
+      }
     }
-  }, [manipulationState, updateShape])
+  }, [manipulationState, updateShape, shapes])
   
   /**
    * End manipulation and sync to Firestore
