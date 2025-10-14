@@ -13,7 +13,8 @@ Try it out! Create an account and test real-time collaboration by opening the ap
 - ✅ **Real-time Collaboration:** Multi-user cursor tracking and shape synchronization
 - ✅ **Canvas Controls:** Pan (middle-click), zoom (Ctrl+wheel), and vertical scroll (wheel)
 - ✅ **Shape Creation:** Rectangle tool with drag-to-create
-- ✅ **Shape Manipulation:** Select, drag, and delete shapes
+- ✅ **Shape Manipulation:** Select, drag, resize (corners/edges), rotate, and delete shapes
+- ✅ **Visual Feedback:** Dynamic cursors, dimension labels, and smooth shape transformations
 - ✅ **Locking System:** Prevents concurrent editing conflicts with visual feedback
 - ✅ **User Presence:** Online user avatars in header with overflow indicator
 - ✅ **Authentication:** Email/password signup and login with persistent sessions
@@ -133,7 +134,9 @@ firebase deploy --only database:rules
 
 See [tasks.md](./tasks.md) for the full development checklist organized by PRs.
 
-**Current Status:** 🎉 **MVP COMPLETE** - All 8 PRs deployed to production!
+**Current Status:** 🎉 **MVP COMPLETE + Enhancements** - 9 PRs complete!
+
+**Recent Update (PR #9):** Added rectangle manipulation with resize and rotate functionality, including dynamic cursors, dimension labels, and smooth visual feedback.
 
 **Live Demo:** [https://collab-canvas-ben-cohen.vercel.app/](https://collab-canvas-ben-cohen.vercel.app/)
 

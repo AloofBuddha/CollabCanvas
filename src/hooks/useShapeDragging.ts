@@ -31,9 +31,10 @@ export function useShapeDragging({
 
   const handleDragMove = (e: Konva.KonvaEventObject<DragEvent>, shape: Shape) => {
     const node = e.target
+    // Node x/y represents the center (due to offset), convert back to top-left
     const updates = {
-      x: node.x(),
-      y: node.y(),
+      x: node.x() - shape.width / 2,
+      y: node.y() - shape.height / 2,
     }
     updateShape(shape.id, updates)
     onDragUpdate?.(shape.id, updates)

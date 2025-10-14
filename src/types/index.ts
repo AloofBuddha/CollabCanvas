@@ -13,6 +13,7 @@ export interface Shape {
   y: number
   width: number
   height: number
+  rotation?: number // Rotation in degrees (default 0)
   color: string
   createdBy: string
   lockedBy?: string | null // userId of user who has locked this shape

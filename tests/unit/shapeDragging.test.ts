@@ -10,6 +10,7 @@ import { Shape } from '../../src/types'
 describe('useShapeDragging', () => {
   const mockShape: Shape = {
     id: 'shape-1',
+    type: 'rectangle',
     x: 100,
     y: 100,
     width: 50,
@@ -104,8 +105,9 @@ describe('useShapeDragging', () => {
 
       result.current.handleDragMove(createMockDragEvent(150, 200), mockShape)
 
-      // Should update shape position
-      expect(updateShape).toHaveBeenCalledWith('shape-1', { x: 150, y: 200 })
+      // Should update shape position (node position is center, converts to top-left)
+      // Node at (150, 200) with width=50, height=50 -> top-left at (125, 175)
+      expect(updateShape).toHaveBeenCalledWith('shape-1', { x: 125, y: 175 })
     })
 
     it('should call onDragUpdate callback if provided', () => {
@@ -124,8 +126,8 @@ describe('useShapeDragging', () => {
 
       result.current.handleDragMove(createMockDragEvent(150, 200), mockShape)
 
-      // Should call onDragUpdate with shape id and updates
-      expect(onDragUpdate).toHaveBeenCalledWith('shape-1', { x: 150, y: 200 })
+      // Should call onDragUpdate with shape id and updates (converted from center to top-left)
+      expect(onDragUpdate).toHaveBeenCalledWith('shape-1', { x: 125, y: 175 })
     })
   })
 

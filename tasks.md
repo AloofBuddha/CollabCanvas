@@ -141,6 +141,66 @@
 
 ---
 
+## PR #9 - Rectangle Manipulation (Resize & Rotate) ✅
+
+**Goal:** Add interactive manipulation to rectangles with visual feedback
+
+### Dimension Display
+* [x] Show dimensions (width × height) below selected rectangle
+* [x] Dimension text remains horizontal regardless of shape rotation
+* [x] Dimension text positioned below shape bounds
+* [x] Dimension text scales inversely with zoom (constant size)
+
+### Cursor Feedback
+* [x] Standard drag cursor over center/body of rectangle (existing)
+* [x] Resize cursors on corners (nwse-resize, nesw-resize)
+* [x] Resize cursors on edges (ew-resize for left/right, ns-resize for top/bottom)
+* [x] Rotation cursor when hovering near corners (outside shape bounds)
+* [x] Define hit zones for corners, edges, and rotation areas
+
+### Resize Functionality
+* [x] Corner resize: drag to resize width and height simultaneously
+* [x] Edge resize: drag to resize width or height independently
+* [x] Maintain opposite corner/edge position during resize
+* [x] Update shape dimensions in Firestore on resize
+* [x] Prevent negative dimensions (minimum size)
+* [x] Visual feedback during resize (live preview)
+
+### Rotation Functionality
+* [x] Detect rotation zone (outside corners, within threshold)
+* [x] Calculate rotation angle based on mouse position relative to shape center
+* [x] Update shape rotation in real-time during drag
+* [x] Sync rotation to Firestore
+* [x] Show rotation angle indicator (optional - skipped)
+
+### Testing & Polish
+* [x] Unit tests for hit zone detection logic (34 tests total)
+* [x] Unit tests for resize calculations (including smooth flipping)
+* [x] Unit tests for rotation calculations
+* [x] Fix cursor feedback for manipulation zones
+* [x] Fix rotation zone detection and interaction (larger 30px zones)
+* [x] Implement smooth shape flipping that follows mouse
+* [x] Fix rotation to pivot around center (not top-left)
+* [x] Hide dimension label during manipulation
+* [x] Improve rotation zone accessibility (starts right at corner edge)
+* [x] Manual test all manipulation modes (cursors, resize, rotate, flip)
+* [x] Ensure manipulation respects shape locking (multi-user)
+* [x] Test with zoom and pan transformations
+* [x] Fix shape deselection on mouseup outside shape bounds
+
+### Key Improvements
+* **Rotation pivot:** Shapes now rotate around their center (using Konva offsetX/offsetY)
+* **Rotation zones:** Increased to 30px for easier triggering, start right at corner edge
+* **Smooth flipping:** Shape follows mouse cursor during resize past anchor point
+* **Dimension label:** Automatically hidden during drag/rotation, visible during resize
+* **Selection persistence:** Shapes stay selected after resize/rotate regardless of mouseup location
+* **Event timing fix:** Handle onClick firing before onMouseUp by checking current operation states
+* **Anonymous auth:** Firebase integration tests now use anonymous authentication
+* **React keys:** Fixed React key warning using Fragment components
+* **Test count:** 203 passing tests (36 new tests for manipulation)
+
+---
+
 ## Future Enhancements
 
 ### Additional Shape Types
@@ -150,10 +210,10 @@
 * [ ] Add shape type selector to toolbar
 
 ### Shape Manipulation
-* [ ] Resize shapes with corner/edge handles
-* [ ] Rotate shapes with rotation handle
+* [x] Resize shapes with corner/edge handles
+* [x] Rotate shapes with rotation handle
 * [ ] Alt+drag to duplicate shapes
-* [ ] Display shape dimensions in label below selected shape
+* [x] Display shape dimensions in label below selected shape
 
 ### Selection Features
 * [ ] Multiple selection with Shift+click

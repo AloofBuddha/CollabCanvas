@@ -66,6 +66,7 @@ export function listenToShapes(
         y: data.y || 0,
         width: data.width || 0,
         height: data.height || 0,
+        rotation: data.rotation || 0,
         color: data.color || '#000000',
         createdBy: data.createdBy || '',
         lockedBy: data.lockedBy || null,

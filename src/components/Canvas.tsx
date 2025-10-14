@@ -1,18 +1,21 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, Fragment } from 'react'
 import { Stage, Layer, Rect } from 'react-konva'
 import Konva from 'konva'
 import useShapeStore from '../stores/useShapeStore'
 import useUserStore from '../stores/useUserStore'
 import useCursorStore from '../stores/useCursorStore'
 import RemoteCursor from './RemoteCursor'
+import ShapeDimensionLabel from './ShapeDimensionLabel'
 import { useCanvasPanning } from '../hooks/useCanvasPanning'
 import { useShapeCreation } from '../hooks/useShapeCreation'
 import { useShapeDragging } from '../hooks/useShapeDragging'
 import { useCanvasZoom } from '../hooks/useCanvasZoom'
 import { useCursorTracking } from '../hooks/useCursorTracking'
 import { useShapeSelection } from '../hooks/useShapeSelection'
+import { useShapeManipulation } from '../hooks/useShapeManipulation'
 import { getCursorStyle } from '../utils/canvasUtils'
 import { Cursor, Shape } from '../types'
+import { detectManipulationZone, getPointerPosition } from '../utils/shapeManipulation'
 import {
   HEADER_HEIGHT,
   SHAPE_OPACITY,
@@ -46,6 +49,8 @@ export default function Canvas({
 }: CanvasProps) {
   const stageRef = useRef<Konva.Stage>(null)
   const [stageScale, setStageScale] = useState(1)
+  const [currentCursor, setCurrentCursor] = useState<string>('default')
+  const justFinishedManipulation = useRef(false)
   
   const { shapes, updateShape } = useShapeStore()
   const { userId, color } = useUserStore()
@@ -112,6 +117,25 @@ export default function Canvas({
   const { handleWheel } = useCanvasZoom({
     onScaleChange: setStageScale,
   })
+  
+  // Shape manipulation (resize & rotate)
+  const {
+    isManipulating,
+    isRotating,
+    currentCursor: manipulationCursor,
+    handleShapeMouseMove: handleManipulationMouseMove,
+    handleStageMouseMove: handleManipulationStageMouseMove,
+    handleShapeMouseLeave,
+    startManipulation,
+    updateManipulation,
+    endManipulation,
+  } = useShapeManipulation({
+    selectedShapeId,
+    updateShape,
+    onShapeUpdate: onShapeCreated,
+    stageRef,
+    stageScale,
+  })
 
   // Handle mouse down - start creating rectangle or panning
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -122,6 +146,26 @@ export default function Canvas({
       setIsPanning(true)
       return
     }
+    
+    // Check if clicking in a rotation zone of selected shape (prevents deselection)
+    if (selectedShapeId && tool === 'select' && evt.button === 0) {
+      const stage = stageRef.current
+      const pos = stage ? getPointerPosition(stage) : null
+      const shape = selectedShapeId ? shapes[selectedShapeId] : null
+      
+      if (stage && pos && shape) {
+        const hit = detectManipulationZone(shape, pos.x, pos.y, stageScale)
+        
+        // If in a rotation zone, start manipulation and prevent deselection
+        if (hit.zone.includes('rotate')) {
+          const started = startManipulation(e, shape, hit.zone)
+          if (started) {
+            e.cancelBubble = true
+            return
+          }
+        }
+      }
+    }
 
     // Left mouse button with rectangle tool - start creating
     if (tool === 'rectangle' && evt.button === 0) {
@@ -129,7 +173,7 @@ export default function Canvas({
     }
   }
 
-  // Handle mouse move - update rectangle size while drawing and track cursor
+  // Handle mouse move - update rectangle size while drawing, track cursor, and handle manipulation
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
     // Track cursor position
     handleCursorMove(e)
@@ -137,25 +181,68 @@ export default function Canvas({
     // Update shape being created
     if (isDrawing) {
       updateSize(e)
+      return
     }
+    
+    // Get current mouse position and shape
+    const stage = stageRef.current
+    const pos = stage ? getPointerPosition(stage) : null
+    const shape = selectedShapeId ? shapes[selectedShapeId] : null
+    
+    if (!stage || !pos) {
+      return
+    }
+    
+    // Update manipulation (resize/rotate) if manipulating
+    if (isManipulating && shape) {
+      updateManipulation(pos.x, pos.y, shape)
+      return
+    }
+    
+    // Check for manipulation zones on selected shape (for rotation zones outside shape)
+    if (shape && tool === 'select') {
+      handleManipulationStageMouseMove(shape, pos.x, pos.y)
+      setCurrentCursor(manipulationCursor)
+      return
+    }
+    
+    // Default cursor
+    setCurrentCursor(getCursorStyle(isPanning, isDrawing, tool))
   }
 
-  // Handle mouse up - finish creating rectangle or panning
+  // Handle mouse up - finish creating rectangle, panning, or manipulation
   const handleMouseUp = () => {
+    // Check if we're ending any operation that should prevent deselection
+    const wasOperating = isPanning || isDrawing || isManipulating || isDragging
+    
+    // CRITICAL: Set the flag IMMEDIATELY before any other logic
+    // This ensures it's set before onClick can fire on the Stage
+    if (wasOperating) {
+      justFinishedManipulation.current = true
+      // Clear the flag after a short delay
+      setTimeout(() => {
+        justFinishedManipulation.current = false
+      }, 100)
+    }
+    
     // Stop panning
     if (isPanning) {
       setIsPanning(false)
-      return
     }
 
     // Finish creating rectangle
     if (isDrawing) {
       finishCreating()
     }
+    
+    // Finish manipulation
+    if (isManipulating) {
+      endManipulation()
+    }
   }
 
-  // Handle shape mouse down (for panning and selection)
-  const handleShapeMouseDown = (e: Konva.KonvaEventObject<MouseEvent>, shapeId: string, isLockedByOther: boolean) => {
+  // Handle shape mouse down (for panning, selection, and manipulation)
+  const handleShapeMouseDown = (e: Konva.KonvaEventObject<MouseEvent>, shapeId: string, isLockedByOther: boolean, shape: Shape) => {
     const evt = e.evt
     
     // Middle mouse button - set panning state
@@ -170,10 +257,27 @@ export default function Canvas({
       return
     }
     
-    // If this shape is already selected, don't re-lock BUT stop event propagation
-    // so it doesn't trigger stage click (which would deselect)
-    if (selectedShapeId === shapeId) {
+    // If this shape is already selected, check for manipulation zones
+    if (selectedShapeId === shapeId && tool === 'select') {
       evt.stopPropagation() // Prevent stage click from deselecting
+      
+      const stage = stageRef.current
+      if (stage) {
+        const pos = getPointerPosition(stage)
+        if (pos) {
+          const hit = detectManipulationZone(shape, pos.x, pos.y, stageScale)
+          
+          // Start manipulation if not in center zone
+          if (hit.zone !== 'center') {
+            const started = startManipulation(e, shape, hit.zone)
+            if (started) {
+              // Prevent dragging when manipulating
+              e.cancelBubble = true
+              return
+            }
+          }
+        }
+      }
       return
     }
     
@@ -204,6 +308,12 @@ export default function Canvas({
   
   // Handle stage click - unlock any selected shape
   const handleStageClickWithUnlock = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    // Don't deselect if we're currently in the middle of an operation
+    // OR if we just finished one (for cases where MouseUp fires after Click)
+    if (justFinishedManipulation.current || isPanning || isDrawing || isManipulating || isDragging) {
+      return
+    }
+    
     // Get the currently selected shape before deselecting
     const currentSelectedId = selectedShapeId
     
@@ -226,7 +336,7 @@ export default function Canvas({
   return (
     <div
       className="w-full h-full bg-canvas-bg relative"
-      style={{ cursor: getCursorStyle(isPanning, isDrawing, tool) }}
+      style={{ cursor: currentCursor }}
     >
       <Stage
         ref={stageRef}
@@ -249,7 +359,7 @@ export default function Canvas({
             // Border logic:
             // - Show blue border if: I selected it AND I own the lock AND not currently dragging
             // - Show colored border if: locked by another user (always visible)
-            const showLocalBorder = isSelected && isLockedByMe && !isDragging
+            const showLocalBorder = isSelected && isLockedByMe && !isDragging && !isManipulating
             const showRemoteBorder = isLockedByOther
             
             const borderColor = showRemoteBorder 
@@ -257,26 +367,41 @@ export default function Canvas({
               : '#3b82f6'
             const showBorder = showLocalBorder || showRemoteBorder
 
-            // Can only drag if not locked by another user
-            const canDrag = tool === 'select' && !isLockedByOther
+            // Can only drag if not locked by another user and not manipulating
+            const canDrag = tool === 'select' && !isLockedByOther && !isManipulating
 
             return (
-              <Rect
-                key={shape.id}
-                x={shape.x}
-                y={shape.y}
-                width={shape.width}
-                height={shape.height}
-                fill={shape.color}
-                opacity={SHAPE_OPACITY}
-                draggable={canDrag}
-                onMouseDown={(e) => handleShapeMouseDown(e, shape.id, isLockedByOther)}
-                onDragStart={handleCombinedDragStart}
-                onDragMove={(e) => handleDragMove(e, shape)}
-                onDragEnd={handleCombinedDragEnd}
-                stroke={showBorder ? borderColor : undefined}
-                strokeWidth={showBorder ? 2 : 0}
-              />
+              <Fragment key={shape.id}>
+                <Rect
+                  x={shape.x + shape.width / 2}
+                  y={shape.y + shape.height / 2}
+                  width={shape.width}
+                  height={shape.height}
+                  rotation={shape.rotation || 0}
+                  offsetX={shape.width / 2}
+                  offsetY={shape.height / 2}
+                  fill={shape.color}
+                  opacity={SHAPE_OPACITY}
+                  draggable={canDrag}
+                  onMouseDown={(e) => handleShapeMouseDown(e, shape.id, isLockedByOther, shape)}
+                  onMouseMove={(e) => handleManipulationMouseMove(e, shape, isSelected)}
+                  onMouseLeave={handleShapeMouseLeave}
+                  onDragStart={handleCombinedDragStart}
+                  onDragMove={(e) => handleDragMove(e, shape)}
+                  onDragEnd={handleCombinedDragEnd}
+                  stroke={showBorder ? borderColor : undefined}
+                  strokeWidth={showBorder ? 2 : 0}
+                />
+                
+                {/* Show dimension label for selected shape (hide during drag and rotation, show during resize) */}
+                {isSelected && isLockedByMe && !isDragging && !isRotating && (
+                  <ShapeDimensionLabel 
+                    key={`${shape.id}-label`}
+                    shape={shape} 
+                    stageScale={stageScale} 
+                  />
+                )}
+              </Fragment>
             )
           })}
 
