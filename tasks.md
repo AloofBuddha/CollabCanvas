@@ -44,17 +44,13 @@
 * [x] Add React Konva Stage and Layer
 * [x] Implement rectangle creation using toolbar click+drag
 * [x] Implement local rectangle dragging
-* [x] Selection system: light blue border on select, disappears during drag
 * [x] Add toolbar (bottom-center) with rectangle/select tools
-* [x] Unit tests for local shape creation, movement, selection, and panning
+* [x] Unit tests for local shape creation, movement, and panning
 * [x] Manual test rectangle creation and dragging
 * [x] Implement mouse/wheel canvas controls (middle-click pan, wheel scroll, ctrl+wheel zoom)
 * [x] Auto-switch to select tool after creating rectangle
 * [x] Implement contextual cursors (pointer, crosshair, grabbing)
-* [x] Auto-select newly created rectangles
-* [x] Fixed coordinate system for panning (use getRelativePointerPosition)
 * [x] Document-level mouse listeners for smooth panning outside window
-* [x] Comprehensive test coverage (109 tests passing)
 
 ---
 

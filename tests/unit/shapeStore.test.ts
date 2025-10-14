@@ -13,7 +13,6 @@ describe('useShapeStore', () => {
     height: 150,
     color: '#ff5733',
     createdBy: 'user1',
-    lockedBy: null,
     ...overrides,
   })
 
@@ -70,11 +69,11 @@ describe('useShapeStore', () => {
   })
 
   describe('updateShape', () => {
-    it('should update shape position when unlocked', () => {
+    it('should update shape position', () => {
       const { addShape, updateShape } = useShapeStore.getState()
       
       addShape(createTestShape())
-      updateShape('shape1', 'user1', { x: 300, y: 400 })
+      updateShape('shape1', { x: 300, y: 400 })
       
       const state = useShapeStore.getState()
       expect(state.shapes['shape1'].x).toBe(300)
@@ -86,7 +85,7 @@ describe('useShapeStore', () => {
       const { addShape, updateShape } = useShapeStore.getState()
       
       addShape(createTestShape())
-      updateShape('shape1', 'user1', { width: 500, height: 600 })
+      updateShape('shape1', { width: 500, height: 600 })
       
       const state = useShapeStore.getState()
       expect(state.shapes['shape1'].width).toBe(500)
@@ -97,7 +96,7 @@ describe('useShapeStore', () => {
       const { addShape, updateShape } = useShapeStore.getState()
       
       addShape(createTestShape())
-      updateShape('shape1', 'user1', { color: '#00ff00' })
+      updateShape('shape1', { color: '#00ff00' })
       
       const state = useShapeStore.getState()
       expect(state.shapes['shape1'].color).toBe('#00ff00')
@@ -107,7 +106,7 @@ describe('useShapeStore', () => {
       const { addShape, updateShape } = useShapeStore.getState()
       
       addShape(createTestShape())
-      updateShape('shape1', 'user1', {
+      updateShape('shape1', {
         x: 500,
         y: 600,
         width: 300,
@@ -129,7 +128,7 @@ describe('useShapeStore', () => {
       addShape(createTestShape({ id: 'shape1', x: 100 }))
       addShape(createTestShape({ id: 'shape2', x: 200 }))
       
-      updateShape('shape1', 'user1', { x: 300 })
+      updateShape('shape1', { x: 300 })
       
       const state = useShapeStore.getState()
       expect(state.shapes['shape1'].x).toBe(300)
@@ -140,52 +139,10 @@ describe('useShapeStore', () => {
       const { updateShape } = useShapeStore.getState()
       
       // Should not throw error
-      expect(() => updateShape('nonexistent', 'user1', { x: 100 })).not.toThrow()
+      expect(() => updateShape('nonexistent', { x: 100 })).not.toThrow()
       
       const state = useShapeStore.getState()
       expect(state.shapes['nonexistent']).toBeUndefined()
-    })
-
-    it('should allow update when shape is locked by the same user', () => {
-      const { addShape, lockShape, updateShape } = useShapeStore.getState()
-      
-      addShape(createTestShape())
-      lockShape('shape1', 'user1')
-      updateShape('shape1', 'user1', { x: 500, y: 600 })
-      
-      const state = useShapeStore.getState()
-      expect(state.shapes['shape1'].x).toBe(500)
-      expect(state.shapes['shape1'].y).toBe(600)
-      expect(state.shapes['shape1'].lockedBy).toBe('user1')
-    })
-
-    it('should prevent update when shape is locked by different user', () => {
-      const { addShape, lockShape, updateShape } = useShapeStore.getState()
-      
-      addShape(createTestShape({ x: 100, y: 100 }))
-      lockShape('shape1', 'user1')
-      updateShape('shape1', 'user2', { x: 500, y: 600 })
-      
-      const state = useShapeStore.getState()
-      // Shape should remain unchanged
-      expect(state.shapes['shape1'].x).toBe(100)
-      expect(state.shapes['shape1'].y).toBe(100)
-      expect(state.shapes['shape1'].lockedBy).toBe('user1')
-    })
-
-    it('should allow any user to update unlocked shape', () => {
-      const { addShape, updateShape } = useShapeStore.getState()
-      
-      addShape(createTestShape({ x: 100 }))
-      
-      updateShape('shape1', 'user1', { x: 200 })
-      expect(useShapeStore.getState().shapes['shape1'].x).toBe(200)
-      
-      updateShape('shape1', 'user2', { x: 300 })
-      expect(useShapeStore.getState().shapes['shape1'].x).toBe(300)
-      
-      updateShape('shape1', 'user3', { x: 400 })
-      expect(useShapeStore.getState().shapes['shape1'].x).toBe(400)
     })
   })
 
@@ -228,78 +185,6 @@ describe('useShapeStore', () => {
     })
   })
 
-  describe('lockShape', () => {
-    it('should lock a shape', () => {
-      const { addShape, lockShape } = useShapeStore.getState()
-      
-      addShape(createTestShape())
-      lockShape('shape1', 'user2')
-      
-      const state = useShapeStore.getState()
-      expect(state.shapes['shape1'].lockedBy).toBe('user2')
-    })
-
-    it('should update lock ownership', () => {
-      const { addShape, lockShape } = useShapeStore.getState()
-      
-      addShape(createTestShape())
-      lockShape('shape1', 'user2')
-      lockShape('shape1', 'user3')
-      
-      const state = useShapeStore.getState()
-      expect(state.shapes['shape1'].lockedBy).toBe('user3')
-    })
-
-    it('should not affect other shape properties', () => {
-      const { addShape, lockShape } = useShapeStore.getState()
-      const shape = createTestShape()
-      
-      addShape(shape)
-      lockShape('shape1', 'user2')
-      
-      const state = useShapeStore.getState()
-      expect(state.shapes['shape1'].x).toBe(shape.x)
-      expect(state.shapes['shape1'].y).toBe(shape.y)
-      expect(state.shapes['shape1'].color).toBe(shape.color)
-    })
-
-    it('should handle locking non-existent shape', () => {
-      const { lockShape } = useShapeStore.getState()
-      
-      // Should not throw error
-      expect(() => lockShape('nonexistent', 'user1')).not.toThrow()
-    })
-  })
-
-  describe('unlockShape', () => {
-    it('should unlock a locked shape', () => {
-      const { addShape, lockShape, unlockShape } = useShapeStore.getState()
-      
-      addShape(createTestShape())
-      lockShape('shape1', 'user2')
-      unlockShape('shape1')
-      
-      const state = useShapeStore.getState()
-      expect(state.shapes['shape1'].lockedBy).toBeNull()
-    })
-
-    it('should work on already unlocked shape', () => {
-      const { addShape, unlockShape } = useShapeStore.getState()
-      
-      addShape(createTestShape())
-      unlockShape('shape1')
-      
-      const state = useShapeStore.getState()
-      expect(state.shapes['shape1'].lockedBy).toBeNull()
-    })
-
-    it('should handle unlocking non-existent shape', () => {
-      const { unlockShape } = useShapeStore.getState()
-      
-      // Should not throw error
-      expect(() => unlockShape('nonexistent')).not.toThrow()
-    })
-  })
 
   describe('clearShapes', () => {
     it('should remove all shapes', () => {
@@ -335,18 +220,9 @@ describe('useShapeStore', () => {
       store.addShape(createTestShape())
       expect(Object.keys(useShapeStore.getState().shapes)).toHaveLength(1)
       
-      // Lock shape
-      store.lockShape('shape1', 'user2')
-      expect(useShapeStore.getState().shapes['shape1'].lockedBy).toBe('user2')
-      
-      // Update shape while locked (by the user who locked it)
-      store.updateShape('shape1', 'user2', { x: 300, y: 400 })
+      // Update shape
+      store.updateShape('shape1', { x: 300, y: 400 })
       expect(useShapeStore.getState().shapes['shape1'].x).toBe(300)
-      expect(useShapeStore.getState().shapes['shape1'].lockedBy).toBe('user2')
-      
-      // Unlock shape
-      store.unlockShape('shape1')
-      expect(useShapeStore.getState().shapes['shape1'].lockedBy).toBeNull()
       
       // Remove shape
       store.removeShape('shape1')
@@ -359,12 +235,9 @@ describe('useShapeStore', () => {
       store.addShape(createTestShape({ id: 'shape1', createdBy: 'user1' }))
       store.addShape(createTestShape({ id: 'shape2', createdBy: 'user2' }))
       
-      store.lockShape('shape1', 'user1')
-      store.lockShape('shape2', 'user2')
-      
       const state = useShapeStore.getState()
-      expect(state.shapes['shape1'].lockedBy).toBe('user1')
-      expect(state.shapes['shape2'].lockedBy).toBe('user2')
+      expect(state.shapes['shape1'].createdBy).toBe('user1')
+      expect(state.shapes['shape2'].createdBy).toBe('user2')
     })
 
     it('should handle rapid shape updates', () => {
@@ -373,7 +246,7 @@ describe('useShapeStore', () => {
       store.addShape(createTestShape())
       
       for (let i = 0; i < 100; i++) {
-        store.updateShape('shape1', 'user1', { x: i, y: i * 2 })
+        store.updateShape('shape1', { x: i, y: i * 2 })
       }
       
       const state = useShapeStore.getState()

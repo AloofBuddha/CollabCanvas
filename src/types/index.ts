@@ -15,7 +15,6 @@ export interface Shape {
   height: number
   color: string
   createdBy: string
-  lockedBy: string | null
 }
 
 // ============================================================================
@@ -74,9 +73,7 @@ export interface CursorState {
 export interface ShapeState {
   shapes: Record<string, Shape>
   addShape: (shape: Shape) => void
-  updateShape: (id: string, userId: string, updates: Partial<Shape>) => void
+  updateShape: (id: string, updates: Partial<Shape>) => void
   removeShape: (id: string) => void
-  lockShape: (id: string, userId: string) => void
-  unlockShape: (id: string) => void
   clearShapes: () => void
 }

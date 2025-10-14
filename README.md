@@ -8,8 +8,6 @@ Real-time collaborative whiteboard application built with React, TypeScript, Kon
 - Rectangle creation, selection, and movement
 - User presence with colored cursors and avatars
 - Minimal Figma-style toolbar UI
-- Locking during drag/move operations
-- Local storage persistence
 
 ## Tech Stack
 

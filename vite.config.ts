@@ -15,11 +15,6 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
     css: true,
-    // Load test environment variables for integration tests
-    env: {
-      // Integration tests will use .env.local if it exists
-      // Otherwise, they'll use placeholder values
-    },
     testTimeout: 10000,
   },
 })

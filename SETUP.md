@@ -97,9 +97,5 @@ Open [http://localhost:5173](http://localhost:5173) to see your app!
 
 ## Next Steps
 
-Once the project runs successfully:
-1. ✅ PR #1 is complete!
-2. Move on to **PR #2: Zustand Stores Setup**
-
 See [tasks.md](./tasks.md) for the full development roadmap.
 

@@ -19,8 +19,6 @@
 * Rectangle creation, selection, and movement
 * User presence with colored cursors and avatar initials (derived from username)
 * Toolbar UI mimicking minimal Figma aesthetics (bottom-center)
-* Locking during drag/move
-* Local storage persistence for state recovery
 * Unit tests via Vitest
 
 **Out of Scope:**
@@ -29,7 +27,6 @@
 * Permissions or roles beyond createdBy metadata
 * Undo/redo
 * Advanced performance optimization (FPS >60 is a goal, not MVP requirement)
-* Integration/E2E tests
 
 ---
 
@@ -82,8 +79,7 @@ Backend: Firebase
       width: number,
       height: number,
       color: string,
-      createdBy: string,
-      lockedBy: string | null
+      createdBy: string
     }
   ]
 
@@ -128,8 +124,8 @@ interface Shape {
   height: number;
   color: string;
   createdBy: string;
-  lockedBy: string | null;
 }
+
 interface ShapeState {
   shapes: Record<string, Shape>;
   addShape: (shape: Shape) => void;
@@ -188,7 +184,6 @@ interface ShapeState {
 ### Phase 2 – Core Canvas Interaction
 
 * Create and move rectangles locally
-* Implement locking visual feedback
 
 ### Phase 3 – Real-Time Collaboration
 

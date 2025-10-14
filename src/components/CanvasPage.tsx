@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { signOut } from '../utils/auth'
+import { getInitials } from '../utils/userUtils'
 import useUserStore from '../stores/useUserStore'
 import Canvas from './Canvas'
 import Toolbar from './Toolbar'
@@ -24,14 +25,12 @@ export default function CanvasPage() {
         <h1 className="text-xl font-bold text-gray-800">CollabCanvas</h1>
         
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
-              style={{ backgroundColor: color }}
-            >
-              {displayName.charAt(0).toUpperCase()}
-            </div>
-            <span className="text-sm text-gray-700">{displayName}</span>
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-medium"
+            style={{ backgroundColor: color }}
+            title={displayName}
+          >
+            {getInitials(displayName)}
           </div>
           
           <button
