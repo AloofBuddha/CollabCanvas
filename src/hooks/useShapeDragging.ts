@@ -13,6 +13,7 @@ import { Shape, Cursor } from '../types'
 import useShapeStore from '../stores/useShapeStore'
 import { syncShapeToRTDB } from '../utils/firebaseShapes'
 import { throttle, CURSOR_THROTTLE_MS } from '../utils/throttle'
+import { generateUniqueShapeId } from '../utils/canvasUtils'
 
 interface UseShapeDraggingProps {
   isPanning: boolean
@@ -54,7 +55,7 @@ export function useShapeDragging({
     // Check if Alt is pressed - create duplicate immediately, then drag original
     if (isAltPressed.current && draggedShape) {
       // Create duplicate at original position (before drag starts)
-      const duplicateId = `shape-${Date.now()}-${Math.random()}`
+      const duplicateId = generateUniqueShapeId()
       const duplicate: Shape = {
         ...draggedShape,
         id: duplicateId,

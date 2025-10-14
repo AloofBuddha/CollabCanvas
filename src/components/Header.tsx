@@ -27,9 +27,9 @@ export default function Header({
   currentUserId, 
   onSignOut 
 }: HeaderProps) {
-  // Filter out current user and only show online users
+  // Filter out current user (all users in the list are online by definition)
   const remoteUsers = onlineUsers.filter(
-    (user) => user.online && user.userId !== currentUserId
+    (user) => user.userId !== currentUserId
   )
   
   const visibleUsers = remoteUsers.slice(0, MAX_VISIBLE_USERS)

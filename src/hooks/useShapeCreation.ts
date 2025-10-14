@@ -7,7 +7,7 @@
 import { useState } from 'react'
 import Konva from 'konva'
 import { Shape } from '../types'
-import { normalizeShape, hasMinimumSize } from '../utils/canvasUtils'
+import { normalizeShape, hasMinimumSize, generateUniqueShapeId } from '../utils/canvasUtils'
 import { MIN_SHAPE_SIZE } from '../utils/canvasConstants'
 
 interface UseShapeCreationProps {
@@ -32,7 +32,7 @@ export function useShapeCreation({
     if (!pos) return
 
     // Start creating a new rectangle
-    const id = `shape-${Date.now()}-${Math.random()}`
+    const id = generateUniqueShapeId()
     const shape: Shape = {
       id,
       type: 'rectangle',

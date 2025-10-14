@@ -211,14 +211,13 @@ describe('firebasePresence', () => {
       const callback = vi.fn()
 
       vi.mocked(onValue).mockImplementation((_ref, cb) => {
+        // Mock data only contains online users (offline users are removed from presence)
         const mockData = {
           user123: {
-            online: true,
             displayName: 'John',
             color: '#ff0000',
           },
           user456: {
-            online: false,
             displayName: 'Jane',
             color: '#00ff00',
           },
@@ -235,13 +234,11 @@ describe('firebasePresence', () => {
           userId: 'user123',
           displayName: 'John',
           color: '#ff0000',
-          online: true,
         },
         {
           userId: 'user456',
           displayName: 'Jane',
           color: '#00ff00',
-          online: false,
         },
       ])
     })

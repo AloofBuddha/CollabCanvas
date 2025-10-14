@@ -74,7 +74,7 @@ export function listenToRemoteCursors(
 
 /**
  * Initialize user presence
- * Marks user as online and sets up disconnect handler
+ * Adds user to presence and sets up disconnect handler to remove them
  * Uses Firebase's recommended presence pattern with .info/connected
  */
 export function initUserPresence(
@@ -86,14 +86,6 @@ export function initUserPresence(
   const connectedRef = ref(rtdb, '.info/connected')
   
   const userData = {
-    online: true,
-    displayName,
-    color,
-    lastSeen: serverTimestamp(),
-  }
-
-  const offlineData = {
-    online: false,
     displayName,
     color,
     lastSeen: serverTimestamp(),
@@ -107,11 +99,11 @@ export function initUserPresence(
     }
 
     // We're connected (or reconnected), set up presence
-    // First, set up what happens when we disconnect
+    // First, set up what happens when we disconnect - REMOVE the user entirely
     onDisconnect(userStatusRef)
-      .set(offlineData)
+      .remove()
       .then(() => {
-        // Then set ourselves as online
+        // Then add ourselves to presence
         set(userStatusRef, userData)
       })
   })
@@ -121,10 +113,11 @@ export function initUserPresence(
 
 /**
  * Listen to online users
- * Calls callback with list of online users whenever it changes
+ * Calls callback with list of currently online users
+ * Only users currently in the presence list are returned (all are online by definition)
  */
 export function listenToOnlineUsers(
-  callback: (users: Array<{ userId: string; displayName: string; color: string; online: boolean }>) => void
+  callback: (users: Array<{ userId: string; displayName: string; color: string }>) => void
 ): () => void {
   const presenceRef = ref(rtdb, 'presence')
   
@@ -135,12 +128,12 @@ export function listenToOnlineUsers(
       return
     }
 
+    // All users in presence are online (we remove them on disconnect)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const users = Object.entries(data).map(([userId, userData]: [string, any]) => ({
       userId,
       displayName: userData.displayName,
       color: userData.color,
-      online: userData.online,
     }))
 
     callback(users)

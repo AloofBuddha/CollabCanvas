@@ -29,7 +29,6 @@ export interface User {
   userId: string
   displayName: string
   color: string
-  online: boolean
 }
 
 // ============================================================================

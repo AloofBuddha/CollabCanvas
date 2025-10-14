@@ -7,6 +7,15 @@
 import { Shape } from '../types'
 
 /**
+ * Generate a unique shape ID
+ * Uses timestamp + random integer to ensure uniqueness and RTDB compatibility
+ * (RTDB paths cannot contain dots, so we use Math.floor instead of Math.random() directly)
+ */
+export function generateUniqueShapeId(): string {
+  return `shape-${Date.now()}-${Math.floor(Math.random() * 1000000)}`
+}
+
+/**
  * Normalize a shape's dimensions to ensure positive width/height
  * and adjust position accordingly
  */
