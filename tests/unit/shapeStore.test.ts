@@ -254,5 +254,111 @@ describe('useShapeStore', () => {
       expect(state.shapes['shape1'].y).toBe(198)
     })
   })
+
+  describe('Shape Locking', () => {
+    beforeEach(() => {
+      useShapeStore.getState().clearShapes()
+    })
+
+    it('should lock a shape', () => {
+      const shape = createTestShape()
+      useShapeStore.getState().addShape(shape)
+      
+      useShapeStore.getState().lockShape(shape.id, 'user123')
+      
+      const lockedShape = useShapeStore.getState().shapes[shape.id]
+      expect(lockedShape.lockedBy).toBe('user123')
+    })
+
+    it('should unlock a shape', () => {
+      const shape = createTestShape()
+      useShapeStore.getState().addShape(shape)
+      useShapeStore.getState().lockShape(shape.id, 'user123')
+      
+      useShapeStore.getState().unlockShape(shape.id)
+      
+      const unlockedShape = useShapeStore.getState().shapes[shape.id]
+      expect(unlockedShape.lockedBy).toBeNull()
+    })
+
+    it('should not lock a non-existent shape', () => {
+      useShapeStore.getState().lockShape('non-existent', 'user123')
+      
+      const shapes = useShapeStore.getState().shapes
+      expect(shapes['non-existent']).toBeUndefined()
+    })
+
+    it('should not unlock a non-existent shape', () => {
+      useShapeStore.getState().unlockShape('non-existent')
+      
+      const shapes = useShapeStore.getState().shapes
+      expect(shapes['non-existent']).toBeUndefined()
+    })
+
+
+    it('should maintain other shape properties when locking', () => {
+      const shape = createTestShape()
+      useShapeStore.getState().addShape(shape)
+      
+      useShapeStore.getState().lockShape(shape.id, 'user123')
+      
+      const lockedShape = useShapeStore.getState().shapes[shape.id]
+      expect(lockedShape.x).toBe(shape.x)
+      expect(lockedShape.y).toBe(shape.y)
+      expect(lockedShape.width).toBe(shape.width)
+      expect(lockedShape.height).toBe(shape.height)
+      expect(lockedShape.color).toBe(shape.color)
+    })
+  })
+
+  describe('Set Shapes', () => {
+    beforeEach(() => {
+      useShapeStore.getState().clearShapes()
+    })
+
+    it('should set shapes from Firestore sync', () => {
+      const shape1 = createTestShape({ id: 'shape1' })
+      const shape2 = createTestShape({ id: 'shape2' })
+      
+      const shapes = {
+        [shape1.id]: shape1,
+        [shape2.id]: shape2,
+      }
+      
+      useShapeStore.getState().setShapes(shapes)
+      
+      const storeShapes = useShapeStore.getState().shapes
+      expect(Object.keys(storeShapes)).toHaveLength(2)
+      expect(storeShapes[shape1.id]).toEqual(shape1)
+      expect(storeShapes[shape2.id]).toEqual(shape2)
+    })
+
+    it('should replace existing shapes when setting', () => {
+      const oldShape = createTestShape({ id: 'oldshape' })
+      useShapeStore.getState().addShape(oldShape)
+      
+      const newShape = createTestShape({ id: 'newshape' })
+      const shapes = {
+        [newShape.id]: newShape,
+      }
+      
+      useShapeStore.getState().setShapes(shapes)
+      
+      const storeShapes = useShapeStore.getState().shapes
+      expect(Object.keys(storeShapes)).toHaveLength(1)
+      expect(storeShapes[oldShape.id]).toBeUndefined()
+      expect(storeShapes[newShape.id]).toEqual(newShape)
+    })
+
+    it('should handle empty shapes object', () => {
+      const shape = createTestShape()
+      useShapeStore.getState().addShape(shape)
+      
+      useShapeStore.getState().setShapes({})
+      
+      const shapes = useShapeStore.getState().shapes
+      expect(Object.keys(shapes)).toHaveLength(0)
+    })
+  })
 })
 

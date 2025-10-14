@@ -15,6 +15,7 @@ export interface Shape {
   height: number
   color: string
   createdBy: string
+  lockedBy?: string | null // userId of user who has locked this shape
 }
 
 // ============================================================================
@@ -75,5 +76,8 @@ export interface ShapeState {
   addShape: (shape: Shape) => void
   updateShape: (id: string, updates: Partial<Shape>) => void
   removeShape: (id: string) => void
+  lockShape: (id: string, userId: string) => void
+  unlockShape: (id: string) => void
+  setShapes: (shapes: Record<string, Shape>) => void
   clearShapes: () => void
 }

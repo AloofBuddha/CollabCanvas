@@ -49,6 +49,47 @@ const useShapeStore = create<ShapeState>((set) => ({
     })
   },
 
+  // Lock a shape (set lockedBy to userId)
+  lockShape: (id, userId) => {
+    set((state) => {
+      const existingShape = state.shapes[id]
+      if (!existingShape) return state
+
+      return {
+        shapes: {
+          ...state.shapes,
+          [id]: {
+            ...existingShape,
+            lockedBy: userId,
+          },
+        },
+      }
+    })
+  },
+
+  // Unlock a shape (clear lockedBy)
+  unlockShape: (id) => {
+    set((state) => {
+      const existingShape = state.shapes[id]
+      if (!existingShape) return state
+
+      return {
+        shapes: {
+          ...state.shapes,
+          [id]: {
+            ...existingShape,
+            lockedBy: null,
+          },
+        },
+      }
+    })
+  },
+
+  // Set all shapes (for syncing from Firestore)
+  setShapes: (shapes) => {
+    set({ shapes })
+  },
+
   // Clear all shapes
   clearShapes: () => {
     set({ shapes: {} })

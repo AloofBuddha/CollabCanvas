@@ -1,16 +1,16 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { Stage, Layer, Rect } from 'react-konva'
 import Konva from 'konva'
 import useShapeStore from '../stores/useShapeStore'
 import useUserStore from '../stores/useUserStore'
 import useCursorStore from '../stores/useCursorStore'
+import RemoteCursor from './RemoteCursor'
 import { useCanvasPanning } from '../hooks/useCanvasPanning'
 import { useShapeCreation } from '../hooks/useShapeCreation'
 import { useShapeDragging } from '../hooks/useShapeDragging'
 import { useCanvasZoom } from '../hooks/useCanvasZoom'
 import { useCursorTracking } from '../hooks/useCursorTracking'
 import { useShapeSelection } from '../hooks/useShapeSelection'
-import RemoteCursor from './RemoteCursor'
 import { getCursorStyle } from '../utils/canvasUtils'
 import { Cursor, Shape } from '../types'
 import {
@@ -27,12 +27,27 @@ interface CanvasProps {
   tool: Tool
   onToolChange: (tool: Tool) => void
   onCursorMove?: (cursor: Cursor) => void
+  onShapeCreated?: (shape: Shape) => void
+  onShapeDeleted?: (shapeId: string) => void
+  onShapeLock?: (shapeId: string) => void
+  onShapeUnlock?: (shapeId: string) => void
+  onlineUsers: import('../types').User[]
 }
 
-export default function Canvas({ tool, onToolChange, onCursorMove }: CanvasProps) {
+export default function Canvas({
+  tool,
+  onToolChange,
+  onCursorMove,
+  onShapeCreated,
+  onShapeDeleted,
+  onShapeLock,
+  onShapeUnlock,
+  onlineUsers,
+}: CanvasProps) {
   const stageRef = useRef<Konva.Stage>(null)
+  const [stageScale, setStageScale] = useState(1)
   
-  const { shapes, addShape, updateShape, removeShape } = useShapeStore()
+  const { shapes, updateShape } = useShapeStore()
   const { userId, color } = useUserStore()
   const { remoteCursors } = useCursorStore()
 
@@ -52,14 +67,15 @@ export default function Canvas({ tool, onToolChange, onCursorMove }: CanvasProps
     handleDragEnd: handleSelectionDragEnd,
     selectShape,
   } = useShapeSelection({
-    onDelete: removeShape,
+    onDelete: onShapeDeleted,
     tool,
   })
   
   // Handle shape creation and auto-select
-  const handleShapeCreated = (shape: Shape) => {
-    addShape(shape)
+  const handleShapeCreatedLocal = (shape: Shape) => {
+    onShapeCreated?.(shape)
     selectShape(shape.id)
+    onShapeLock?.(shape.id) // Lock the shape when created
   }
   
   const {
@@ -70,8 +86,7 @@ export default function Canvas({ tool, onToolChange, onCursorMove }: CanvasProps
     finishCreating,
   } = useShapeCreation({
     userId,
-    color,
-    onShapeCreated: handleShapeCreated,
+    onShapeCreated: handleShapeCreatedLocal,
     onToolChange,
   })
   
@@ -82,9 +97,15 @@ export default function Canvas({ tool, onToolChange, onCursorMove }: CanvasProps
   } = useShapeDragging({
     isPanning,
     updateShape,
+    onDragUpdate: (id, updates) => {
+      // Sync shape position to Firestore during drag
+      onShapeCreated?.({ ...shapes[id], ...updates })
+    },
   })
   
-  const { handleWheel } = useCanvasZoom()
+  const { handleWheel } = useCanvasZoom({
+    onScaleChange: setStageScale,
+  })
 
   // Handle mouse down - start creating rectangle or panning
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -128,7 +149,7 @@ export default function Canvas({ tool, onToolChange, onCursorMove }: CanvasProps
   }
 
   // Handle shape mouse down (for panning and selection)
-  const handleShapeMouseDown = (e: Konva.KonvaEventObject<MouseEvent>, shapeId: string) => {
+  const handleShapeMouseDown = (e: Konva.KonvaEventObject<MouseEvent>, shapeId: string, isLockedByOther: boolean) => {
     const evt = e.evt
     
     // Middle mouse button - set panning state
@@ -137,19 +158,58 @@ export default function Canvas({ tool, onToolChange, onCursorMove }: CanvasProps
       return
     }
     
-    // Handle selection
+    // Don't allow selection of shapes locked by other users
+    if (isLockedByOther) {
+      evt.stopPropagation() // Prevent stage click
+      return
+    }
+    
+    // If this shape is already selected, don't re-lock BUT stop event propagation
+    // so it doesn't trigger stage click (which would deselect)
+    if (selectedShapeId === shapeId) {
+      evt.stopPropagation() // Prevent stage click from deselecting
+      return
+    }
+    
+    // Handle selection and lock
     handleShapeClick(e, shapeId)
+    if (tool === 'select' && evt.button === 0) {
+      onShapeLock?.(shapeId)
+    }
   }
 
   // Combined drag handlers
   const handleCombinedDragStart = (e: Konva.KonvaEventObject<DragEvent>) => {
     handleSelectionDragStart()
     handleDragStart(e)
+    // Note: Shape should already be locked from mouse down, don't re-lock
   }
 
   const handleCombinedDragEnd = () => {
     handleSelectionDragEnd()
     handleDragEnd()
+    // Note: Keep shape locked after drag - only unlock on deselect
+  }
+  
+  // Handle stage click - unlock any selected shape
+  const handleStageClickWithUnlock = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    // Get the currently selected shape before deselecting
+    const currentSelectedId = selectedShapeId
+    
+    // Deselect first (updates local state)
+    handleStageClick(e)
+    
+    // Only unlock if we clicked the stage background (not a shape)
+    // This prevents unlocking when clicking an already-selected shape
+    if (currentSelectedId && e.target === e.target.getStage()) {
+      onShapeUnlock?.(currentSelectedId)
+    }
+  }
+  
+  // Get user color by userId
+  const getUserColor = (userId: string): string => {
+    const user = onlineUsers.find(u => u.userId === userId)
+    return user?.color || '#666666'
   }
 
   return (
@@ -165,14 +225,29 @@ export default function Canvas({ tool, onToolChange, onCursorMove }: CanvasProps
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onWheel={handleWheel}
-        onClick={handleStageClick}
+        onClick={handleStageClickWithUnlock}
         draggable={false}
       >
         <Layer>
           {/* Render all existing shapes */}
           {Object.values(shapes).map((shape) => {
             const isSelected = selectedShapeId === shape.id
-            const showBorder = isSelected && !isDragging
+            const isLockedByMe = shape.lockedBy === userId
+            const isLockedByOther = !!(shape.lockedBy && shape.lockedBy !== userId)
+            
+            // Border logic:
+            // - Show blue border if: I selected it AND I own the lock AND not currently dragging
+            // - Show colored border if: locked by another user (always visible)
+            const showLocalBorder = isSelected && isLockedByMe && !isDragging
+            const showRemoteBorder = isLockedByOther
+            
+            const borderColor = showRemoteBorder 
+              ? getUserColor(shape.lockedBy!) 
+              : '#3b82f6'
+            const showBorder = showLocalBorder || showRemoteBorder
+
+            // Can only drag if not locked by another user
+            const canDrag = tool === 'select' && !isLockedByOther
 
             return (
               <Rect
@@ -183,12 +258,12 @@ export default function Canvas({ tool, onToolChange, onCursorMove }: CanvasProps
                 height={shape.height}
                 fill={shape.color}
                 opacity={SHAPE_OPACITY}
-                draggable={tool === 'select'}
-                onMouseDown={(e) => handleShapeMouseDown(e, shape.id)}
+                draggable={canDrag}
+                onMouseDown={(e) => handleShapeMouseDown(e, shape.id, isLockedByOther)}
                 onDragStart={handleCombinedDragStart}
                 onDragMove={(e) => handleDragMove(e, shape)}
                 onDragEnd={handleCombinedDragEnd}
-                stroke={showBorder ? '#3b82f6' : undefined}
+                stroke={showBorder ? borderColor : undefined}
                 strokeWidth={showBorder ? 2 : 0}
               />
             )
@@ -201,20 +276,24 @@ export default function Canvas({ tool, onToolChange, onCursorMove }: CanvasProps
               y={newShape.y}
               width={newShape.width}
               height={newShape.height}
-              fill={newShape.color}
+              fill="#D1D5DB"
               opacity={NEW_SHAPE_OPACITY}
               stroke={color}
               strokeWidth={NEW_SHAPE_STROKE_WIDTH}
               dash={NEW_SHAPE_DASH}
             />
           )}
+
+          {/* Render remote cursors inside the canvas layer */}
+          {Object.values(remoteCursors).map((cursor) => (
+            <RemoteCursor 
+              key={cursor.userId} 
+              cursor={cursor} 
+              stageScale={stageScale}
+            />
+          ))}
         </Layer>
       </Stage>
-
-      {/* Render remote cursors */}
-      {Object.values(remoteCursors).map((cursor) => (
-        <RemoteCursor key={cursor.userId} cursor={cursor} />
-      ))}
     </div>
   )
 }

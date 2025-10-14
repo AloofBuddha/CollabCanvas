@@ -12,14 +12,12 @@ import { MIN_SHAPE_SIZE } from '../utils/canvasConstants'
 
 interface UseShapeCreationProps {
   userId: string | null
-  color: string
   onShapeCreated: (shape: Shape) => void
   onToolChange: (tool: 'select' | 'rectangle') => void
 }
 
 export function useShapeCreation({
   userId,
-  color,
   onShapeCreated,
   onToolChange,
 }: UseShapeCreationProps) {
@@ -42,7 +40,7 @@ export function useShapeCreation({
       y: pos.y,
       width: 0,
       height: 0,
-      color: color,
+      color: '#D1D5DB', // Light gray - neutral color to make borders visible
       createdBy: userId!,
     }
 

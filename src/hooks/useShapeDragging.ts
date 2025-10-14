@@ -10,11 +10,13 @@ import { Shape } from '../types'
 interface UseShapeDraggingProps {
   isPanning: boolean
   updateShape: (id: string, updates: Partial<Shape>) => void
+  onDragUpdate?: (id: string, updates: Partial<Shape>) => void
 }
 
 export function useShapeDragging({
   isPanning,
   updateShape,
+  onDragUpdate,
 }: UseShapeDraggingProps) {
   const handleDragStart = (e: Konva.KonvaEventObject<DragEvent>) => {
     // Prevent shape drag if middle mouse button is being used for panning
@@ -27,10 +29,12 @@ export function useShapeDragging({
 
   const handleDragMove = (e: Konva.KonvaEventObject<DragEvent>, shape: Shape) => {
     const node = e.target
-    updateShape(shape.id, {
+    const updates = {
       x: node.x(),
       y: node.y(),
-    })
+    }
+    updateShape(shape.id, updates)
+    onDragUpdate?.(shape.id, updates)
   }
 
   const handleDragEnd = () => {

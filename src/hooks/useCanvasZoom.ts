@@ -7,7 +7,11 @@
 import Konva from 'konva'
 import { MIN_ZOOM, MAX_ZOOM, ZOOM_SCALE_FACTOR } from '../utils/canvasConstants'
 
-export function useCanvasZoom() {
+interface UseCanvasZoomProps {
+  onScaleChange?: (scale: number) => void
+}
+
+export function useCanvasZoom({ onScaleChange }: UseCanvasZoomProps = {}) {
   const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault()
     
@@ -39,6 +43,9 @@ export function useCanvasZoom() {
         y: pointer.y - mousePointTo.y * limitedScale,
       }
       stage.position(newPos)
+      
+      // Notify scale change
+      onScaleChange?.(limitedScale)
     } else {
       // Regular wheel = pan vertically
       const dy = evt.deltaY

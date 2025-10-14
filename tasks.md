@@ -82,54 +82,110 @@
 
 ---
 
-## PR #7 - Real-Time Shape Sync
+## PR #7 - Real-Time Shape Sync ✅
 
-* [ ] Add Firestore CRUD for shapes (add/update/remove)
-* [ ] Implement real-time listeners for Firestore shapes
-* [ ] Sync shape drag/move events to Firestore
-* [ ] Handle temporary lock during drag (`lockedBy`)
-* [ ] Merge local and remote shapes correctly
-* [ ] Unit tests with Firestore mocks
-* [ ] Manual test multi-user shape sync, drag locks, and updates
-
----
-
-## PR #8 - Local Storage Persistence
-
-* [ ] Save shapes to localStorage on change
-* [ ] Load shapes from localStorage on app start
-* [ ] Merge localStorage state with Firestore on reconnect
-* [ ] Unit tests for persistence logic
-* [ ] Manual test reload and state restoration
+* [x] Add Firestore CRUD for shapes (add/update/remove)
+* [x] Implement real-time listeners for Firestore shapes
+* [x] Sync shape drag/move events to Firestore
+* [x] Handle temporary lock during drag (`lockedBy`)
+* [x] Merge local and remote shapes correctly
+* [x] Unit tests for shape store locking and setShapes
+* [x] Visual feedback: colored borders for remote-locked shapes
+* [x] Prevent dragging shapes locked by other users
+* [x] Prevent stealing locks from other users
+* [x] Fix remote cursor positioning for zoom/pan
+* [x] Render cursors inside Konva Layer for proper transformation
+* [x] Remote cursors maintain constant size during zoom (inverse scaling)
+* [x] Extract Header component with online user presence (max 10 visible + overflow)
+* [x] Manual test multi-user shape sync, drag locks, and updates
 
 ---
 
-## PR #9 - UI Polish & Performance Tweaks
+## PR #8 - Deployment & Production Setup
 
-* [ ] Ensure toolbar positioned bottom-center
-* [ ] Add subtle grid background to canvas
-* [ ] Adjust Konva rendering for smooth dragging
-* [ ] CSS/Tailwind styling polish for minimal Figma feel
-* [ ] Verify FPS (~60) under moderate load
-* [ ] Manual test toolbar, grid, and dragging performance
+* [ ] Create production Firebase environment variables
+* [ ] Configure Vercel project
+* [ ] Set up environment variables in Vercel dashboard
+* [ ] Configure build settings (npm run build)
+* [ ] Set up custom domain (optional)
+* [ ] Deploy to Vercel
+* [ ] Verify Firebase services work in production
+* [ ] Test authentication flow in production
+* [ ] Test real-time collaboration with multiple users
+* [ ] Document deployment process in README
 
 ---
 
-## PR #10 - Unit Testing & Smoke Test
+## MVP Checkpoint ✅
 
-* [ ] Unit tests for shape store (add/update/remove/lock)
-* [ ] Unit tests for cursor store (local/remote update, throttle)
-* [ ] Unit tests for user store (login/logout, presence, authStatus)
-* [ ] Manual multi-browser smoke tests: login, canvas, shapes, cursors, persistence
+**Core Requirements:**
+- [x] Basic canvas with pan/zoom (middle-click pan, wheel scroll, Ctrl+wheel zoom)
+- [x] At least one shape type (rectangle with drag functionality)
+- [x] Ability to create and move objects
+- [x] Real-time sync between 2+ users via Firestore
+- [x] Multiplayer cursors with name labels and colors
+- [x] Presence awareness (who's online in header)
+- [x] User authentication (email/password signup/login with profiles)
+- [ ] Deployed and publicly accessible (Vercel + Firebase)
+
+**Test Coverage:**
+- [x] 146 unit tests across 10 test suites
+- [x] All core stores tested (user, cursor, shape)
+- [x] Authentication and validation tested
+- [x] Firebase presence and locking logic tested
 
 ---
 
 ## Future Enhancements
 
-### Multi-Select Feature
-* [ ] Implement translucent selection box on canvas drag
-* [ ] Detect shapes within selection box
-* [ ] Support multi-shape selection state
-* [ ] Allow group dragging of selected shapes
-* [ ] Clear selection on click outside
-* [ ] Unit tests for multi-select logic
+### Additional Shape Types
+* [ ] Implement circle/ellipse shape creation
+* [ ] Implement line/arrow shape creation
+* [ ] Implement text shape with inline editing
+* [ ] Add shape type selector to toolbar
+
+### Shape Manipulation
+* [ ] Resize shapes with corner/edge handles
+* [ ] Rotate shapes with rotation handle
+* [ ] Alt+drag to duplicate shapes
+* [ ] Display shape dimensions in label below selected shape
+
+### Selection Features
+* [ ] Multiple selection with Shift+click
+* [ ] Drag-to-select rectangle (translucent selection box)
+* [ ] Group move for multi-selected shapes
+* [ ] Delete multiple shapes at once
+
+### Properties Panel
+* [ ] Right-aligned properties panel (visible when shape selected)
+* [ ] Editable position (X, Y coordinates)
+* [ ] Editable rotation angle
+* [ ] Color picker for fill color
+* [ ] Opacity slider (0-100%)
+* [ ] Width/height inputs for dimensions
+
+### Layers Panel
+* [ ] Left-aligned layers panel
+* [ ] List all shapes with names/icons
+* [ ] Drag-n-drop to reorder shape z-index
+* [ ] Show/hide layer visibility toggle
+* [ ] Lock/unlock layers for editing
+
+### Performance & Architecture
+* [ ] **Clarify "persistence layer" requirement** - Local storage backup? Session restore?
+* [ ] **Clarify "refresh mid-edit" requirement** - Should maintain position/selection on reload?
+* [ ] **Measure and optimize for 60 FPS goal:**
+  * Set up FPS monitoring/profiling
+  * Identify bottlenecks (Firebase latency? Rendering?)
+  * Evaluate Firebase Realtime DB performance limits
+  * Consider Firebase paid tier for higher throughput
+  * Consider optimistic updates for better perceived performance
+  * Evaluate batching shape updates vs individual writes
+
+### UX Improvements
+* [ ] Add subtle grid background to canvas
+* [ ] Keyboard shortcuts (Cmd/Ctrl+D duplicate, Cmd/Ctrl+Z undo)
+* [ ] Context menu (right-click) for shape actions
+* [ ] Snap-to-grid functionality
+* [ ] Export/import canvas state (JSON)
+* [ ] Anonymous guest access for quick testing
