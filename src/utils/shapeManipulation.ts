@@ -6,12 +6,12 @@
 
 import { Shape } from '../types'
 import Konva from 'konva'
-
-// Hit zone configuration
-const CORNER_HIT_SIZE = 10 // Distance from corner to trigger resize
-const EDGE_HIT_SIZE = 5 // Distance from edge to trigger resize
-const ROTATION_ZONE_WIDTH = 30 // Width of rotation zone starting at corner edge (increased for easier targeting)
-const MIN_SHAPE_SIZE = 5 // Minimum width/height (small value to allow flipping)
+import { 
+  CORNER_HIT_SIZE, 
+  EDGE_HIT_SIZE, 
+  ROTATION_ZONE_WIDTH, 
+  MIN_SHAPE_SIZE 
+} from './canvasConstants'
 
 export type ManipulationZone = 
   | 'center' 

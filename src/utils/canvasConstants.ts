@@ -9,8 +9,13 @@ export const MIN_ZOOM = 0.1
 export const MAX_ZOOM = 5
 export const ZOOM_SCALE_FACTOR = 1.1
 
-// Shape creation
+// Shape creation and manipulation
 export const MIN_SHAPE_SIZE = 5
+
+// Hit zone configuration for shape manipulation
+export const CORNER_HIT_SIZE = 10 // Distance from corner to trigger resize
+export const EDGE_HIT_SIZE = 5 // Distance from edge to trigger resize
+export const ROTATION_ZONE_WIDTH = 30 // Width of rotation zone starting at corner edge
 
 // Canvas layout
 export const HEADER_HEIGHT = 64

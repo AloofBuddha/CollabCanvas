@@ -308,9 +308,14 @@ export default function Canvas({
   
   // Handle stage click - unlock any selected shape
   const handleStageClickWithUnlock = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    // Don't deselect if we're currently in the middle of an operation
-    // OR if we just finished one (for cases where MouseUp fires after Click)
-    if (justFinishedManipulation.current || isPanning || isDrawing || isManipulating || isDragging) {
+    // Don't deselect if we're currently in an operation or just finished one
+    const isOperating = justFinishedManipulation.current ||
+                       isPanning ||
+                       isDrawing ||
+                       isManipulating ||
+                       isDragging
+
+    if (isOperating) {
       return
     }
     
