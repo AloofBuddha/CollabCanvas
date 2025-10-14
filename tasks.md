@@ -67,7 +67,22 @@
 
 ---
 
-## PR #6 - Real-Time Shape Sync
+## PR #6 - Shape Selection & Deletion ✅
+
+* [x] Implement shape selection with light blue border on click
+* [x] Clicking canvas background deselects current shape
+* [x] Add keyboard listener for Delete key
+* [x] Delete selected shape when Delete key is pressed
+* [x] Add selectedShapeId state to track selected shape
+* [x] Ensure selection border only shows when shape is selected (not dragging)
+* [x] Add removeShape function call on delete
+* [x] Unit tests for shape selection logic
+* [x] Unit tests for keyboard deletion
+* [x] Manual test selection and deletion across multiple shapes
+
+---
+
+## PR #7 - Real-Time Shape Sync
 
 * [ ] Add Firestore CRUD for shapes (add/update/remove)
 * [ ] Implement real-time listeners for Firestore shapes
@@ -79,7 +94,7 @@
 
 ---
 
-## PR #7 - Local Storage Persistence
+## PR #8 - Local Storage Persistence
 
 * [ ] Save shapes to localStorage on change
 * [ ] Load shapes from localStorage on app start
@@ -89,7 +104,7 @@
 
 ---
 
-## PR #8 - UI Polish & Performance Tweaks
+## PR #9 - UI Polish & Performance Tweaks
 
 * [ ] Ensure toolbar positioned bottom-center
 * [ ] Add subtle grid background to canvas
@@ -100,7 +115,7 @@
 
 ---
 
-## PR #9 - Unit Testing & Smoke Test
+## PR #10 - Unit Testing & Smoke Test
 
 * [ ] Unit tests for shape store (add/update/remove/lock)
 * [ ] Unit tests for cursor store (local/remote update, throttle)

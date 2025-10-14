@@ -2,13 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock Firebase functions
 vi.mock('firebase/database', () => ({
-  ref: vi.fn((db, path) => ({ _path: path })),
+  ref: vi.fn((_db, path) => ({ _path: path })),
   set: vi.fn(() => Promise.resolve()),
-  onValue: vi.fn((ref, callback) => {
+  onValue: vi.fn(() => {
     // Return unsubscribe function
     return vi.fn()
   }),
-  onDisconnect: vi.fn((ref) => ({
+  onDisconnect: vi.fn(() => ({
     set: vi.fn(() => Promise.resolve()),
     remove: vi.fn(() => Promise.resolve()),
   })),
@@ -90,12 +90,13 @@ describe('firebasePresence', () => {
       const currentUserId = 'user123'
 
       // Mock onValue to simulate Firebase data
-      vi.mocked(onValue).mockImplementation((ref, cb) => {
+      vi.mocked(onValue).mockImplementation((_ref, cb) => {
         // Simulate Firebase calling our callback with data
         const mockData = {
           user123: { x: 10, y: 20, name: 'Me', color: '#ff0000' },
           user456: { x: 30, y: 40, name: 'Other', color: '#00ff00' },
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         cb({ val: () => mockData } as any)
         return vi.fn()
       })
@@ -124,7 +125,8 @@ describe('firebasePresence', () => {
     it('should handle empty cursor data', () => {
       const callback = vi.fn()
 
-      vi.mocked(onValue).mockImplementation((ref, cb) => {
+      vi.mocked(onValue).mockImplementation((_ref, cb) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         cb({ val: () => null } as any)
         return vi.fn()
       })
@@ -155,9 +157,11 @@ describe('firebasePresence', () => {
     })
 
     it('should set up disconnect handler when connected', () => {
-      vi.mocked(onValue).mockImplementation((ref, callback) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(onValue).mockImplementation((ref: any, callback) => {
         // Simulate being connected
         if (ref._path === '.info/connected') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           callback({ val: () => true } as any)
         }
         return vi.fn()
@@ -173,9 +177,11 @@ describe('firebasePresence', () => {
       const setMock = vi.mocked(set)
       setMock.mockClear()
 
-      vi.mocked(onValue).mockImplementation((ref, callback) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(onValue).mockImplementation((ref: any, callback) => {
         // Simulate being disconnected
         if (ref._path === '.info/connected') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           callback({ val: () => false } as any)
         }
         return vi.fn()
@@ -204,7 +210,7 @@ describe('firebasePresence', () => {
     it('should call callback with user data', () => {
       const callback = vi.fn()
 
-      vi.mocked(onValue).mockImplementation((ref, cb) => {
+      vi.mocked(onValue).mockImplementation((_ref, cb) => {
         const mockData = {
           user123: {
             online: true,
@@ -217,6 +223,7 @@ describe('firebasePresence', () => {
             color: '#00ff00',
           },
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         cb({ val: () => mockData } as any)
         return vi.fn()
       })
@@ -242,7 +249,8 @@ describe('firebasePresence', () => {
     it('should handle empty presence data', () => {
       const callback = vi.fn()
 
-      vi.mocked(onValue).mockImplementation((ref, cb) => {
+      vi.mocked(onValue).mockImplementation((_ref, cb) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         cb({ val: () => null } as any)
         return vi.fn()
       })

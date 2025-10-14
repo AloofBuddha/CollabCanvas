@@ -9,9 +9,10 @@ import { useShapeCreation } from '../hooks/useShapeCreation'
 import { useShapeDragging } from '../hooks/useShapeDragging'
 import { useCanvasZoom } from '../hooks/useCanvasZoom'
 import { useCursorTracking } from '../hooks/useCursorTracking'
+import { useShapeSelection } from '../hooks/useShapeSelection'
 import RemoteCursor from './RemoteCursor'
 import { getCursorStyle } from '../utils/canvasUtils'
-import { Cursor } from '../types'
+import { Cursor, Shape } from '../types'
 import {
   HEADER_HEIGHT,
   SHAPE_OPACITY,
@@ -31,7 +32,7 @@ interface CanvasProps {
 export default function Canvas({ tool, onToolChange, onCursorMove }: CanvasProps) {
   const stageRef = useRef<Konva.Stage>(null)
   
-  const { shapes, addShape, updateShape } = useShapeStore()
+  const { shapes, addShape, updateShape, removeShape } = useShapeStore()
   const { userId, color } = useUserStore()
   const { remoteCursors } = useCursorStore()
 
@@ -43,6 +44,25 @@ export default function Canvas({ tool, onToolChange, onCursorMove }: CanvasProps
   })
   
   const {
+    selectedShapeId,
+    isDragging,
+    handleShapeClick,
+    handleStageClick,
+    handleDragStart: handleSelectionDragStart,
+    handleDragEnd: handleSelectionDragEnd,
+    selectShape,
+  } = useShapeSelection({
+    onDelete: removeShape,
+    tool,
+  })
+  
+  // Handle shape creation and auto-select
+  const handleShapeCreated = (shape: Shape) => {
+    addShape(shape)
+    selectShape(shape.id)
+  }
+  
+  const {
     isDrawing,
     newShape,
     startCreating,
@@ -51,7 +71,7 @@ export default function Canvas({ tool, onToolChange, onCursorMove }: CanvasProps
   } = useShapeCreation({
     userId,
     color,
-    onShapeCreated: addShape,
+    onShapeCreated: handleShapeCreated,
     onToolChange,
   })
   
@@ -107,14 +127,29 @@ export default function Canvas({ tool, onToolChange, onCursorMove }: CanvasProps
     }
   }
 
-  // Handle shape mouse down (for panning)
-  const handleShapeMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  // Handle shape mouse down (for panning and selection)
+  const handleShapeMouseDown = (e: Konva.KonvaEventObject<MouseEvent>, shapeId: string) => {
     const evt = e.evt
     
     // Middle mouse button - set panning state
     if (evt.button === 1) {
       setIsPanning(true)
+      return
     }
+    
+    // Handle selection
+    handleShapeClick(e, shapeId)
+  }
+
+  // Combined drag handlers
+  const handleCombinedDragStart = (e: Konva.KonvaEventObject<DragEvent>) => {
+    handleSelectionDragStart()
+    handleDragStart(e)
+  }
+
+  const handleCombinedDragEnd = () => {
+    handleSelectionDragEnd()
+    handleDragEnd()
   }
 
   return (
@@ -130,26 +165,34 @@ export default function Canvas({ tool, onToolChange, onCursorMove }: CanvasProps
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onWheel={handleWheel}
+        onClick={handleStageClick}
         draggable={false}
       >
         <Layer>
           {/* Render all existing shapes */}
-          {Object.values(shapes).map((shape) => (
-            <Rect
-              key={shape.id}
-              x={shape.x}
-              y={shape.y}
-              width={shape.width}
-              height={shape.height}
-              fill={shape.color}
-              opacity={SHAPE_OPACITY}
-              draggable={tool === 'select'}
-              onMouseDown={handleShapeMouseDown}
-              onDragStart={handleDragStart}
-              onDragMove={(e) => handleDragMove(e, shape)}
-              onDragEnd={handleDragEnd}
-            />
-          ))}
+          {Object.values(shapes).map((shape) => {
+            const isSelected = selectedShapeId === shape.id
+            const showBorder = isSelected && !isDragging
+
+            return (
+              <Rect
+                key={shape.id}
+                x={shape.x}
+                y={shape.y}
+                width={shape.width}
+                height={shape.height}
+                fill={shape.color}
+                opacity={SHAPE_OPACITY}
+                draggable={tool === 'select'}
+                onMouseDown={(e) => handleShapeMouseDown(e, shape.id)}
+                onDragStart={handleCombinedDragStart}
+                onDragMove={(e) => handleDragMove(e, shape)}
+                onDragEnd={handleCombinedDragEnd}
+                stroke={showBorder ? '#3b82f6' : undefined}
+                strokeWidth={showBorder ? 2 : 0}
+              />
+            )
+          })}
 
           {/* Render shape being created */}
           {newShape && (
