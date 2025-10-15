@@ -65,11 +65,11 @@ export function hasMinimumSize(shape: Shape, minSize: number): boolean {
 export function getCursorStyle(
   isPanning: boolean,
   isDrawing: boolean,
-  tool: 'select' | 'rectangle' | 'circle'
+  tool: 'select' | 'rectangle' | 'circle' | 'line' | 'text'
 ): string {
   if (isPanning) return 'grabbing' // Middle-click panning
   if (isDrawing) return 'crosshair' // Creating shape
-  if (tool === 'rectangle' || tool === 'circle') return 'crosshair' // Shape tool active
+  if (tool === 'rectangle' || tool === 'circle' || tool === 'line' || tool === 'text') return 'crosshair' // Shape tool active
   return 'default' // Select tool - default pointer
 }
 

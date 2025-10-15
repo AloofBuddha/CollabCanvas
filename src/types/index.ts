@@ -31,8 +31,26 @@ export interface CircleShape extends BaseShape {
   radiusY: number
 }
 
+// Line shape
+export interface LineShape extends BaseShape {
+  type: 'line'
+  x2: number
+  y2: number
+  strokeWidth: number
+}
+
+// Text shape
+export interface TextShape extends BaseShape {
+  type: 'text'
+  text: string
+  fontSize: number
+  fontFamily: string
+  textColor: string
+  width?: number // Optional width for text wrapping
+}
+
 // Discriminated union of all shape types
-export type Shape = RectangleShape | CircleShape
+export type Shape = RectangleShape | CircleShape | LineShape | TextShape
 
 // ============================================================================
 // User Types

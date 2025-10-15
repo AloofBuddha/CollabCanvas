@@ -1,6 +1,6 @@
 import { MousePointer2, Square, Circle } from 'lucide-react'
 
-type Tool = 'select' | 'rectangle' | 'circle'
+type Tool = 'select' | 'rectangle' | 'circle' | 'line' | 'text'
 
 interface ToolbarProps {
   selectedTool: Tool

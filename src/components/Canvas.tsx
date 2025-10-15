@@ -24,7 +24,7 @@ import {
   NEW_SHAPE_DASH,
 } from '../utils/canvasConstants'
 
-type Tool = 'select' | 'rectangle' | 'circle'
+type Tool = 'select' | 'rectangle' | 'circle' | 'line' | 'text'
 
 interface CanvasProps {
   tool: Tool

@@ -30,7 +30,7 @@ import Header from './Header'
 import LoadingSpinner from './LoadingSpinner'
 import { Cursor, User, Shape } from '../types'
 
-type Tool = 'select' | 'rectangle' | 'circle'
+type Tool = 'select' | 'rectangle' | 'circle' | 'line' | 'text'
 
 /**
  * Canvas Page - Main collaborative canvas view
@@ -212,6 +212,10 @@ export default function CanvasPage() {
     }
   }, [userId, lockShape, unlockShape])
 
+  // Track last unlock time to prevent rapid fire calls
+  const lastUnlockTime = useRef<number>(0)
+  const UNLOCK_DEBOUNCE_MS = 100 // 100ms debounce
+
   // Handle shape unlock (when user deselects or stops dragging)
   const handleShapeUnlock = useCallback(async (shapeId: string) => {
     if (!userId) return
@@ -231,12 +235,22 @@ export default function CanvasPage() {
       return // Already unlocked
     }
     
-    try {
-      unlockShape(shapeId) // Update local state immediately (optimistic)
-      await unlockShapeInFirestore(shapeId) // Sync to Firestore
-    } catch (error) {
-      console.error('Failed to unlock shape:', error)
+    // Debounce rapid unlock calls to prevent flickering
+    const now = Date.now()
+    if (now - lastUnlockTime.current < UNLOCK_DEBOUNCE_MS) {
+      return
     }
+    lastUnlockTime.current = now
+    
+    // Update local state immediately (optimistic) - this is synchronous
+    unlockShape(shapeId)
+    
+    // Sync to Firestore in the next tick to avoid blocking the UI
+    setTimeout(() => {
+      unlockShapeInFirestore(shapeId).catch(error => {
+        console.error('Failed to unlock shape in Firestore:', error)
+      })
+    }, 0)
   }, [userId, unlockShape])
 
   const handleSignOut = async () => {

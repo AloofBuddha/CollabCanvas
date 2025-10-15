@@ -6,15 +6,15 @@
 
 import { useState } from 'react'
 import Konva from 'konva'
-import { Shape, RectangleShape, CircleShape } from '../types'
-import { normalizeShape, hasMinimumSize, generateUniqueShapeId } from '../utils/canvasUtils'
+import { Shape } from '../types'
+import { createShape, updateShapeCreation, hasShapeMinimumSize, normalizeShape } from '../utils/shapeFactory'
 import { MIN_SHAPE_SIZE } from '../utils/canvasConstants'
 
 interface UseShapeCreationProps {
   userId: string | null
   onShapeCreated: (shape: Shape) => void
-  onToolChange: (tool: 'select' | 'rectangle' | 'circle') => void
-  shapeType: 'rectangle' | 'circle'
+  onToolChange: (tool: 'select' | 'rectangle' | 'circle' | 'line' | 'text') => void
+  shapeType: 'rectangle' | 'circle' | 'line' | 'text'
 }
 
 export function useShapeCreation({
@@ -31,38 +31,10 @@ export function useShapeCreation({
     if (!stage) return
 
     const pos = stage.getRelativePointerPosition()
-    if (!pos) return
+    if (!pos || !userId) return
 
-    // Start creating a new shape based on shapeType
-    const id = generateUniqueShapeId()
-    let shape: Shape
-
-    if (shapeType === 'rectangle') {
-      shape = {
-        id,
-        type: 'rectangle',
-        x: pos.x,
-        y: pos.y,
-        width: 0,
-        height: 0,
-        color: '#D1D5DB', // Light gray - neutral color to make borders visible
-        createdBy: userId!,
-      } as RectangleShape
-    } else if (shapeType === 'circle') {
-      shape = {
-        id,
-        type: 'circle',
-        x: pos.x,
-        y: pos.y,
-        radiusX: 0,
-        radiusY: 0,
-        color: '#D1D5DB', // Light gray - neutral color to make borders visible
-        createdBy: userId!,
-      } as CircleShape
-    } else {
-      return
-    }
-
+    // Create new shape using shape factory
+    const shape = createShape(shapeType, pos.x, pos.y, userId)
     setNewShape(shape)
     setIsDrawing(true)
   }
@@ -76,35 +48,20 @@ export function useShapeCreation({
     const pos = stage.getRelativePointerPosition()
     if (!pos) return
 
-    // Update shape size based on type
-    if (newShape.type === 'rectangle') {
-      const width = pos.x - newShape.x
-      const height = pos.y - newShape.y
-      setNewShape({
-        ...newShape,
-        width,
-        height,
-      })
-    } else if (newShape.type === 'circle') {
-      const width = pos.x - newShape.x
-      const height = pos.y - newShape.y
-      setNewShape({
-        ...newShape,
-        radiusX: width / 2,
-        radiusY: height / 2,
-      })
-    }
+    // Update shape using shape factory
+    const updatedShape = updateShapeCreation(newShape, pos.x, pos.y)
+    setNewShape(updatedShape)
   }
 
   const finishCreating = () => {
     if (isDrawing && newShape) {
       // Only add shape if it has meaningful size
-      if (hasMinimumSize(newShape, MIN_SHAPE_SIZE)) {
+      if (hasShapeMinimumSize(newShape, MIN_SHAPE_SIZE)) {
         // Normalize negative dimensions
         const normalized = normalizeShape(newShape)
         onShapeCreated(normalized)
         
-        // Auto-switch back to select tool after creating rectangle
+        // Auto-switch back to select tool after creating shape
         onToolChange('select')
       }
 

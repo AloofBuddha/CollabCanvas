@@ -101,7 +101,18 @@ export function listenToShapes(
  * Lock a shape (set lockedBy field)
  */
 export async function lockShape(shapeId: string, userId: string): Promise<void> {
+  // Update Firestore
   await updateShapeFields(shapeId, { lockedBy: userId })
+  
+  // Also update RTDB for real-time sync
+  const rtdbShapeRef = ref(rtdb, `shapes/${shapeId}`)
+  const rtdbSnapshot = await get(rtdbShapeRef)
+  if (rtdbSnapshot.exists()) {
+    await set(rtdbShapeRef, {
+      ...rtdbSnapshot.val(),
+      lockedBy: userId,
+    })
+  }
 }
 
 /**
