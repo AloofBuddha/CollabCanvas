@@ -165,13 +165,13 @@
 
 **Day 1: Shape Library + Color (PRs #11-14)**
 
-**PR #11: Circle Shape** 🔄 (IMMEDIATE)
-- [ ] Circle component with Konva Circle/Ellipse
-- [ ] Corner-based creation (like rectangles)
-- [ ] Resize from corners/edges (radii adjustment)
-- [ ] Drag to move, rotation support
-- [ ] Update Firestore types (radiusX, radiusY)
-- [ ] 10-15 unit tests
+**PR #11: Circle Shape** ✅ COMPLETE
+- [x] Circle component with Konva Circle/Ellipse
+- [x] Corner-based creation (like rectangles)
+- [x] Resize from corners/edges (radii adjustment)
+- [x] Drag to move, rotation support
+- [x] Update Firestore types (radiusX, radiusY)
+- [x] 10-15 unit tests
 - **Rubric Impact**: Section 2 +1-2 pts
 
 **PR #12: Line Shape**

@@ -182,27 +182,29 @@
 
 ---
 
-## PR #11 - Circle/Ellipse Shape ⏳ NEXT
+## PR #11 - Circle/Ellipse Shape ✅ COMPLETE
 
 **Rubric Impact**: Section 2 (+1-2 pts), prepares for AI agent
 
-* [ ] Create `Circle.tsx` component using Konva Circle/Ellipse
-* [ ] Add circle tool to toolbar with icon
-* [ ] Implement click-drag creation (corner-based, like rectangle)
-* [ ] Support resize from corners/edges (maintains circular or elliptical shape)
-* [ ] Support rotation (for consistency, though visually subtle for circles)
-* [ ] Support drag to move
-* [ ] Support color fill (will add color picker in PR #14)
-* [ ] Dimension label (radiusX × radiusY or diameter)
-* [ ] Update Firestore types to support `radiusX`, `radiusY` fields
-* [ ] Sync circle operations to Firestore
-* [ ] Respect locking mechanism (lock on selection, unlock on deselect)
-* [ ] Unit tests for circle creation, resize, and manipulation (10-15 tests)
-* [ ] Manual test with multi-user scenarios
+* [x] Create `Circle.tsx` component using Konva Circle/Ellipse
+* [x] Add circle tool to toolbar with icon
+* [x] Implement click-drag creation (corner-based, like rectangle)
+* [x] Support resize from corners/edges (maintains circular or elliptical shape)
+* [x] Support rotation (for consistency, though visually subtle for circles)
+* [x] Support drag to move
+* [x] Support color fill (will add color picker in PR #14)
+* [x] Dimension label (radiusX × radiusY or diameter)
+* [x] Update Firestore types to support `radiusX`, `radiusY` fields
+* [x] Sync circle operations to Firestore
+* [x] Respect locking mechanism (lock on selection, unlock on deselect)
+* [x] Unit tests for circle creation, resize, and manipulation (10-15 tests)
+* [x] Manual test with multi-user scenarios
+* [x] **BONUS**: Fixed comprehensive flickering issues (borders, dimension labels, shapes)
+* [x] **BONUS**: Resolved Firestore/RTDB conflict causing performance issues
 
 ---
 
-## PR #12 - Line Shape ⏳
+## PR #12 - Line Shape ⏳ NEXT
 
 **Rubric Impact**: Section 2 (+1-2 pts), prepares for AI agent
 

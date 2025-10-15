@@ -4,7 +4,7 @@
 
 **Phase**: Final Sprint - Rubric-Focused Enhancement (4 Days Remaining)  
 **Version**: v1.2 → v2.0 (Major Upgrade)  
-**Last Completed**: PR #11 - Circle/Ellipse Shape + Flicker Fix  
+**Last Completed**: PR #11 - Circle/Ellipse Shape + Flicker Fix ✅ COMPLETE  
 **Live Production**: https://collab-canvas-ben-cohen.vercel.app/
 
 **Current Grade**: **46/100 (F)** | **Target**: **70-75/100 (C/C+)** | **Stretch**: **80+/100 (B)**
@@ -111,14 +111,14 @@ Validate conflict resolution, persistence, reconnection, and performance with 10
 - Demo Video (avoid -10 penalty)
 - Final polish
 
-### Next Immediate Task: PR #11 - Circle Shape
+### Next Immediate Task: PR #12 - Line Shape
 
 **Implementation Focus**:
-1. **Circle.tsx component** - Use Konva Circle or Ellipse
-2. **Corner-based creation** - Like rectangles, drag from corner (more intuitive than center-based)
-3. **Resize logic** - Corner drag changes both radii, edge drag changes single radius
+1. **Line.tsx component** - Use Konva Line with two endpoints
+2. **Two-point creation** - Click start point, drag to end point
+3. **Endpoint manipulation** - Drag endpoints to resize, drag line body to move
 4. **Reuse manipulation patterns** - From Rectangle.tsx (zones, cursors, locking)
-5. **Firestore schema** - Add `radiusX`, `radiusY` fields to shape type
+5. **Firestore schema** - Add `x1`, `y1`, `x2`, `y2` fields to shape type
 
 ## Active Decisions & Considerations
 
@@ -216,39 +216,38 @@ Validate conflict resolution, persistence, reconnection, and performance with 10
 
 ## Next Session Priorities (In Order)
 
-### 1. **PR #11: Circle Shape** (Start immediately)
-   - Create `Circle.tsx` component
+### 1. **PR #12: Line Shape** (Start immediately)
+   - Create `Line.tsx` component
    - Copy manipulation patterns from `Rectangle.tsx`
-   - Update `Canvas.tsx` to render circles
-   - Update `types/shape.ts` to include circle type
-   - Add circle tool to `Toolbar.tsx`
+   - Update `Canvas.tsx` to render lines
+   - Update `types/shape.ts` to include line type
+   - Add line tool to `Toolbar.tsx`
    - 10-15 unit tests
 
-### 2. **PR #12: Line Shape** (Same day)
-   - Create `Line.tsx` component
+### 2. **PR #13: Text Shape** (Same day)
+   - Create `Text.tsx` component
    - Two-point creation + endpoint manipulation
    - Update Canvas and types
-   - Add line tool to toolbar
+   - Add text tool to toolbar
    - 8-12 unit tests
 
-### 3. **PR #13: Text Shape** (End of Day 1)
-   - Create `Text.tsx` component with HTML overlay editing
-   - Double-click to edit, Escape to exit
-   - Update Canvas and types
-   - Add text tool to toolbar
-   - 10-15 unit tests
-
-### 4. **PR #14: Color Picker** (Early Day 2)
+### 3. **PR #14: Color Picker** (End of Day 1)
    - Simple custom picker (presets + recent colors)
    - Show when shape selected
    - Update all shape types to support color changes
    - 5-8 unit tests
 
-### 5. **PR #15: Multi-Select** (Day 2)
+### 4. **PR #15: Multi-Select** (Early Day 2)
    - Shift+click to add to selection
    - Multi-drag, multi-delete
    - Update locking for multiple shapes
    - 15-20 unit tests
+
+### 5. **PR #16: Keyboard Shortcuts** (Day 2)
+   - Arrow keys for nudging shapes
+   - Delete/Backspace for deletion
+   - Ctrl+A for select all
+   - 8-12 unit tests
 
 ## Context for Next Session
 
