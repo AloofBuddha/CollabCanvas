@@ -6,18 +6,33 @@
 // Shape Types
 // ============================================================================
 
-export interface Shape {
+// Base shape properties shared by all shapes
+interface BaseShape {
   id: string
-  type: 'rectangle'
   x: number
   y: number
-  width: number
-  height: number
   rotation?: number // Rotation in degrees (default 0)
   color: string
   createdBy: string
   lockedBy?: string | null // userId of user who has locked this shape
 }
+
+// Rectangle shape
+export interface RectangleShape extends BaseShape {
+  type: 'rectangle'
+  width: number
+  height: number
+}
+
+// Circle shape
+export interface CircleShape extends BaseShape {
+  type: 'circle'
+  radiusX: number
+  radiusY: number
+}
+
+// Discriminated union of all shape types
+export type Shape = RectangleShape | CircleShape
 
 // ============================================================================
 // User Types

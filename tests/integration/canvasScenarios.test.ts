@@ -7,11 +7,11 @@
 
 import { describe, it, expect, beforeEach } from 'vitest'
 import { calculateResize, calculateRotation, detectManipulationZone } from '../../src/utils/shapeManipulation'
-import { Shape } from '../../src/types'
+import { RectangleShape } from '../../src/types'
 
 describe('Canvas Integration Scenarios', () => {
   describe('Rotation Persistence', () => {
-    let shape: Shape
+    let shape: RectangleShape
 
     beforeEach(() => {
       shape = {
@@ -52,7 +52,7 @@ describe('Canvas Integration Scenarios', () => {
       
       const rotatedShape = { ...shape, rotation: 45 }
       
-      // Simulate Firestore data
+      // Simulate Firestore data - since we know it's a RectangleShape
       const firestoreData = {
         id: rotatedShape.id,
         type: rotatedShape.type,
@@ -70,7 +70,7 @@ describe('Canvas Integration Scenarios', () => {
   })
 
   describe('Smooth Flipping Resize', () => {
-    let shape: Shape
+    let shape: RectangleShape
 
     beforeEach(() => {
       shape = {
@@ -100,8 +100,10 @@ describe('Canvas Integration Scenarios', () => {
       const updates = calculateResize(shape, zone, mouseX, mouseY, startMouseX, startMouseY, shape)
       
       // Shape should flip but maintain positive dimensions
-      expect(updates.width).toBeGreaterThan(0)
-      expect(updates.height).toBeGreaterThan(0)
+      // Since we know it's a RectangleShape, cast the result
+      const rectUpdates = updates as Partial<RectangleShape>
+      expect(rectUpdates.width).toBeGreaterThan(0)
+      expect(rectUpdates.height).toBeGreaterThan(0)
       
       // Top-left should move to where mouse is
       expect(updates.x).toBeLessThan(100)
@@ -120,8 +122,10 @@ describe('Canvas Integration Scenarios', () => {
       
       const updates = calculateResize(shape, zone, mouseX, mouseY, startMouseX, startMouseY, shape)
       
-      expect(updates.width).toBeGreaterThan(0)
-      expect(updates.height).toBeGreaterThan(0)
+      // Since we know it's a RectangleShape, cast the result
+      const rectUpdates = updates as Partial<RectangleShape>
+      expect(rectUpdates.width).toBeGreaterThan(0)
+      expect(rectUpdates.height).toBeGreaterThan(0)
       expect(updates.x).toBeGreaterThan(100)
       expect(updates.y).toBeGreaterThan(100)
     })
@@ -138,13 +142,15 @@ describe('Canvas Integration Scenarios', () => {
       
       const updates = calculateResize(shape, zone, mouseX, mouseY, startMouseX, startMouseY, shape)
       
-      expect(updates.width).toBeGreaterThanOrEqual(5)
-      expect(updates.height).toBeGreaterThanOrEqual(5)
+      // Since we know it's a RectangleShape, cast the result
+      const rectUpdates = updates as Partial<RectangleShape>
+      expect(rectUpdates.width).toBeGreaterThanOrEqual(5)
+      expect(rectUpdates.height).toBeGreaterThanOrEqual(5)
     })
   })
 
   describe('Hit Zone Invariance with zoom', () => {
-    let shape: Shape
+    let shape: RectangleShape
 
     beforeEach(() => {
       shape = {
@@ -237,7 +243,7 @@ describe('Canvas Integration Scenarios', () => {
   })
 
   describe('Rotation Pivot Point', () => {
-    let shape: Shape
+    let shape: RectangleShape
 
     beforeEach(() => {
       shape = {
@@ -258,6 +264,7 @@ describe('Canvas Integration Scenarios', () => {
       // Bug: Was pivoting around top-left (x, y) origin
       // Fix: Set Konva offsetX/offsetY to width/2, height/2
       
+      // Since we know it's a RectangleShape, we can access width/height directly
       const centerX = shape.x + shape.width / 2
       const centerY = shape.y + shape.height / 2
       

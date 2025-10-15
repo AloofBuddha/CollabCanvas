@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, Fragment } from 'react'
-import { Stage, Layer, Rect } from 'react-konva'
+import { Stage, Layer, Rect, Ellipse } from 'react-konva'
 import Konva from 'konva'
 import useShapeStore from '../stores/useShapeStore'
 import useUserStore from '../stores/useUserStore'
@@ -24,7 +24,7 @@ import {
   NEW_SHAPE_DASH,
 } from '../utils/canvasConstants'
 
-type Tool = 'select' | 'rectangle'
+type Tool = 'select' | 'rectangle' | 'circle'
 
 interface CanvasProps {
   tool: Tool
@@ -123,7 +123,12 @@ export default function Canvas({
   } = useShapeCreation({
     userId,
     onShapeCreated: handleShapeCreatedLocal,
-    onToolChange,
+    onToolChange: (newTool) => {
+      if (newTool === 'select' || newTool === 'rectangle' || newTool === 'circle') {
+        onToolChange(newTool as Tool)
+      }
+    },
+    shapeType: tool === 'rectangle' ? 'rectangle' : tool === 'circle' ? 'circle' : 'rectangle',
   })
   
   const {
@@ -146,7 +151,6 @@ export default function Canvas({
   // Shape manipulation (resize & rotate)
   const {
     isManipulating,
-    isRotating,
     currentCursor: manipulationCursor,
     handleShapeMouseMove: handleManipulationMouseMove,
     handleStageMouseMove: handleManipulationStageMouseMove,
@@ -193,8 +197,8 @@ export default function Canvas({
       }
     }
 
-    // Left mouse button with rectangle tool - start creating
-    if (tool === 'rectangle' && evt.button === 0) {
+    // Left mouse button with rectangle or circle tool - start creating
+    if ((tool === 'rectangle' || tool === 'circle') && evt.button === 0) {
       startCreating(e)
     }
   }
@@ -396,9 +400,9 @@ export default function Canvas({
             const isLockedByOther = !!(shape.lockedBy && shape.lockedBy !== userId)
             
             // Border logic:
-            // - Show blue border if: I selected it AND I own the lock AND not currently dragging
+            // - Show blue border if: I selected it AND I own the lock AND not currently manipulating
             // - Show colored border if: locked by another user (always visible)
-            const showLocalBorder = isSelected && isLockedByMe && !isDragging && !isManipulating
+            const showLocalBorder = isSelected && isLockedByMe && !isManipulating
             const showRemoteBorder = isLockedByOther
             
             const borderColor = showRemoteBorder 
@@ -409,54 +413,102 @@ export default function Canvas({
             // Can only drag if not locked by another user and not manipulating
             const canDrag = tool === 'select' && !isLockedByOther && !isManipulating
 
-            return (
-              <Fragment key={shape.id}>
-                <Rect
-                  x={shape.x + shape.width / 2}
-                  y={shape.y + shape.height / 2}
-                  width={shape.width}
-                  height={shape.height}
-                  rotation={shape.rotation || 0}
-                  offsetX={shape.width / 2}
-                  offsetY={shape.height / 2}
-                  fill={shape.color}
-                  opacity={SHAPE_OPACITY}
-                  draggable={canDrag}
-                  onMouseDown={(e) => handleShapeMouseDown(e, shape.id, isLockedByOther, shape)}
-                  onMouseMove={(e) => handleManipulationMouseMove(e, shape, isSelected)}
-                  onMouseLeave={handleShapeMouseLeave}
-                  onDragStart={(e) => handleCombinedDragStart(e, shape)}
-                  onDragMove={(e) => handleDragMove(e, shape)}
-                  onDragEnd={() => handleCombinedDragEnd(shape)}
-                  stroke={showBorder ? borderColor : undefined}
-                  strokeWidth={showBorder ? 2 : 0}
-                />
-                
-                {/* Show dimension label for selected shape (hide during drag and rotation, show during resize) */}
-                {isSelected && isLockedByMe && !isDragging && !isRotating && (
-                  <ShapeDimensionLabel 
-                    key={`${shape.id}-label`}
-                    shape={shape} 
-                    stageScale={stageScale} 
+            // Render shape based on type
+            if (shape.type === 'rectangle') {
+              return (
+                <Fragment key={shape.id}>
+                  <Rect
+                    x={shape.x + shape.width / 2}
+                    y={shape.y + shape.height / 2}
+                    width={shape.width}
+                    height={shape.height}
+                    rotation={shape.rotation || 0}
+                    offsetX={shape.width / 2}
+                    offsetY={shape.height / 2}
+                    fill={shape.color}
+                    opacity={SHAPE_OPACITY}
+                    draggable={canDrag}
+                    onMouseDown={(e) => handleShapeMouseDown(e, shape.id, isLockedByOther, shape)}
+                    onMouseMove={(e) => handleManipulationMouseMove(e, shape, isSelected)}
+                    onMouseLeave={handleShapeMouseLeave}
+                    onDragStart={(e) => handleCombinedDragStart(e, shape)}
+                    onDragMove={(e) => handleDragMove(e, shape)}
+                    onDragEnd={() => handleCombinedDragEnd(shape)}
+                    stroke={showBorder ? borderColor : undefined}
+                    strokeWidth={showBorder ? 2 : 0}
                   />
-                )}
-              </Fragment>
-            )
+                  {/* Show dimension label for selected shape */}
+                  {isSelected && isLockedByMe && !isManipulating && (
+                    <ShapeDimensionLabel 
+                      key={`${shape.id}-label`}
+                      shape={shape} 
+                      stageScale={stageScale} 
+                    />
+                  )}
+                </Fragment>
+              )
+            } else if (shape.type === 'circle') {
+              return (
+                <Fragment key={shape.id}>
+                  <Ellipse
+                    x={shape.x + shape.radiusX}
+                    y={shape.y + shape.radiusY}
+                    radiusX={shape.radiusX}
+                    radiusY={shape.radiusY}
+                    rotation={shape.rotation || 0}
+                    fill={shape.color}
+                    opacity={SHAPE_OPACITY}
+                    draggable={canDrag}
+                    onMouseDown={(e) => handleShapeMouseDown(e, shape.id, isLockedByOther, shape)}
+                    onMouseMove={(e) => handleManipulationMouseMove(e, shape, isSelected)}
+                    onMouseLeave={handleShapeMouseLeave}
+                    onDragStart={(e) => handleCombinedDragStart(e, shape)}
+                    onDragMove={(e) => handleDragMove(e, shape)}
+                    onDragEnd={() => handleCombinedDragEnd(shape)}
+                    stroke={showBorder ? borderColor : undefined}
+                    strokeWidth={showBorder ? 2 : 0}
+                  />
+                  {/* Show dimension label for selected shape */}
+                  {isSelected && isLockedByMe && !isManipulating && (
+                    <ShapeDimensionLabel 
+                      key={`${shape.id}-label`}
+                      shape={shape} 
+                      stageScale={stageScale} 
+                    />
+                  )}
+                </Fragment>
+              )
+            }
+            return null
           })}
 
           {/* Render shape being created */}
           {newShape && (
-            <Rect
-              x={newShape.x}
-              y={newShape.y}
-              width={newShape.width}
-              height={newShape.height}
-              fill="#D1D5DB"
-              opacity={NEW_SHAPE_OPACITY}
-              stroke={color}
-              strokeWidth={NEW_SHAPE_STROKE_WIDTH}
-              dash={NEW_SHAPE_DASH}
-            />
+            newShape.type === 'rectangle' ? (
+              <Rect
+                x={newShape.x}
+                y={newShape.y}
+                width={newShape.width}
+                height={newShape.height}
+                fill="#D1D5DB"
+                opacity={NEW_SHAPE_OPACITY}
+                stroke={color}
+                strokeWidth={NEW_SHAPE_STROKE_WIDTH}
+                dash={NEW_SHAPE_DASH}
+              />
+            ) : newShape.type === 'circle' ? (
+              <Ellipse
+                x={newShape.x + newShape.radiusX}
+                y={newShape.y + newShape.radiusY}
+                radiusX={newShape.radiusX}
+                radiusY={newShape.radiusY}
+                fill="#D1D5DB"
+                opacity={NEW_SHAPE_OPACITY}
+                stroke={color}
+                strokeWidth={NEW_SHAPE_STROKE_WIDTH}
+                dash={NEW_SHAPE_DASH}
+              />
+            ) : null
           )}
 
           {/* Render remote cursors inside the canvas layer */}

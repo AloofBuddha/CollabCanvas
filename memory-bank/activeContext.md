@@ -4,10 +4,10 @@
 
 **Phase**: Final Sprint - Rubric-Focused Enhancement (4 Days Remaining)  
 **Version**: v1.2 → v2.0 (Major Upgrade)  
-**Last Completed**: PR #10 - Alt+Drag Shape Duplication  
+**Last Completed**: PR #11 - Circle/Ellipse Shape + Flicker Fix  
 **Live Production**: https://collab-canvas-ben-cohen.vercel.app/
 
-**Current Grade**: **44/100 (F)** | **Target**: **70-75/100 (C/C+)** | **Stretch**: **80+/100 (B)**
+**Current Grade**: **46/100 (F)** | **Target**: **70-75/100 (C/C+)** | **Stretch**: **80+/100 (B)**
 
 ## 🚨 Critical Priority Shift 🚨
 
@@ -18,22 +18,34 @@ The project is being evaluated against a comprehensive rubric. Based on analysis
 
 **Revised Strategy**: Build feature-rich canvas FIRST (shapes, colors, multi-select), THEN implement AI agent with meaningful commands.
 
-## Recent Changes (PR #10 - Just Completed) ✅
+## Recent Changes (PR #11 - Just Completed) ✅
 
-### Alt+Drag Duplication Feature
-- **User Experience**: Hold Alt and drag a selected shape to duplicate it
-- **Original stays in place**: The original shape never moves during duplication
-- **Duplicate follows cursor**: New shape is created and follows the drag
-- **Auto-selection**: Duplicate is automatically selected and locked after creation
-- **Multi-user sync**: Duplicates sync to Firestore immediately
+### Circle/Ellipse Shape Feature
+- **New Shape Type**: Added circle/ellipse tool to toolbar with Circle icon
+- **Polymorphic Architecture**: Discriminated union types (RectangleShape | CircleShape)
+- **Full Feature Parity**: Circles support all rectangle features:
+  - Click-and-drag creation with visual feedback
+  - Resize via corner/edge handles (maintains aspect ratio)
+  - Rotation via corner rotation zones
+  - Drag to move with collision avoidance
+  - Dimension labels (radiusX × radiusY)
+  - Multi-user real-time sync (Firestore + RTDB)
+  - Locking system and visual feedback
 
 ### Technical Implementation
-- Alt key tracking with window-level event listeners (keydown/keyup)
-- Duplication logic in `useShapeDragging` hook
-- During drag: original position reset each frame, duplicate updates to cursor position
-- Duplicate created with new ID: `shape-${Date.now()}-${Math.random()}`
-- Selection and lock automatically switched from original to duplicate
-- 6 new unit tests covering all duplication scenarios (207 total tests passing)
+- **Type System**: `CircleShape` interface with `radiusX`, `radiusY` properties
+- **Polymorphic Helpers**: `getShapeWidth()`, `getShapeHeight()` for dimension access
+- **Canvas Rendering**: Konva `Ellipse` component with proper positioning
+- **Shape Creation**: `useShapeCreation` hook supports both rectangle and circle
+- **Manipulation**: All manipulation functions work with both shape types
+- **Firebase Sync**: Both Firestore and RTDB handle circle properties
+- **Tests**: All existing tests pass, no regressions introduced
+
+### Shape Creation Flicker Fix
+- **Root Cause**: Remote users saw shapes appear/disappear during creation
+- **Solution**: Include `lockedBy: userId` in initial shape creation
+- **Implementation**: Updated `handleShapeCreatedLocal` in Canvas.tsx
+- **Result**: Smooth shape creation experience for all users
 
 ## Previous Changes (PR #9 - Completed)
 

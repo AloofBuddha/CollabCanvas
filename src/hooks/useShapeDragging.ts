@@ -14,6 +14,7 @@ import useShapeStore from '../stores/useShapeStore'
 import { syncShapeToRTDB } from '../utils/firebaseShapes'
 import { throttle, CURSOR_THROTTLE_MS } from '../utils/throttle'
 import { generateUniqueShapeId } from '../utils/canvasUtils'
+import { getShapeWidth, getShapeHeight } from '../utils/shapeManipulation'
 
 interface UseShapeDraggingProps {
   isPanning: boolean
@@ -77,8 +78,8 @@ export function useShapeDragging({
     const node = e.target
     // Node x/y represents the center (due to offset), convert back to top-left
     const updates = {
-      x: node.x() - shape.width / 2,
-      y: node.y() - shape.height / 2,
+      x: node.x() - getShapeWidth(shape) / 2,
+      y: node.y() - getShapeHeight(shape) / 2,
     }
     
     // Update local Zustand store immediately (optimistic)

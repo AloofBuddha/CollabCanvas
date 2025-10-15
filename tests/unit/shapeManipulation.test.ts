@@ -8,10 +8,10 @@ import {
   calculateResize, 
   calculateRotation 
 } from '../../src/utils/shapeManipulation'
-import { Shape } from '../../src/types'
+import { Shape, RectangleShape } from '../../src/types'
 
 describe('detectManipulationZone', () => {
-  const baseShape: Shape = {
+  const baseShape: RectangleShape = {
     id: 'test-shape',
     type: 'rectangle',
     x: 100,
@@ -148,7 +148,7 @@ describe('detectManipulationZone', () => {
 
   describe('With rotation', () => {
     it('should detect zones correctly for rotated shapes', () => {
-      const rotatedShape: Shape = { ...baseShape, rotation: 45 }
+      const rotatedShape: RectangleShape = { ...baseShape, rotation: 45 }
       
       // This is complex to test exactly due to rotation transformation
       // Just verify it returns valid zone and cursor
@@ -162,7 +162,7 @@ describe('detectManipulationZone', () => {
 })
 
 describe('calculateResize', () => {
-  const baseShape: Shape = {
+  const baseShape: RectangleShape = {
     id: 'test-shape',
     type: 'rectangle',
     x: 100,
@@ -174,6 +174,9 @@ describe('calculateResize', () => {
     createdBy: 'user-1',
   }
 
+  // Helper to cast result to RectangleShape properties
+  const asRectResult = (result: Partial<Shape>) => result as Partial<RectangleShape>
+
   describe('Corner resize', () => {
     it('should resize from nw-corner', () => {
       const result = calculateResize(
@@ -184,8 +187,10 @@ describe('calculateResize', () => {
         baseShape
       )
       
-      expect(result.width).toBe(220) // width increases by 20
-      expect(result.height).toBe(120) // height increases by 20
+      // Since baseShape is a RectangleShape, result should have width/height
+      const rectResult = asRectResult(result)
+      expect(rectResult.width).toBe(220) // width increases by 20
+      expect(rectResult.height).toBe(120) // height increases by 20
       expect(result.x).toBe(80) // x moves left by 20
       expect(result.y).toBe(80) // y moves up by 20
     })
@@ -199,8 +204,10 @@ describe('calculateResize', () => {
         baseShape
       )
       
-      expect(result.width).toBe(220) // width increases by 20
-      expect(result.height).toBe(120) // height increases by 20
+      // Since baseShape is a RectangleShape, result should have width/height
+      const rectResult = asRectResult(result)
+      expect(rectResult.width).toBe(220) // width increases by 20
+      expect(rectResult.height).toBe(120) // height increases by 20
       expect(result.x).toBe(100) // x stays the same
       expect(result.y).toBe(100) // y stays the same
     })
@@ -214,8 +221,10 @@ describe('calculateResize', () => {
         baseShape
       )
       
-      expect(result.width).toBe(220) // width increases by 20
-      expect(result.height).toBe(120) // height increases by 20
+      // Since baseShape is a RectangleShape, result should have width/height
+      const rectResult = asRectResult(result)
+      expect(rectResult.width).toBe(220) // width increases by 20
+      expect(rectResult.height).toBe(120) // height increases by 20
       expect(result.x).toBe(100) // x stays the same
       expect(result.y).toBe(80) // y moves up by 20
     })
@@ -229,8 +238,11 @@ describe('calculateResize', () => {
         baseShape
       )
       
-      expect(result.width).toBe(220) // width increases by 20
-      expect(result.height).toBe(120) // height increases by 20
+      // Since baseShape is a RectangleShape, result should have width/height
+        const rectResult = asRectResult(result)
+      expect(rectResult.width).toBe(220) // width increases by 20
+        expect(rectResult.height).toBe(120) // height increases by 20
+
       expect(result.x).toBe(80) // x moves left by 20
       expect(result.y).toBe(100) // y stays the same
     })
@@ -246,8 +258,10 @@ describe('calculateResize', () => {
         baseShape
       )
       
-      expect(result.width).toBe(200) // width unchanged
-      expect(result.height).toBe(120) // height increases by 20
+      // Since baseShape is a RectangleShape, result should have width/height
+      const rectResult = asRectResult(result)
+      expect(rectResult.width).toBe(200) // width unchanged
+      expect(rectResult.height).toBe(120) // height increases by 20
       expect(result.x).toBe(100) // x unchanged
       expect(result.y).toBe(80) // y moves up by 20
     })
@@ -261,8 +275,11 @@ describe('calculateResize', () => {
         baseShape
       )
       
-      expect(result.width).toBe(200) // width unchanged
-      expect(result.height).toBe(120) // height increases by 20
+      // Since baseShape is a RectangleShape, result should have width/height
+        const rectResult = asRectResult(result)
+      expect(rectResult.width).toBe(200) // width unchanged
+        expect(rectResult.height).toBe(120) // height increases by 20
+
       expect(result.x).toBe(100) // x unchanged
       expect(result.y).toBe(100) // y unchanged
     })
@@ -276,8 +293,11 @@ describe('calculateResize', () => {
         baseShape
       )
       
-      expect(result.width).toBe(220) // width increases by 20
-      expect(result.height).toBe(100) // height unchanged
+      // Since baseShape is a RectangleShape, result should have width/height
+        const rectResult = asRectResult(result)
+      expect(rectResult.width).toBe(220) // width increases by 20
+        expect(rectResult.height).toBe(100) // height unchanged
+
       expect(result.x).toBe(80) // x moves left by 20
       expect(result.y).toBe(100) // y unchanged
     })
@@ -291,8 +311,11 @@ describe('calculateResize', () => {
         baseShape
       )
       
-      expect(result.width).toBe(220) // width increases by 20
-      expect(result.height).toBe(100) // height unchanged
+      // Since baseShape is a RectangleShape, result should have width/height
+        const rectResult = asRectResult(result)
+      expect(rectResult.width).toBe(220) // width increases by 20
+        expect(rectResult.height).toBe(100) // height unchanged
+
       expect(result.x).toBe(100) // x unchanged
       expect(result.y).toBe(100) // y unchanged
     })
@@ -310,7 +333,10 @@ describe('calculateResize', () => {
       )
       
       // Width should be distance from mouse to anchor
-      expect(result.width).toBe(50) // abs(50 - 100)
+      // Since baseShape is a RectangleShape, result should have width/height
+        const rectResult = asRectResult(result)
+      expect(rectResult.width).toBe(50) // abs(50 - 100)
+
       // X should follow the mouse (shape stays with cursor)
       expect(result.x).toBe(50)
     })
@@ -326,7 +352,10 @@ describe('calculateResize', () => {
       )
       
       // Height should be distance from mouse to anchor
-      expect(result.height).toBe(50) // abs(50 - 100)
+      // Since baseShape is a RectangleShape, result should have width/height
+      const rectResult = asRectResult(result)
+      expect(rectResult.height).toBe(50) // abs(50 - 100)
+
       // Y should follow the mouse (shape stays with cursor)
       expect(result.y).toBe(50)
     })
@@ -342,8 +371,11 @@ describe('calculateResize', () => {
       )
       
       // Both dimensions should be distance from mouse to anchor
-      expect(result.width).toBe(50) // abs(50 - 100)
-      expect(result.height).toBe(50) // abs(50 - 100)
+      // Since baseShape is a RectangleShape, result should have width/height
+        const rectResult = asRectResult(result)
+      expect(rectResult.width).toBe(50) // abs(50 - 100)
+        expect(rectResult.height).toBe(50) // abs(50 - 100)
+
       // Position should follow mouse
       expect(result.x).toBe(50)
       expect(result.y).toBe(50)
@@ -359,7 +391,10 @@ describe('calculateResize', () => {
         baseShape
       )
       
-      expect(result.width).toBeGreaterThanOrEqual(5) // MIN_SHAPE_SIZE
+      // Since baseShape is a RectangleShape, result should have width/height
+        const rectResult = asRectResult(result)
+      expect(rectResult.width).toBeGreaterThanOrEqual(5) // MIN_SHAPE_SIZE
+
     })
     
     it('should resize normally before flipping', () => {
@@ -373,8 +408,11 @@ describe('calculateResize', () => {
       )
       
       // Should grow normally
-      expect(result.width).toBe(220) // 320 - 100
-      expect(result.height).toBe(120) // 220 - 100
+      // Since baseShape is a RectangleShape, result should have width/height
+        const rectResult = asRectResult(result)
+      expect(rectResult.width).toBe(220) // 320 - 100
+        expect(rectResult.height).toBe(120) // 220 - 100
+
       expect(result.x).toBe(100) // anchor stays at (100, 100)
       expect(result.y).toBe(100)
     })
@@ -382,7 +420,7 @@ describe('calculateResize', () => {
 })
 
 describe('calculateRotation', () => {
-  const baseShape: Shape = {
+  const baseShape: RectangleShape = {
     id: 'test-shape',
     type: 'rectangle',
     x: 100,

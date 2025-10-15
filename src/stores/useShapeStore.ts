@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { ShapeState } from '../types'
+import { ShapeState, Shape } from '../types'
 
 /**
  * Shape Store
@@ -34,7 +34,7 @@ const useShapeStore = create<ShapeState>((set) => ({
           [id]: {
             ...existingShape,
             ...updates,
-          },
+          } as Shape,
         },
       }
     })

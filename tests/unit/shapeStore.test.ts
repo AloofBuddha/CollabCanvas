@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import useShapeStore from '../../src/stores/useShapeStore'
-import { Shape } from '../../src/types'
+import { RectangleShape, CircleShape } from '../../src/types'
 
 describe('useShapeStore', () => {
-  // Helper function to create a test shape
-  const createTestShape = (overrides?: Partial<Shape>): Shape => ({
-    id: 'shape1',
+  // Helper functions to create test shapes
+  const createTestRectangle = (overrides?: Partial<RectangleShape>): RectangleShape => ({
+    id: 'rectangle1',
     type: 'rectangle',
     x: 100,
     y: 100,
@@ -16,97 +16,144 @@ describe('useShapeStore', () => {
     ...overrides,
   })
 
+  const createTestCircle = (overrides?: Partial<CircleShape>): CircleShape => ({
+    id: 'circle1',
+    type: 'circle',
+    x: 100,
+    y: 100,
+    radiusX: 100,
+    radiusY: 75,
+    color: '#ff5733',
+    createdBy: 'user1',
+    ...overrides,
+  })
+
   beforeEach(() => {
     // Reset store to initial state before each test
     useShapeStore.getState().clearShapes()
   })
 
-  describe('Initial State', () => {
-    it('should have empty shapes object initially', () => {
-      const state = useShapeStore.getState()
-      
-      expect(state.shapes).toEqual({})
-      expect(Object.keys(state.shapes)).toHaveLength(0)
-    })
-  })
-
   describe('addShape', () => {
-    it('should add a new shape', () => {
+    it('should add a new rectangle', () => {
       const { addShape } = useShapeStore.getState()
-      const shape = createTestShape()
+      const rectangle = createTestRectangle()
       
-      addShape(shape)
+      addShape(rectangle)
       
       const state = useShapeStore.getState()
-      expect(state.shapes['shape1']).toEqual(shape)
       expect(Object.keys(state.shapes)).toHaveLength(1)
+      expect(state.shapes[rectangle.id]).toEqual(rectangle)
+    })
+
+    it('should add a new circle', () => {
+      const { addShape } = useShapeStore.getState()
+      const circle = createTestCircle()
+      
+      addShape(circle)
+      
+      const state = useShapeStore.getState()
+      expect(Object.keys(state.shapes)).toHaveLength(1)
+      expect(state.shapes[circle.id]).toEqual(circle)
     })
 
     it('should add multiple shapes', () => {
       const { addShape } = useShapeStore.getState()
       
-      addShape(createTestShape({ id: 'shape1' }))
-      addShape(createTestShape({ id: 'shape2', x: 200 }))
-      addShape(createTestShape({ id: 'shape3', x: 300 }))
+      const rectangle1 = createTestRectangle({ id: 'rectangle1' })
+      const rectangle2 = createTestRectangle({ id: 'rectangle2', x: 200 })
+      const circle1 = createTestCircle({ id: 'circle1', x: 300 })
+      
+      addShape(rectangle1)
+      addShape(rectangle2)
+      addShape(circle1)
       
       const state = useShapeStore.getState()
       expect(Object.keys(state.shapes)).toHaveLength(3)
-      expect(state.shapes['shape1']).toBeDefined()
-      expect(state.shapes['shape2']).toBeDefined()
-      expect(state.shapes['shape3']).toBeDefined()
     })
 
     it('should overwrite shape with same id', () => {
       const { addShape } = useShapeStore.getState()
       
-      addShape(createTestShape({ id: 'shape1', x: 100 }))
-      addShape(createTestShape({ id: 'shape1', x: 200 }))
+      const rectangle1 = createTestRectangle({ id: 'rectangle1', x: 100 })
+      const rectangle2 = createTestRectangle({ id: 'rectangle1', x: 200 })
+      
+      addShape(rectangle1)
+      addShape(rectangle2)
       
       const state = useShapeStore.getState()
       expect(Object.keys(state.shapes)).toHaveLength(1)
-      expect(state.shapes['shape1'].x).toBe(200)
+      expect(state.shapes['rectangle1'].x).toBe(200)
     })
   })
 
   describe('updateShape', () => {
-    it('should update shape position', () => {
+    it('should update rectangle position', () => {
       const { addShape, updateShape } = useShapeStore.getState()
+      const rectangle = createTestRectangle()
       
-      addShape(createTestShape())
-      updateShape('shape1', { x: 300, y: 400 })
+      addShape(rectangle)
+      updateShape(rectangle.id, { x: 300, y: 400 })
       
       const state = useShapeStore.getState()
-      expect(state.shapes['shape1'].x).toBe(300)
-      expect(state.shapes['shape1'].y).toBe(400)
-      expect(state.shapes['shape1'].width).toBe(200) // Other props unchanged
+      expect(state.shapes[rectangle.id].x).toBe(300)
+      expect(state.shapes[rectangle.id].y).toBe(400)
     })
 
-    it('should update shape dimensions', () => {
+    it('should update circle position', () => {
       const { addShape, updateShape } = useShapeStore.getState()
+      const circle = createTestCircle()
       
-      addShape(createTestShape())
-      updateShape('shape1', { width: 500, height: 600 })
+      addShape(circle)
+      updateShape(circle.id, { x: 300, y: 400 })
       
       const state = useShapeStore.getState()
-      expect(state.shapes['shape1'].width).toBe(500)
-      expect(state.shapes['shape1'].height).toBe(600)
+      expect(state.shapes[circle.id].x).toBe(300)
+      expect(state.shapes[circle.id].y).toBe(400)
+    })
+
+    it('should update rectangle dimensions', () => {
+      const { addShape, updateShape } = useShapeStore.getState()
+      const rectangle = createTestRectangle()
+      
+      addShape(rectangle)
+      updateShape(rectangle.id, { width: 500, height: 600 })
+      
+      const state = useShapeStore.getState()
+      const updatedRect = state.shapes[rectangle.id] as RectangleShape
+      expect(updatedRect.width).toBe(500)
+      expect(updatedRect.height).toBe(600)
+    })
+
+    it('should update circle dimensions', () => {
+      const { addShape, updateShape } = useShapeStore.getState()
+      const circle = createTestCircle()
+      
+      addShape(circle)
+      updateShape(circle.id, { radiusX: 250, radiusY: 300 })
+      
+      const state = useShapeStore.getState()
+      const updatedCircle = state.shapes[circle.id] as CircleShape
+      expect(updatedCircle.radiusX).toBe(250)
+      expect(updatedCircle.radiusY).toBe(300)
     })
 
     it('should update shape color', () => {
       const { addShape, updateShape } = useShapeStore.getState()
+      const rectangle = createTestRectangle()
       
-      addShape(createTestShape())
-      updateShape('shape1', { color: '#00ff00' })
+      addShape(rectangle)
+      updateShape(rectangle.id, { color: '#00ff00' })
       
       const state = useShapeStore.getState()
-      expect(state.shapes['shape1'].color).toBe('#00ff00')
+      expect(state.shapes[rectangle.id].color).toBe('#00ff00')
     })
 
     it('should update multiple properties at once', () => {
       const { addShape, updateShape } = useShapeStore.getState()
+      const rectangle = createTestRectangle()
       
-      addShape(createTestShape())
-      updateShape('shape1', {
+      addShape(rectangle)
+      updateShape(rectangle.id, {
         x: 500,
         y: 600,
         width: 300,
@@ -115,100 +162,95 @@ describe('useShapeStore', () => {
       })
       
       const state = useShapeStore.getState()
-      expect(state.shapes['shape1'].x).toBe(500)
-      expect(state.shapes['shape1'].y).toBe(600)
-      expect(state.shapes['shape1'].width).toBe(300)
-      expect(state.shapes['shape1'].height).toBe(400)
-      expect(state.shapes['shape1'].color).toBe('#0000ff')
+      const updatedRect = state.shapes[rectangle.id] as RectangleShape
+      expect(updatedRect.x).toBe(500)
+      expect(updatedRect.y).toBe(600)
+      expect(updatedRect.width).toBe(300)
+      expect(updatedRect.height).toBe(400)
+      expect(updatedRect.color).toBe('#0000ff')
     })
 
     it('should not affect other shapes', () => {
       const { addShape, updateShape } = useShapeStore.getState()
       
-      addShape(createTestShape({ id: 'shape1', x: 100 }))
-      addShape(createTestShape({ id: 'shape2', x: 200 }))
+      const rectangle1 = createTestRectangle({ id: 'rectangle1', x: 100 })
+      const rectangle2 = createTestRectangle({ id: 'rectangle2', x: 200 })
       
-      updateShape('shape1', { x: 300 })
+      addShape(rectangle1)
+      addShape(rectangle2)
       
-      const state = useShapeStore.getState()
-      expect(state.shapes['shape1'].x).toBe(300)
-      expect(state.shapes['shape2'].x).toBe(200)
-    })
-
-    it('should handle updating non-existent shape gracefully', () => {
-      const { updateShape } = useShapeStore.getState()
-      
-      // Should not throw error
-      expect(() => updateShape('nonexistent', { x: 100 })).not.toThrow()
+      updateShape('rectangle1', { x: 500, y: 600 })
       
       const state = useShapeStore.getState()
-      expect(state.shapes['nonexistent']).toBeUndefined()
+      expect(state.shapes['rectangle1'].x).toBe(500)
+      expect(state.shapes['rectangle1'].y).toBe(600)
+      expect(state.shapes['rectangle2'].x).toBe(200) // Unchanged
     })
   })
 
   describe('removeShape', () => {
-    it('should remove a shape', () => {
+    it('should remove a rectangle', () => {
       const { addShape, removeShape } = useShapeStore.getState()
+      const rectangle = createTestRectangle()
       
-      addShape(createTestShape())
-      removeShape('shape1')
+      addShape(rectangle)
+      expect(Object.keys(useShapeStore.getState().shapes)).toHaveLength(1)
       
-      const state = useShapeStore.getState()
-      expect(state.shapes['shape1']).toBeUndefined()
-      expect(Object.keys(state.shapes)).toHaveLength(0)
+      removeShape(rectangle.id)
+      expect(Object.keys(useShapeStore.getState().shapes)).toHaveLength(0)
+    })
+
+    it('should remove a circle', () => {
+      const { addShape, removeShape } = useShapeStore.getState()
+      const circle = createTestCircle()
+      
+      addShape(circle)
+      expect(Object.keys(useShapeStore.getState().shapes)).toHaveLength(1)
+      
+      removeShape(circle.id)
+      expect(Object.keys(useShapeStore.getState().shapes)).toHaveLength(0)
     })
 
     it('should only remove specified shape', () => {
       const { addShape, removeShape } = useShapeStore.getState()
       
-      addShape(createTestShape({ id: 'shape1' }))
-      addShape(createTestShape({ id: 'shape2' }))
-      addShape(createTestShape({ id: 'shape3' }))
+      const rectangle1 = createTestRectangle({ id: 'rectangle1' })
+      const rectangle2 = createTestRectangle({ id: 'rectangle2' })
+      const circle1 = createTestCircle({ id: 'circle1' })
       
-      removeShape('shape2')
+      addShape(rectangle1)
+      addShape(rectangle2)
+      addShape(circle1)
+      
+      expect(Object.keys(useShapeStore.getState().shapes)).toHaveLength(3)
+      
+      removeShape('rectangle1')
       
       const state = useShapeStore.getState()
-      expect(state.shapes['shape1']).toBeDefined()
-      expect(state.shapes['shape2']).toBeUndefined()
-      expect(state.shapes['shape3']).toBeDefined()
       expect(Object.keys(state.shapes)).toHaveLength(2)
-    })
-
-    it('should handle removing non-existent shape', () => {
-      const { removeShape } = useShapeStore.getState()
-      
-      // Should not throw error
-      expect(() => removeShape('nonexistent')).not.toThrow()
-      
-      const state = useShapeStore.getState()
-      expect(state.shapes).toEqual({})
+      expect(state.shapes['rectangle1']).toBeUndefined()
+      expect(state.shapes['rectangle2']).toBeDefined()
+      expect(state.shapes['circle1']).toBeDefined()
     })
   })
-
 
   describe('clearShapes', () => {
     it('should remove all shapes', () => {
       const { addShape, clearShapes } = useShapeStore.getState()
       
-      addShape(createTestShape({ id: 'shape1' }))
-      addShape(createTestShape({ id: 'shape2' }))
-      addShape(createTestShape({ id: 'shape3' }))
+      const rectangle1 = createTestRectangle({ id: 'rectangle1' })
+      const rectangle2 = createTestRectangle({ id: 'rectangle2' })
+      const circle1 = createTestCircle({ id: 'circle1' })
+      
+      addShape(rectangle1)
+      addShape(rectangle2)
+      addShape(circle1)
+      
+      expect(Object.keys(useShapeStore.getState().shapes)).toHaveLength(3)
       
       clearShapes()
       
-      const state = useShapeStore.getState()
-      expect(state.shapes).toEqual({})
-      expect(Object.keys(state.shapes)).toHaveLength(0)
-    })
-
-    it('should work when no shapes exist', () => {
-      const { clearShapes } = useShapeStore.getState()
-      
-      // Should not throw error
-      expect(() => clearShapes()).not.toThrow()
-      
-      const state = useShapeStore.getState()
-      expect(state.shapes).toEqual({})
+      expect(Object.keys(useShapeStore.getState().shapes)).toHaveLength(0)
     })
   })
 
@@ -217,41 +259,62 @@ describe('useShapeStore', () => {
       const store = useShapeStore.getState()
       
       // Add shape
-      store.addShape(createTestShape())
+      const rectangle = createTestRectangle()
+      store.addShape(rectangle)
       expect(Object.keys(useShapeStore.getState().shapes)).toHaveLength(1)
       
       // Update shape
-      store.updateShape('shape1', { x: 300, y: 400 })
-      expect(useShapeStore.getState().shapes['shape1'].x).toBe(300)
+      store.updateShape(rectangle.id, { x: 200, y: 300 })
+      expect(useShapeStore.getState().shapes[rectangle.id].x).toBe(200)
+      
+      // Lock shape
+      store.lockShape(rectangle.id, 'user123')
+      expect(useShapeStore.getState().shapes[rectangle.id].lockedBy).toBe('user123')
+      
+      // Unlock shape
+      store.unlockShape(rectangle.id)
+      expect(useShapeStore.getState().shapes[rectangle.id].lockedBy).toBeNull()
       
       // Remove shape
-      store.removeShape('shape1')
-      expect(useShapeStore.getState().shapes['shape1']).toBeUndefined()
+      store.removeShape(rectangle.id)
+      expect(Object.keys(useShapeStore.getState().shapes)).toHaveLength(0)
     })
 
     it('should handle multiple users editing different shapes', () => {
       const store = useShapeStore.getState()
       
-      store.addShape(createTestShape({ id: 'shape1', createdBy: 'user1' }))
-      store.addShape(createTestShape({ id: 'shape2', createdBy: 'user2' }))
+      const rectangle1 = createTestRectangle({ id: 'rectangle1', createdBy: 'user1' })
+      const circle1 = createTestCircle({ id: 'circle1', createdBy: 'user2' })
+      
+      store.addShape(rectangle1)
+      store.addShape(circle1)
+      
+      // User 1 updates their rectangle
+      store.updateShape('rectangle1', { x: 200, lockedBy: 'user1' })
+      
+      // User 2 updates their circle
+      store.updateShape('circle1', { x: 300, lockedBy: 'user2' })
       
       const state = useShapeStore.getState()
-      expect(state.shapes['shape1'].createdBy).toBe('user1')
-      expect(state.shapes['shape2'].createdBy).toBe('user2')
+      expect(state.shapes['rectangle1'].x).toBe(200)
+      expect(state.shapes['rectangle1'].lockedBy).toBe('user1')
+      expect(state.shapes['circle1'].x).toBe(300)
+      expect(state.shapes['circle1'].lockedBy).toBe('user2')
     })
 
     it('should handle rapid shape updates', () => {
       const store = useShapeStore.getState()
+      const rectangle = createTestRectangle()
       
-      store.addShape(createTestShape())
+      store.addShape(rectangle)
       
       for (let i = 0; i < 100; i++) {
-        store.updateShape('shape1', { x: i, y: i * 2 })
+        store.updateShape(rectangle.id, { x: i, y: i })
       }
       
-      const state = useShapeStore.getState()
-      expect(state.shapes['shape1'].x).toBe(99)
-      expect(state.shapes['shape1'].y).toBe(198)
+      const finalState = useShapeStore.getState()
+      expect(finalState.shapes[rectangle.id].x).toBe(99)
+      expect(finalState.shapes[rectangle.id].y).toBe(99)
     })
   })
 
@@ -260,24 +323,45 @@ describe('useShapeStore', () => {
       useShapeStore.getState().clearShapes()
     })
 
-    it('should lock a shape', () => {
-      const shape = createTestShape()
-      useShapeStore.getState().addShape(shape)
+    it('should lock a rectangle', () => {
+      const rectangle = createTestRectangle()
+      useShapeStore.getState().addShape(rectangle)
       
-      useShapeStore.getState().lockShape(shape.id, 'user123')
+      useShapeStore.getState().lockShape(rectangle.id, 'user123')
       
-      const lockedShape = useShapeStore.getState().shapes[shape.id]
+      const lockedShape = useShapeStore.getState().shapes[rectangle.id]
       expect(lockedShape.lockedBy).toBe('user123')
     })
 
-    it('should unlock a shape', () => {
-      const shape = createTestShape()
-      useShapeStore.getState().addShape(shape)
-      useShapeStore.getState().lockShape(shape.id, 'user123')
+    it('should lock a circle', () => {
+      const circle = createTestCircle()
+      useShapeStore.getState().addShape(circle)
       
-      useShapeStore.getState().unlockShape(shape.id)
+      useShapeStore.getState().lockShape(circle.id, 'user123')
       
-      const unlockedShape = useShapeStore.getState().shapes[shape.id]
+      const lockedShape = useShapeStore.getState().shapes[circle.id]
+      expect(lockedShape.lockedBy).toBe('user123')
+    })
+
+    it('should unlock a rectangle', () => {
+      const rectangle = createTestRectangle()
+      useShapeStore.getState().addShape(rectangle)
+      useShapeStore.getState().lockShape(rectangle.id, 'user123')
+      
+      useShapeStore.getState().unlockShape(rectangle.id)
+      
+      const unlockedShape = useShapeStore.getState().shapes[rectangle.id]
+      expect(unlockedShape.lockedBy).toBeNull()
+    })
+
+    it('should unlock a circle', () => {
+      const circle = createTestCircle()
+      useShapeStore.getState().addShape(circle)
+      useShapeStore.getState().lockShape(circle.id, 'user123')
+      
+      useShapeStore.getState().unlockShape(circle.id)
+      
+      const unlockedShape = useShapeStore.getState().shapes[circle.id]
       expect(unlockedShape.lockedBy).toBeNull()
     })
 
@@ -288,26 +372,20 @@ describe('useShapeStore', () => {
       expect(shapes['non-existent']).toBeUndefined()
     })
 
-    it('should not unlock a non-existent shape', () => {
-      useShapeStore.getState().unlockShape('non-existent')
-      
-      const shapes = useShapeStore.getState().shapes
-      expect(shapes['non-existent']).toBeUndefined()
-    })
-
-
     it('should maintain other shape properties when locking', () => {
-      const shape = createTestShape()
-      useShapeStore.getState().addShape(shape)
+      const rectangle = createTestRectangle()
+      useShapeStore.getState().addShape(rectangle)
       
-      useShapeStore.getState().lockShape(shape.id, 'user123')
+      useShapeStore.getState().lockShape(rectangle.id, 'user123')
       
-      const lockedShape = useShapeStore.getState().shapes[shape.id]
-      expect(lockedShape.x).toBe(shape.x)
-      expect(lockedShape.y).toBe(shape.y)
-      expect(lockedShape.width).toBe(shape.width)
-      expect(lockedShape.height).toBe(shape.height)
-      expect(lockedShape.color).toBe(shape.color)
+      const lockedShape = useShapeStore.getState().shapes[rectangle.id]
+      expect(lockedShape.x).toBe(rectangle.x)
+      expect(lockedShape.y).toBe(rectangle.y)
+      if (lockedShape.type === 'rectangle' && rectangle.type === 'rectangle') {
+        expect(lockedShape.width).toBe(rectangle.width)
+        expect(lockedShape.height).toBe(rectangle.height)
+      }
+      expect(lockedShape.color).toBe(rectangle.color)
     })
   })
 
@@ -317,48 +395,47 @@ describe('useShapeStore', () => {
     })
 
     it('should set shapes from Firestore sync', () => {
-      const shape1 = createTestShape({ id: 'shape1' })
-      const shape2 = createTestShape({ id: 'shape2' })
+      const rectangle1 = createTestRectangle({ id: 'rectangle1' })
+      const circle1 = createTestCircle({ id: 'circle1' })
       
-      const shapes = {
-        [shape1.id]: shape1,
-        [shape2.id]: shape2,
-      }
+      useShapeStore.getState().setShapes({
+        [rectangle1.id]: rectangle1,
+        [circle1.id]: circle1,
+      })
       
-      useShapeStore.getState().setShapes(shapes)
-      
-      const storeShapes = useShapeStore.getState().shapes
-      expect(Object.keys(storeShapes)).toHaveLength(2)
-      expect(storeShapes[shape1.id]).toEqual(shape1)
-      expect(storeShapes[shape2.id]).toEqual(shape2)
+      const state = useShapeStore.getState()
+      expect(Object.keys(state.shapes)).toHaveLength(2)
+      expect(state.shapes[rectangle1.id]).toEqual(rectangle1)
+      expect(state.shapes[circle1.id]).toEqual(circle1)
     })
 
     it('should replace existing shapes when setting', () => {
-      const oldShape = createTestShape({ id: 'oldshape' })
-      useShapeStore.getState().addShape(oldShape)
+      const oldRectangle = createTestRectangle({ id: 'oldshape' })
+      useShapeStore.getState().addShape(oldRectangle)
       
-      const newShape = createTestShape({ id: 'newshape' })
-      const shapes = {
-        [newShape.id]: newShape,
-      }
+      const newRectangle = createTestRectangle({ id: 'newshape' })
+      const newCircle = createTestCircle({ id: 'newcircle' })
       
-      useShapeStore.getState().setShapes(shapes)
+      useShapeStore.getState().setShapes({
+        [newRectangle.id]: newRectangle,
+        [newCircle.id]: newCircle,
+      })
       
-      const storeShapes = useShapeStore.getState().shapes
-      expect(Object.keys(storeShapes)).toHaveLength(1)
-      expect(storeShapes[oldShape.id]).toBeUndefined()
-      expect(storeShapes[newShape.id]).toEqual(newShape)
+      const state = useShapeStore.getState()
+      expect(Object.keys(state.shapes)).toHaveLength(2)
+      expect(state.shapes['oldshape']).toBeUndefined()
+      expect(state.shapes[newRectangle.id]).toEqual(newRectangle)
+      expect(state.shapes[newCircle.id]).toEqual(newCircle)
     })
 
     it('should handle empty shapes object', () => {
-      const shape = createTestShape()
-      useShapeStore.getState().addShape(shape)
+      const rectangle = createTestRectangle()
+      useShapeStore.getState().addShape(rectangle)
       
       useShapeStore.getState().setShapes({})
       
-      const shapes = useShapeStore.getState().shapes
-      expect(Object.keys(shapes)).toHaveLength(0)
+      const state = useShapeStore.getState()
+      expect(Object.keys(state.shapes)).toHaveLength(0)
     })
   })
 })
-

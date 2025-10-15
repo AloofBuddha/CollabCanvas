@@ -62,17 +62,34 @@ export function listenToShapes(
     
     snapshot.forEach((doc) => {
       const data = doc.data()
-      shapes[doc.id] = {
-        id: doc.id,
-        type: data.type || 'rectangle',
-        x: data.x || 0,
-        y: data.y || 0,
-        width: data.width || 0,
-        height: data.height || 0,
-        rotation: data.rotation || 0,
-        color: data.color || '#000000',
-        createdBy: data.createdBy || '',
-        lockedBy: data.lockedBy || null,
+      // Create shape based on type
+      if (data.type === 'circle') {
+        shapes[doc.id] = {
+          id: doc.id,
+          type: 'circle',
+          x: data.x || 0,
+          y: data.y || 0,
+          radiusX: data.radiusX || 0,
+          radiusY: data.radiusY || 0,
+          rotation: data.rotation || 0,
+          color: data.color || '#000000',
+          createdBy: data.createdBy || '',
+          lockedBy: data.lockedBy || null,
+        }
+      } else {
+        // Default to rectangle
+        shapes[doc.id] = {
+          id: doc.id,
+          type: 'rectangle',
+          x: data.x || 0,
+          y: data.y || 0,
+          width: data.width || 0,
+          height: data.height || 0,
+          rotation: data.rotation || 0,
+          color: data.color || '#000000',
+          createdBy: data.createdBy || '',
+          lockedBy: data.lockedBy || null,
+        }
       }
     })
     
@@ -189,17 +206,34 @@ export function listenToRTDBShapes(
     const shapes: Record<string, Shape> = {}
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.entries(data).forEach(([shapeId, shapeData]: [string, any]) => {
-      shapes[shapeId] = {
-        id: shapeId,
-        type: shapeData.type || 'rectangle',
-        x: shapeData.x || 0,
-        y: shapeData.y || 0,
-        width: shapeData.width || 0,
-        height: shapeData.height || 0,
-        rotation: shapeData.rotation || 0,
-        color: shapeData.color || '#000000',
-        createdBy: shapeData.createdBy || '',
-        lockedBy: shapeData.lockedBy || null,
+      // Create shape based on type
+      if (shapeData.type === 'circle') {
+        shapes[shapeId] = {
+          id: shapeId,
+          type: 'circle',
+          x: shapeData.x || 0,
+          y: shapeData.y || 0,
+          radiusX: shapeData.radiusX || 0,
+          radiusY: shapeData.radiusY || 0,
+          rotation: shapeData.rotation || 0,
+          color: shapeData.color || '#000000',
+          createdBy: shapeData.createdBy || '',
+          lockedBy: shapeData.lockedBy || null,
+        }
+      } else {
+        // Default to rectangle
+        shapes[shapeId] = {
+          id: shapeId,
+          type: 'rectangle',
+          x: shapeData.x || 0,
+          y: shapeData.y || 0,
+          width: shapeData.width || 0,
+          height: shapeData.height || 0,
+          rotation: shapeData.rotation || 0,
+          color: shapeData.color || '#000000',
+          createdBy: shapeData.createdBy || '',
+          lockedBy: shapeData.lockedBy || null,
+        }
       }
     })
 

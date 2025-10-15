@@ -2,7 +2,7 @@
 
 ## Current Rubric Grade Analysis
 
-**Overall Grade**: **44/100 (F)** | **Target**: 70-75/100 (C/C+) | **Stretch**: 80+/100 (B)
+**Overall Grade**: **46/100 (F)** | **Target**: 70-75/100 (C/C+) | **Stretch**: 80+/100 (B)
 
 ### Detailed Breakdown by Section
 
@@ -11,8 +11,8 @@
 - Conflict Resolution: 7/9 (Good - locking works, but prevents rather than resolves)
 - Persistence & Reconnection: 5/9 (Satisfactory - no offline queue, no connection UI)
 
-**Section 2: Canvas Features & Performance (9/20)**
-- Canvas Functionality: 3/8 (Poor - only 1 shape type, no text, no multi-select)
+**Section 2: Canvas Features & Performance (11/20)**
+- Canvas Functionality: 5/8 (Satisfactory - 2 shape types, no text, no multi-select)
 - Performance & Scalability: 6/12 (Satisfactory - only tested with 20 shapes, 2-3 users)
 
 **Section 3: Advanced Figma-Inspired Features (3/15)**
@@ -78,6 +78,8 @@
 - ✅ Document-level mouse listeners for smooth panning
 - ✅ Contextual cursors (pointer, crosshair, grabbing, resize, rotate)
 
+**Shape Types**
+
 **Rectangle Shapes**
 - ✅ Click-drag creation with rectangle tool
 - ✅ Selection with click (blue border for local, colored for remote)
@@ -89,6 +91,19 @@
 - ✅ Delete with Delete key
 - ✅ Dimension labels below selected shapes (width × height)
 - ✅ Auto-switch to select tool after creation
+
+**Circle/Ellipse Shapes**
+- ✅ Click-drag creation with circle tool
+- ✅ Selection with click (blue border for local, colored for remote)
+- ✅ Drag to move
+- ✅ Resize from corners (diagonal resize with smooth flipping)
+- ✅ Resize from edges (single-axis resize)
+- ✅ Rotate from corner zones (30px hit areas, pivots around center)
+- ✅ Alt+drag to duplicate (original stays in place, duplicate follows cursor)
+- ✅ Delete with Delete key
+- ✅ Dimension labels below selected shapes (radiusX × radiusY)
+- ✅ Auto-switch to select tool after creation
+- ✅ Polymorphic architecture supporting both shape types
 
 **Real-Time Collaboration**
 - ✅ Shape sync via Firestore (all users see updates ~200ms)

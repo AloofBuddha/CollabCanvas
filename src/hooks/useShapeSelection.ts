@@ -9,7 +9,7 @@ import Konva from 'konva'
 
 interface UseShapeSelectionProps {
   onDelete?: (shapeId: string) => void
-  tool: 'select' | 'rectangle'
+  tool: 'select' | 'rectangle' | 'circle'
 }
 
 export function useShapeSelection({ onDelete, tool }: UseShapeSelectionProps) {

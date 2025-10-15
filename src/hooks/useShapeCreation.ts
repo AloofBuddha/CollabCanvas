@@ -6,20 +6,22 @@
 
 import { useState } from 'react'
 import Konva from 'konva'
-import { Shape } from '../types'
+import { Shape, RectangleShape, CircleShape } from '../types'
 import { normalizeShape, hasMinimumSize, generateUniqueShapeId } from '../utils/canvasUtils'
 import { MIN_SHAPE_SIZE } from '../utils/canvasConstants'
 
 interface UseShapeCreationProps {
   userId: string | null
   onShapeCreated: (shape: Shape) => void
-  onToolChange: (tool: 'select' | 'rectangle') => void
+  onToolChange: (tool: 'select' | 'rectangle' | 'circle') => void
+  shapeType: 'rectangle' | 'circle'
 }
 
 export function useShapeCreation({
   userId,
   onShapeCreated,
   onToolChange,
+  shapeType,
 }: UseShapeCreationProps) {
   const [isDrawing, setIsDrawing] = useState(false)
   const [newShape, setNewShape] = useState<Shape | null>(null)
@@ -31,17 +33,34 @@ export function useShapeCreation({
     const pos = stage.getRelativePointerPosition()
     if (!pos) return
 
-    // Start creating a new rectangle
+    // Start creating a new shape based on shapeType
     const id = generateUniqueShapeId()
-    const shape: Shape = {
-      id,
-      type: 'rectangle',
-      x: pos.x,
-      y: pos.y,
-      width: 0,
-      height: 0,
-      color: '#D1D5DB', // Light gray - neutral color to make borders visible
-      createdBy: userId!,
+    let shape: Shape
+
+    if (shapeType === 'rectangle') {
+      shape = {
+        id,
+        type: 'rectangle',
+        x: pos.x,
+        y: pos.y,
+        width: 0,
+        height: 0,
+        color: '#D1D5DB', // Light gray - neutral color to make borders visible
+        createdBy: userId!,
+      } as RectangleShape
+    } else if (shapeType === 'circle') {
+      shape = {
+        id,
+        type: 'circle',
+        x: pos.x,
+        y: pos.y,
+        radiusX: 0,
+        radiusY: 0,
+        color: '#D1D5DB', // Light gray - neutral color to make borders visible
+        createdBy: userId!,
+      } as CircleShape
+    } else {
+      return
     }
 
     setNewShape(shape)
@@ -57,15 +76,24 @@ export function useShapeCreation({
     const pos = stage.getRelativePointerPosition()
     if (!pos) return
 
-    // Update rectangle size
-    const width = pos.x - newShape.x
-    const height = pos.y - newShape.y
-
-    setNewShape({
-      ...newShape,
-      width,
-      height,
-    })
+    // Update shape size based on type
+    if (newShape.type === 'rectangle') {
+      const width = pos.x - newShape.x
+      const height = pos.y - newShape.y
+      setNewShape({
+        ...newShape,
+        width,
+        height,
+      })
+    } else if (newShape.type === 'circle') {
+      const width = pos.x - newShape.x
+      const height = pos.y - newShape.y
+      setNewShape({
+        ...newShape,
+        radiusX: width / 2,
+        radiusY: height / 2,
+      })
+    }
   }
 
   const finishCreating = () => {

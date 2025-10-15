@@ -33,7 +33,11 @@ export function detectManipulationZone(
   mouseY: number,
   stageScale: number = 1
 ): HitResult {
-  const { x, y, width, height, rotation = 0 } = shape
+  const { x, y, rotation = 0 } = shape
+  
+  // Get shape dimensions polymorphically
+  const width = getShapeWidth(shape)
+  const height = getShapeHeight(shape)
   
   // Adjust hit sizes for zoom level (constant size in screen space)
   const cornerSize = CORNER_HIT_SIZE / stageScale
@@ -131,9 +135,13 @@ export function calculateResize(
   const { rotation = 0 } = originalShape
   const radians = -(rotation * Math.PI / 180)
   
+  // Get shape dimensions polymorphically
+  const originalWidth = getShapeWidth(originalShape)
+  const originalHeight = getShapeHeight(originalShape)
+  
   // Transform mouse position to local coordinates (accounting for rotation)
-  const centerX = originalShape.x + originalShape.width / 2
-  const centerY = originalShape.y + originalShape.height / 2
+  const centerX = originalShape.x + originalWidth / 2
+  const centerY = originalShape.y + originalHeight / 2
   const dx = mouseX - centerX
   const dy = mouseY - centerY
   const localMouseX = centerX + (dx * Math.cos(radians) - dy * Math.sin(radians))
@@ -148,8 +156,8 @@ export function calculateResize(
   switch (zone) {
     case 'nw-corner':
       // Anchor at SE corner
-      anchorX = originalShape.x + originalShape.width
-      anchorY = originalShape.y + originalShape.height
+      anchorX = originalShape.x + originalWidth
+      anchorY = originalShape.y + originalHeight
       useMouseX = true
       useMouseY = true
       break
@@ -157,14 +165,14 @@ export function calculateResize(
     case 'ne-corner':
       // Anchor at SW corner
       anchorX = originalShape.x
-      anchorY = originalShape.y + originalShape.height
+      anchorY = originalShape.y + originalHeight
       useMouseX = true
       useMouseY = true
       break
       
     case 'sw-corner':
       // Anchor at NE corner
-      anchorX = originalShape.x + originalShape.width
+      anchorX = originalShape.x + originalWidth
       anchorY = originalShape.y
       useMouseX = true
       useMouseY = true
@@ -181,7 +189,7 @@ export function calculateResize(
     case 'n-edge':
       // Anchor at bottom edge
       anchorX = originalShape.x
-      anchorY = originalShape.y + originalShape.height
+      anchorY = originalShape.y + originalHeight
       useMouseY = true
       break
       
@@ -194,7 +202,7 @@ export function calculateResize(
       
     case 'w-edge':
       // Anchor at right edge
-      anchorX = originalShape.x + originalShape.width
+      anchorX = originalShape.x + originalWidth
       anchorY = originalShape.y
       useMouseX = true
       break
@@ -215,8 +223,8 @@ export function calculateResize(
   // This automatically handles flipping when mouse goes past anchor
   let newX = originalShape.x
   let newY = originalShape.y
-  let newWidth = originalShape.width
-  let newHeight = originalShape.height
+  let newWidth = getShapeWidth(originalShape)
+  let newHeight = getShapeHeight(originalShape)
   
   if (useMouseX) {
     newX = Math.min(localMouseX, anchorX)
@@ -244,7 +252,14 @@ export function calculateResize(
     newY = centerY + rotatedDcy - newHeight / 2
   }
   
-  return { x: newX, y: newY, width: newWidth, height: newHeight }
+  // Return appropriate properties based on shape type
+  if (originalShape.type === 'rectangle') {
+    return { x: newX, y: newY, width: newWidth, height: newHeight }
+  } else if (originalShape.type === 'circle') {
+    return { x: newX, y: newY, radiusX: newWidth / 2, radiusY: newHeight / 2 }
+  }
+  
+  return {}
 }
 
 /**
@@ -258,8 +273,10 @@ export function calculateRotation(
   startMouseY: number,
   initialRotation: number = 0
 ): number {
-  const centerX = shape.x + shape.width / 2
-  const centerY = shape.y + shape.height / 2
+  const width = getShapeWidth(shape)
+  const height = getShapeHeight(shape)
+  const centerX = shape.x + width / 2
+  const centerY = shape.y + height / 2
   
   // Calculate angle from center to current mouse position
   const currentAngle = Math.atan2(mouseY - centerY, mouseX - centerX)
@@ -286,5 +303,33 @@ export function getPointerPosition(stage: Konva.Stage): { x: number, y: number }
   
   const transform = stage.getAbsoluteTransform().copy().invert()
   return transform.point(pointerPos)
+}
+
+// ============================================================================
+// Polymorphic Shape Helpers
+// ============================================================================
+
+/**
+ * Get shape width (for rectangles) or diameter (for circles)
+ */
+export function getShapeWidth(shape: Shape): number {
+  if (shape.type === 'rectangle') {
+    return shape.width
+  } else if (shape.type === 'circle') {
+    return shape.radiusX * 2
+  }
+  return 0
+}
+
+/**
+ * Get shape height (for rectangles) or diameter (for circles)
+ */
+export function getShapeHeight(shape: Shape): number {
+  if (shape.type === 'rectangle') {
+    return shape.height
+  } else if (shape.type === 'circle') {
+    return shape.radiusY * 2
+  }
+  return 0
 }
 

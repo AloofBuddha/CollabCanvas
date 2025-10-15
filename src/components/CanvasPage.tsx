@@ -30,7 +30,7 @@ import Header from './Header'
 import LoadingSpinner from './LoadingSpinner'
 import { Cursor, User, Shape } from '../types'
 
-type Tool = 'select' | 'rectangle'
+type Tool = 'select' | 'rectangle' | 'circle'
 
 /**
  * Canvas Page - Main collaborative canvas view
@@ -115,9 +115,9 @@ export default function CanvasPage() {
         })
       }
       
-      // After initial setup, we can unsubscribe from Firestore
-      // Keep it for now to detect external changes (e.g., admin edits)
-      // TODO: Consider unsubscribing after first load for better performance
+      // After initial setup, unsubscribe from Firestore to prevent conflicts with RTDB
+      // RTDB will handle all real-time updates, Firestore is only used for initial load
+      unsubscribeFirestoreShapes()
     })
 
     return () => {

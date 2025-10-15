@@ -7,6 +7,7 @@
 
 import { Text } from 'react-konva'
 import { Shape } from '../types'
+import { getShapeWidth, getShapeHeight } from '../utils/shapeManipulation'
 
 // Display constants
 const LABEL_FONT_SIZE = 14
@@ -19,13 +20,17 @@ interface ShapeDimensionLabelProps {
 }
 
 export default function ShapeDimensionLabel({ shape, stageScale }: ShapeDimensionLabelProps) {
-  const { x, y, width, height, rotation = 0 } = shape
+  const { x, y, rotation = 0 } = shape
+  
+  // Get shape dimensions polymorphically
+  const width = getShapeWidth(shape)
+  const height = getShapeHeight(shape)
   
   // Calculate the center of the shape
   const centerX = x + width / 2
   const centerY = y + height / 2
   
-  // Calculate all four corners of the rectangle before rotation
+  // Calculate all four corners of the shape before rotation
   const corners = [
     { x: x, y: y },                    // top-left
     { x: x + width, y: y },            // top-right
@@ -51,8 +56,15 @@ export default function ShapeDimensionLabel({ shape, stageScale }: ShapeDimensio
   const labelX = centerX
   const labelY = maxY
   
-  // Format dimensions (round to whole numbers)
-  const text = `${Math.round(width)} × ${Math.round(height)}`
+  // Format dimensions based on shape type
+  let text: string
+  if (shape.type === 'rectangle') {
+    text = `${Math.round(width)} × ${Math.round(height)}`
+  } else if (shape.type === 'circle') {
+    text = `${Math.round(shape.radiusX)} × ${Math.round(shape.radiusY)}`
+  } else {
+    text = `${Math.round(width)} × ${Math.round(height)}`
+  }
   
   // Scale font size inversely with zoom (constant size in screen space)
   const fontSize = LABEL_FONT_SIZE / stageScale

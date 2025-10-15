@@ -188,7 +188,7 @@ export function useShapeManipulation({
       updateShape(shape.id, updates)
       
       // Sync to RTDB for real-time updates (throttled)
-      const updatedShape = { ...shapes[shape.id], ...updates }
+      const updatedShape = { ...shapes[shape.id], ...updates } as Shape
       if (throttledRTDBSync.current) {
         throttledRTDBSync.current(updatedShape)
       }
