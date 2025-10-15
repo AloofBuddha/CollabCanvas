@@ -2,10 +2,21 @@
 
 ## Current Status
 
-**Phase**: Post-MVP Enhancement Phase  
-**Version**: v1.2 (In Progress)  
+**Phase**: Final Sprint - Rubric-Focused Enhancement (4 Days Remaining)  
+**Version**: v1.2 → v2.0 (Major Upgrade)  
 **Last Completed**: PR #10 - Alt+Drag Shape Duplication  
 **Live Production**: https://collab-canvas-ben-cohen.vercel.app/
+
+**Current Grade**: **44/100 (F)** | **Target**: **70-75/100 (C/C+)** | **Stretch**: **80+/100 (B)**
+
+## 🚨 Critical Priority Shift 🚨
+
+The project is being evaluated against a comprehensive rubric. Based on analysis:
+- **Biggest Gap**: AI Canvas Agent (0/25 points) - CRITICAL
+- **Second Gap**: Limited shape types (only rectangles, need 3+)
+- **Third Gap**: Performance/testing not validated against rubric standards
+
+**Revised Strategy**: Build feature-rich canvas FIRST (shapes, colors, multi-select), THEN implement AI agent with meaningful commands.
 
 ## Recent Changes (PR #10 - Just Completed) ✅
 
@@ -53,51 +64,82 @@
 - Fixed React key warning using Fragment components
 - Rotation zones start right at corner edge (no gap)
 
-## Current Work Focus
+## Current Work Focus - 4-Day Sprint Plan
 
-### Next Feature: Additional Shape Types 📋
+### **Day 1: Shape Library + Color Foundation**
+**PRs #11-14**: Circle, Line, Text shapes + Color Picker  
+**Rubric Impact**: Section 2 (+5-6 pts), Section 3 (+2 pts)
 
-**Priority Order**:
-1. **Circle/Ellipse**
-   - Reuse manipulation logic from rectangles
-   - Resize from corners/edges
-   - Rotation less relevant (but keep for consistency)
-   - Center-based creation vs corner-based?
+This builds the foundation for the AI agent. Without these, AI commands would be limited to rectangles only.
 
-2. **Line/Arrow**
-   - Two-point creation (start and end)
-   - Resize by dragging endpoints
-   - Rotation implicitly handled by endpoints
-   - Arrow head as optional property
+### **Day 2: Multi-Select + Keyboard Shortcuts**
+**PRs #15-16**: Multi-select with shift-click, Arrow nudging, keyboard shortcuts  
+**Rubric Impact**: Section 2 (+2-3 pts), Section 3 (+2 pts)
 
-3. **Text**
-   - Click to create, enter text mode
-   - Inline editing with contentEditable or input
-   - Font size, color, alignment properties
-   - Auto-resize vs fixed width?
+Multi-select enables group operations for AI ("arrange these shapes in a row").
 
-**Shared Concerns**:
-- Shape type selector in toolbar (radio buttons or dropdown?)
-- Polymorphic shape type in Firestore (add `type` field, already exists)
-- Shape-specific rendering logic (switch statement or component map?)
-- Manipulation zone differences per shape type
+### **Days 2-3: AI Canvas Agent (CRITICAL 25 POINTS)**
+**PR #17**: Full AI integration with 8+ commands  
+**Rubric Impact**: Section 4 (target 15-18/25 pts = Good tier)
+
+Now the AI has:
+- 4 shape types (rectangle, circle, line, text)
+- Color manipulation
+- Multi-select and group operations
+- Rich command possibilities ("create a login form", "make a navigation bar")
+
+### **Day 3: Testing & Performance Validation**
+**PR #18**: Rubric-specific testing scenarios  
+**Rubric Impact**: Section 1 (+3-5 pts), Section 2 (+2-3 pts)
+
+Validate conflict resolution, persistence, reconnection, and performance with 100-300+ shapes.
+
+### **Day 4: Required Deliverables**
+- AI Development Log (required for pass)
+- Demo Video (avoid -10 penalty)
+- Final polish
+
+### Next Immediate Task: PR #11 - Circle Shape
+
+**Implementation Focus**:
+1. **Circle.tsx component** - Use Konva Circle or Ellipse
+2. **Corner-based creation** - Like rectangles, drag from corner (more intuitive than center-based)
+3. **Resize logic** - Corner drag changes both radii, edge drag changes single radius
+4. **Reuse manipulation patterns** - From Rectangle.tsx (zones, cursors, locking)
+5. **Firestore schema** - Add `radiusX`, `radiusY` fields to shape type
 
 ## Active Decisions & Considerations
 
-### Shape Type Architecture Decisions
-- **Decision needed**: How to extend shape rendering?
-  - **Option A**: Single Shape component with type switch
-  - **Option B**: Separate components (Rectangle, Circle, Line) with shared base
-  - **Recommendation**: Option B (better separation, easier to maintain)
+### Rubric-Driven Decisions
 
-- **Decision needed**: How to unify manipulation logic?
-  - **Option A**: Shared hooks (useManipulation) for all shapes
-  - **Option B**: Per-shape manipulation with duplicated code
-  - **Recommendation**: Option A (DRY principle, consistent behavior)
+**1. AI Provider Choice (PR #17)**
+- **Options**: OpenAI GPT-4, Anthropic Claude, Google Gemini
+- **Consideration**: Cost, latency (<3s target), accuracy (80%+)
+- **Recommendation**: Start with OpenAI GPT-4 (proven canvas/code generation), fallback to Claude if needed
+
+**2. Color Picker Implementation (PR #14)**
+- **Options**: Library (react-color) vs custom simple picker
+- **Consideration**: Time constraint vs feature richness
+- **Recommendation**: Custom simple picker (8-10 presets + recent colors) - faster to implement
+
+**3. Multi-Select State Management (PR #15)**
+- **Options**: Array of IDs vs Set vs new selection object
+- **Consideration**: Firestore locking (multiple shapes), performance
+- **Recommendation**: Array of IDs in `selectedShapeIds` - simple, works with existing lock logic
+
+**4. Text Editing UX (PR #13)**
+- **Options**: Konva Text + Transformer vs HTML overlay vs contentEditable
+- **Consideration**: Real-time sync, multi-user conflicts, cursor positioning
+- **Recommendation**: HTML input overlay (absolute positioned) - easier to handle editing state
+
+### Shape Type Architecture (Decided)
+- ✅ **Separate components** (Rectangle, Circle, Line, Text) with shared manipulation patterns
+- ✅ **Polymorphic Firestore schema** - `type` field + nullable shape-specific fields
+- ✅ **Component map** - Canvas component switches rendering based on `shape.type`
 
 ## Current Blockers
 
-**None** - Ready to implement alt+drag duplication
+**None** - Clear path forward with rubric-focused plan
 
 ## Open Technical Questions
 
@@ -160,43 +202,67 @@
 - Integration tests: 4 passing (Firebase connectivity)
 - Manual testing: Regularly tested with 2-3 browser windows
 
-## Next Session Priorities
+## Next Session Priorities (In Order)
 
-1. **Immediate**: Implement alt+drag duplication
-   - Start with keyboard event tracking
-   - Add duplication logic to Rectangle component
-   - Write unit tests
-   - Manual test multi-user duplication
+### 1. **PR #11: Circle Shape** (Start immediately)
+   - Create `Circle.tsx` component
+   - Copy manipulation patterns from `Rectangle.tsx`
+   - Update `Canvas.tsx` to render circles
+   - Update `types/shape.ts` to include circle type
+   - Add circle tool to `Toolbar.tsx`
+   - 10-15 unit tests
 
-2. **Next PR**: Add circle/ellipse shape
-   - Create Circle component with Konva Circle primitive
-   - Reuse manipulation logic (resize, rotate)
-   - Add circle tool to toolbar
-   - Update Firestore types to support circle fields
-
-3. **Follow-up PR**: Add line/arrow shape
-   - Create Line component with Konva Line primitive
-   - Two-point manipulation (drag endpoints)
-   - Optional arrow head rendering
+### 2. **PR #12: Line Shape** (Same day)
+   - Create `Line.tsx` component
+   - Two-point creation + endpoint manipulation
+   - Update Canvas and types
    - Add line tool to toolbar
+   - 8-12 unit tests
+
+### 3. **PR #13: Text Shape** (End of Day 1)
+   - Create `Text.tsx` component with HTML overlay editing
+   - Double-click to edit, Escape to exit
+   - Update Canvas and types
+   - Add text tool to toolbar
+   - 10-15 unit tests
+
+### 4. **PR #14: Color Picker** (Early Day 2)
+   - Simple custom picker (presets + recent colors)
+   - Show when shape selected
+   - Update all shape types to support color changes
+   - 5-8 unit tests
+
+### 5. **PR #15: Multi-Select** (Day 2)
+   - Shift+click to add to selection
+   - Multi-drag, multi-delete
+   - Update locking for multiple shapes
+   - 15-20 unit tests
 
 ## Context for Next Session
 
-When resuming work:
-1. **Read this file first** to understand current state
-2. **Check tasks.md** for detailed PR checklist
-3. **Review architecture.md** for system design patterns
-4. **Check progress.md** for what's working and what's not
-5. Start with alt+drag duplication implementation
+**Current Rubric Score**: 44/100 (F)  
+**Critical Gap**: AI Agent (0/25 points)  
+**Strategy**: Build rich canvas features first, then AI agent can create "login forms" and "navigation bars"
 
-**Key files to focus on**:
-- `src/components/Rectangle.tsx` - Add duplication logic here
-- `src/stores/useShapeStore.ts` - Add duplicate action
-- `tests/unit/components/Rectangle.test.tsx` - Add duplication tests
+**Key Implementation Pattern to Follow**:
+1. Copy `Rectangle.tsx` as starting template
+2. Modify shape-specific rendering (Konva.Circle vs Konva.Rect)
+3. Adapt manipulation zones (circles: radii, lines: endpoints, text: width)
+4. Update Firestore type union in `types/shape.ts`
+5. Add to Canvas component's shape renderer
+6. Add tool button to Toolbar
+7. Write unit tests for creation, manipulation, sync
 
-**Helpful context from previous work**:
-- PR #9 added comprehensive manipulation zones (body, corners, edges, rotation)
-- Locking mechanism prevents concurrent edits
-- Firestore sync happens on `onMouseUp` for performance
-- Cursor updates throttled to 50ms for performance
+**Files to Focus On**:
+- `src/components/Rectangle.tsx` - Reference implementation
+- `src/types/shape.ts` - Add new shape type unions
+- `src/components/Canvas.tsx` - Add shape rendering logic
+- `src/components/Toolbar.tsx` - Add new tool buttons
+- `src/stores/useShapeStore.ts` - Should work without changes (polymorphic)
+
+**Helpful Context**:
+- Manipulation zones: body (move), corners (resize diagonal), edges (resize axis), rotation zones (30px outside)
+- Locking: Set `lockedBy` on mouseDown, clear on mouseUp or deselect
+- Firestore sync: Optimistic local update, background Firestore write
+- All shapes use same base fields: `id`, `type`, `lockedBy`, `createdBy`, `createdAt`
 

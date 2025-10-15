@@ -1,5 +1,63 @@
 # Progress: CollabCanvas
 
+## Current Rubric Grade Analysis
+
+**Overall Grade**: **44/100 (F)** | **Target**: 70-75/100 (C/C+) | **Stretch**: 80+/100 (B)
+
+### Detailed Breakdown by Section
+
+**Section 1: Core Collaborative Infrastructure (19/30)**
+- Real-Time Synchronization: 7/12 (Satisfactory - 200ms shape sync, not sub-100ms)
+- Conflict Resolution: 7/9 (Good - locking works, but prevents rather than resolves)
+- Persistence & Reconnection: 5/9 (Satisfactory - no offline queue, no connection UI)
+
+**Section 2: Canvas Features & Performance (9/20)**
+- Canvas Functionality: 3/8 (Poor - only 1 shape type, no text, no multi-select)
+- Performance & Scalability: 6/12 (Satisfactory - only tested with 20 shapes, 2-3 users)
+
+**Section 3: Advanced Figma-Inspired Features (3/15)**
+- Poor tier: Only alt+drag duplication (~1 Tier 1 feature)
+- Need: 2-3 Tier 1 OR 1 Tier 2 for satisfactory
+
+**Section 4: AI Canvas Agent (0/25)** ⚠️ CRITICAL GAP
+- Not implemented
+
+**Section 5: Technical Implementation (8/10)**
+- Architecture Quality: 4/5 (Good)
+- Authentication & Security: 4/5 (Good)
+
+**Section 6: Documentation & Submission (5/5)**
+- Repository & Setup: 3/3 (Excellent)
+- Deployment: 2/2 (Excellent)
+
+**Section 7: AI Development Log (NOT DONE)** - Required for pass
+
+**Section 8: Demo Video (NOT DONE)** - Missing = -10 point penalty
+
+### Path to C Grade (70-75 points)
+
+**Priority 1: Shape Library + Color (PRs #11-14)**
+- Add circle, line, text shapes → Section 2: +5-6 pts
+- Add color picker → Section 3: +2 pts
+
+**Priority 2: Multi-Select + Shortcuts (PRs #15-16)**
+- Multi-select → Section 2: +2-3 pts
+- Keyboard shortcuts → Section 3: +2 pts
+
+**Priority 3: AI Agent (PR #17)**
+- 8+ commands, good execution → Section 4: +15-18 pts
+
+**Priority 4: Testing (PR #18)**
+- Conflict scenarios, performance validation → Section 1: +3-5 pts, Section 2: +2-3 pts
+
+**Priority 5: Deliverables**
+- AI Development Log (required)
+- Demo Video (avoid -10 penalty)
+
+**Projected Final**: 73-82/100 (C to B-)
+
+---
+
 ## What's Working (Production-Ready)
 
 ### Core Features ✅
@@ -86,34 +144,138 @@
 - ✅ Authentication required for all canvas access
 - ✅ JWT tokens auto-attached to database requests
 
-## What's Left to Build
+## What's Left to Build (Prioritized by Rubric Impact)
 
-### Next Up (Planned)
+### Critical Path - Next 4 Days
 
-**PR #11: Circle/Ellipse Shape** 🔄 (NEXT)
+**Day 1: Shape Library + Color (PRs #11-14)**
+
+**PR #11: Circle Shape** 🔄 (IMMEDIATE)
 - [ ] Circle component with Konva Circle/Ellipse
-- [ ] Circle creation tool (click-drag from center or corner?)
-- [ ] Reuse manipulation logic (resize, rotate)
-- [ ] Update Firestore schema to support radiusX/radiusY
-- [ ] Add circle icon to toolbar
-- [ ] Unit tests for circle-specific logic
+- [ ] Corner-based creation (like rectangles)
+- [ ] Resize from corners/edges (radii adjustment)
+- [ ] Drag to move, rotation support
+- [ ] Update Firestore types (radiusX, radiusY)
+- [ ] 10-15 unit tests
+- **Rubric Impact**: Section 2 +1-2 pts
 
-**PR #12: Line/Arrow Shape**
+**PR #12: Line Shape**
 - [ ] Line component with Konva Line
-- [ ] Two-point creation (start and end)
-- [ ] Endpoint manipulation (drag to resize)
-- [ ] Optional arrow head rendering
-- [ ] Update Firestore schema for x1/y1/x2/y2
-- [ ] Add line/arrow icons to toolbar
+- [ ] Two-point creation (click-drag)
+- [ ] Endpoint manipulation (drag either end)
+- [ ] Stroke color and width properties
+- [ ] Update Firestore types (x1, y1, x2, y2, strokeWidth)
+- [ ] 8-12 unit tests
+- **Rubric Impact**: Section 2 +1-2 pts
 
 **PR #13: Text Shape**
 - [ ] Text component with Konva Text
-- [ ] Click-to-create with inline editing mode
-- [ ] Text input field or contentEditable integration
-- [ ] Font size, color, alignment properties
-- [ ] Auto-resize or fixed width?
-- [ ] Update Firestore schema for text fields
-- [ ] Add text icon to toolbar
+- [ ] HTML overlay for editing (absolute positioned input)
+- [ ] Double-click to edit, Escape to exit
+- [ ] Font size, family, color properties
+- [ ] Resize to adjust width (text wraps)
+- [ ] Update Firestore types (text, fontSize, fontFamily, textColor)
+- [ ] 10-15 unit tests
+- **Rubric Impact**: Section 2 +2-3 pts (critical for AI "create login form")
+
+**PR #14: Color Picker**
+- [ ] Custom simple picker (8-10 presets + recent 5 colors)
+- [ ] Show when shape selected (toolbar or floating)
+- [ ] Update fill color (rectangles, circles)
+- [ ] Update stroke color (lines)
+- [ ] Update text color (text shapes)
+- [ ] Real-time Firestore sync
+- [ ] 5-8 unit tests
+- **Rubric Impact**: Section 3 Tier 1 +2 pts
+
+**Day 2: Multi-Select + Shortcuts (PRs #15-16)**
+
+**PR #15: Multi-Select**
+- [ ] Shift+click to add/remove from selection
+- [ ] Track array of selected IDs in store
+- [ ] Visual feedback (blue borders on all selected)
+- [ ] Multi-drag (maintain relative positions)
+- [ ] Multi-delete (Delete key)
+- [ ] Update locking (lock all selected shapes)
+- [ ] Prevent multi-select if any shape locked by another
+- [ ] Multi-select count indicator UI
+- [ ] 15-20 unit tests
+- **Rubric Impact**: Section 2 +2-3 pts, Section 3 potential
+
+**PR #16: Keyboard Shortcuts**
+- [ ] Arrow keys: Nudge 1px
+- [ ] Shift+Arrow: Nudge 10px
+- [ ] Cmd/Ctrl+D: Duplicate
+- [ ] Escape: Deselect all
+- [ ] Cmd/Ctrl+A: Select all
+- [ ] Document in README/help panel
+- [ ] 8-10 unit tests
+- **Rubric Impact**: Section 3 Tier 1 +2 pts
+
+**Days 2-3: AI Canvas Agent (PR #17)** 🤖
+
+**PR #17: AI Integration (25 POINTS AVAILABLE)**
+- [ ] Choose AI provider (OpenAI GPT-4 recommended)
+- [ ] Secure API key management
+- [ ] AI service module (src/services/aiAgent.ts)
+- [ ] Command input UI (floating panel or toolbar)
+- [ ] Loading/thinking indicator
+- [ ] 8+ commands across all categories:
+  - Creation: "Create a [color] [shape] at [position]"
+  - Manipulation: "Move/resize/rotate/color [shape]"
+  - Layout: "Arrange [shapes] in row/grid"
+  - Complex: "Create a login form" (3-4 arranged elements)
+- [ ] Parse AI response → canvas operations
+- [ ] Sub-3 second response times
+- [ ] 80%+ accuracy
+- [ ] Multi-user AI support (concurrent commands)
+- [ ] 10-15 unit tests for AI service
+- [ ] 5-8 integration tests for command execution
+- **Rubric Impact**: Section 4 +15-18 pts (target Good tier)
+
+**Day 3: Testing & Performance (PR #18)**
+
+**PR #18: Rubric Validation**
+- [ ] Conflict resolution tests:
+  - Simultaneous move (2 users drag same shape)
+  - Rapid edit storm (resize+color+move simultaneously)
+  - Delete vs edit collision
+  - Create collision (simultaneous creation)
+- [ ] Persistence tests:
+  - Mid-operation refresh
+  - Total disconnect (all users leave, return)
+  - Network simulation (throttle to 0 for 30s)
+- [ ] Connection status UI indicator
+- [ ] Consider offline queue implementation
+- [ ] FPS monitoring overlay
+- [ ] Test with 100+ shapes
+- [ ] Test with 300+ shapes (document results)
+- [ ] Test with 5+ concurrent users
+- [ ] Profile bottlenecks
+- [ ] Document results in progress.md
+- **Rubric Impact**: Section 1 +3-5 pts, Section 2 +2-3 pts
+
+**Day 4: Required Deliverables**
+
+**AI Development Log** (Required for pass)
+- [ ] 2-3 page reflection covering 3 of 5 sections:
+  - Tools & Workflow used
+  - 3-5 effective prompting strategies
+  - Code analysis (% AI vs hand-written)
+  - Strengths & limitations
+  - Key learnings
+
+**Demo Video** (Required - avoid -10 penalty)
+- [ ] 3-5 minute video
+- [ ] Show 2+ browser windows (real-time collab)
+- [ ] Create/manipulate shapes, change colors
+- [ ] Multi-select and group operations
+- [ ] 5-8 AI commands (all categories)
+- [ ] Advanced features showcase
+- [ ] Brief architecture explanation
+- [ ] Clear audio and video
+- [ ] Upload to YouTube/Loom
+- [ ] Add link to README
 
 ### Backlog (Future)
 
