@@ -7,6 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { useAIAgent } from '../../src/hooks/useAIAgent'
+import type { AICommandResponse } from '../../src/types/aiAgent'
 
 // Mock the AI agent service
 vi.mock('../../src/services/aiAgent', () => ({
@@ -86,9 +87,9 @@ describe('useAIAgent Hook', () => {
     const { parseCommand } = await import('../../src/services/commandParser')
 
     const mockResponse = {
-      action: 'createShape',
+      action: 'createShape' as const,
       shape: {
-        type: 'circle',
+        type: 'circle' as const,
         x: 100,
         y: 200,
         radiusX: 50,
@@ -99,7 +100,7 @@ describe('useAIAgent Hook', () => {
 
     const mockShape = {
       id: 'shape-123',
-      type: 'circle',
+      type: 'circle' as const,
       x: 100,
       y: 200,
       radiusX: 50,
@@ -144,9 +145,9 @@ describe('useAIAgent Hook', () => {
 
     const mockResponse = [
       {
-        action: 'createShape',
+        action: 'createShape' as const,
         shape: {
-          type: 'circle',
+          type: 'circle' as const,
           x: 100,
           y: 200,
           radiusX: 50,
@@ -155,9 +156,9 @@ describe('useAIAgent Hook', () => {
         }
       },
       {
-        action: 'createShape',
+        action: 'createShape' as const,
         shape: {
-          type: 'circle',
+          type: 'circle' as const,
           x: 150,
           y: 250,
           radiusX: 10,
@@ -168,8 +169,8 @@ describe('useAIAgent Hook', () => {
     ]
 
     const mockShapes = [
-      { id: 'shape-1', type: 'circle', x: 100, y: 200 },
-      { id: 'shape-2', type: 'circle', x: 150, y: 250 }
+      { id: 'shape-1', type: 'circle' as const, x: 100, y: 200, radiusX: 50, radiusY: 50, color: '#FFFF00', createdBy: mockUserId, rotation: 0 },
+      { id: 'shape-2', type: 'circle' as const, x: 150, y: 250, radiusX: 10, radiusY: 10, color: '#000000', createdBy: mockUserId, rotation: 0 }
     ]
 
     vi.mocked(executeCommand).mockResolvedValue(mockResponse)
@@ -284,13 +285,25 @@ describe('useAIAgent Hook', () => {
     const { executeCommand } = await import('../../src/services/aiAgent')
     const { parseCommand } = await import('../../src/services/commandParser')
 
-    let resolveExecute: (value: unknown) => void
-    const executePromise = new Promise((resolve) => {
+    let resolveExecute: (value: AICommandResponse) => void
+    const executePromise = new Promise<AICommandResponse>((resolve) => {
       resolveExecute = resolve
     })
 
+    const mockShape = { 
+      id: 'shape-1', 
+      type: 'circle' as const, 
+      x: 100, 
+      y: 200, 
+      radiusX: 50, 
+      radiusY: 50, 
+      color: '#FF0000', 
+      createdBy: mockUserId, 
+      rotation: 0 
+    }
+
     vi.mocked(executeCommand).mockReturnValue(executePromise)
-    vi.mocked(parseCommand).mockReturnValue([{ id: 'shape-1' }])
+    vi.mocked(parseCommand).mockReturnValue([mockShape])
 
     const { result } = renderHook(() =>
       useAIAgent({
