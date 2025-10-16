@@ -1,13 +1,16 @@
 import { MousePointer2, Square, Circle, Pen, Type } from 'lucide-react'
+import AIAgentButton from './AIAgent/AIAgentButton'
 
 type Tool = 'select' | 'rectangle' | 'circle' | 'line' | 'text'
 
 interface ToolbarProps {
   selectedTool: Tool
   onSelectTool: (tool: Tool) => void
+  isAIAgentOpen: boolean
+  onToggleAIAgent: () => void
 }
 
-export default function Toolbar({ selectedTool, onSelectTool }: ToolbarProps) {
+export default function Toolbar({ selectedTool, onSelectTool, isAIAgentOpen, onToggleAIAgent }: ToolbarProps) {
   const tools: { id: Tool; icon: typeof Square; label: string }[] = [
     { id: 'select', icon: MousePointer2, label: 'Select' },
     { id: 'rectangle', icon: Square, label: 'Rectangle' },
@@ -50,6 +53,12 @@ export default function Toolbar({ selectedTool, onSelectTool }: ToolbarProps) {
             </button>
           )
         })}
+        
+        {/* Divider */}
+        <div className="w-px h-10 bg-gray-200 mx-1" />
+        
+        {/* AI Agent Button */}
+        <AIAgentButton isActive={isAIAgentOpen} onClick={onToggleAIAgent} />
       </div>
     </div>
   )

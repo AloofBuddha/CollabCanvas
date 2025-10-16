@@ -36,6 +36,7 @@ interface CanvasProps {
   onShapeUnlock?: (shapeId: string) => void
   onBatchShapeLock?: (shapeIds: string[]) => void
   onBatchShapeUnlock?: (shapeIds: string[]) => void
+  onDetailPaneVisibilityChange?: (isOpen: boolean) => void
 }
 
 export default function Canvas({
@@ -49,6 +50,7 @@ export default function Canvas({
   onShapeUnlock,
   onBatchShapeLock,
   onBatchShapeUnlock,
+  onDetailPaneVisibilityChange,
 }: CanvasProps) {
   const stageRef = useRef<Konva.Stage>(null)
   const [stageScale, setStageScale] = useState(1)
@@ -569,6 +571,11 @@ export default function Canvas({
     }
   }
   
+  // Track detail pane visibility for parent component
+  useEffect(() => {
+    const isDetailPaneVisible = !!(selectedShapeId && selectedShapeIds.size === 1 && shapes[selectedShapeId])
+    onDetailPaneVisibilityChange?.(isDetailPaneVisible)
+  }, [selectedShapeId, selectedShapeIds.size, shapes, onDetailPaneVisibilityChange])
 
   return (
     <div

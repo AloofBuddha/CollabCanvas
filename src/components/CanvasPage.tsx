@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { signOut } from '../utils/auth'
+import toast, { Toaster } from 'react-hot-toast'
 import {
   initCursorSync,
   listenToRemoteCursors,
@@ -29,6 +30,9 @@ import Canvas from './Canvas'
 import Toolbar from './Toolbar'
 import Header from './Header'
 import LoadingSpinner from './LoadingSpinner'
+import AICommandInput from './AIAgent/AICommandInput'
+import { useAIAgent } from '../hooks/useAIAgent'
+import { CanvasContext } from '../types/aiAgent'
 import { Cursor, User, Shape } from '../types'
 
 type Tool = 'select' | 'rectangle' | 'circle' | 'line' | 'text'
@@ -38,11 +42,28 @@ type Tool = 'select' | 'rectangle' | 'circle' | 'line' | 'text'
  */
 export default function CanvasPage() {
   const { userId, displayName, color } = useUserStore()
-  const { lockShape, unlockShape, addShape, removeShape } = useShapeStore()
+  const { lockShape, unlockShape, addShape, removeShape, shapes } = useShapeStore()
   const [selectedTool, setSelectedTool] = useState<Tool>('select')
   const [onlineUsers, setOnlineUsers] = useState<User[]>([])
   const [isPresenceReady, setIsPresenceReady] = useState(false)
+  const [isDetailPaneOpen, setIsDetailPaneOpen] = useState(false)
   const updateCursorRef = useRef<((cursor: Cursor) => void) | null>(null)
+  const canvasRef = useRef<HTMLDivElement>(null)
+  
+  // AI Agent
+  const aiAgent = useAIAgent({
+    userId: userId || '',
+    onShapesCreated: async (newShapes) => {
+      // Lock all shapes being created
+      for (const shape of newShapes) {
+        await handleShapeCreated(shape)
+      }
+      toast.success('Shapes created successfully!')
+    },
+    onError: (message) => {
+      toast.error(message)
+    }
+  })
   const isFirstLoadRef = useRef(true)
 
   // Initialize cursor sync and presence
@@ -367,6 +388,34 @@ export default function CanvasPage() {
     await signOut()
   }
 
+  // Handle AI command execution
+  const handleAIExecute = useCallback(() => {
+    if (!aiAgent.currentCommand.trim()) return
+    
+    // Build canvas context
+    const canvasContext: CanvasContext = {
+      shapes: Object.values(shapes).map(shape => ({
+        ...shape,
+        id: shape.id,
+        type: shape.type,
+        x: shape.x,
+        y: shape.y
+      })),
+      canvasDimensions: {
+        width: canvasRef.current?.clientWidth || 1920,
+        height: canvasRef.current?.clientHeight || 1080
+      },
+      viewport: {
+        x: 0, // TODO: Get from Canvas component if needed
+        y: 0,
+        scale: 1
+      },
+      selectedShapeIds: [] // TODO: Get from useShapeSelection if needed
+    }
+    
+    aiAgent.execute(aiAgent.currentCommand, canvasContext)
+  }, [aiAgent, shapes])
+
   // Show loading spinner until presence is initialized and color is assigned
   if (!isPresenceReady || color === '#000000') {
     return <LoadingSpinner message="Initializing workspace..." />
@@ -374,6 +423,9 @@ export default function CanvasPage() {
 
   return (
     <div className="w-screen h-screen bg-canvas-bg flex flex-col">
+      {/* Toast Notifications */}
+      <Toaster position="top-right" />
+      
       {/* Header */}
       <Header
         displayName={displayName}
@@ -384,7 +436,7 @@ export default function CanvasPage() {
       />
 
       {/* Canvas */}
-      <div className="flex-1 relative overflow-hidden">
+      <div ref={canvasRef} className="flex-1 relative overflow-hidden">
         <Canvas
           tool={selectedTool}
           onToolChange={setSelectedTool}
@@ -396,8 +448,27 @@ export default function CanvasPage() {
           onShapeUnlock={handleShapeUnlock}
           onBatchShapeLock={handleBatchShapeLock}
           onBatchShapeUnlock={handleBatchShapeUnlock}
+          onDetailPaneVisibilityChange={setIsDetailPaneOpen}
         />
-        <Toolbar selectedTool={selectedTool} onSelectTool={setSelectedTool} />
+        
+        {/* AI Command Input (above toolbar) */}
+        {aiAgent.isOpen && (
+          <AICommandInput
+            isExecuting={aiAgent.isExecuting}
+            currentCommand={aiAgent.currentCommand}
+            onCommandChange={aiAgent.setCurrentCommand}
+            onExecute={handleAIExecute}
+            isDetailPaneOpen={isDetailPaneOpen}
+          />
+        )}
+        
+        {/* Toolbar */}
+        <Toolbar 
+          selectedTool={selectedTool} 
+          onSelectTool={setSelectedTool}
+          isAIAgentOpen={aiAgent.isOpen}
+          onToggleAIAgent={aiAgent.toggle}
+        />
       </div>
     </div>
   )
