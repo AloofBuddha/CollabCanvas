@@ -42,8 +42,12 @@ export function normalizeShape(shape: Shape): Shape {
       radiusX: Math.abs(shape.radiusX),
       radiusY: Math.abs(shape.radiusY),
     } as CircleShape
+  } else if (shape.type === 'line') {
+    // Lines don't need normalization - endpoints can be in any direction
+    return shape
   }
   
+  console.error(`[canvasUtils] normalizeShape: Unknown shape type "${(shape as { type: string }).type}"`)
   return shape
 }
 
@@ -55,7 +59,14 @@ export function hasMinimumSize(shape: Shape, minSize: number): boolean {
     return Math.abs(shape.width) > minSize && Math.abs(shape.height) > minSize
   } else if (shape.type === 'circle') {
     return Math.abs(shape.radiusX) > minSize && Math.abs(shape.radiusY) > minSize
+  } else if (shape.type === 'line') {
+    // Check if line has meaningful length
+    const dx = shape.x2 - shape.x
+    const dy = shape.y2 - shape.y
+    const length = Math.sqrt(dx * dx + dy * dy)
+    return length > minSize
   }
+  console.error(`[canvasUtils] hasMinimumSize: Unknown shape type "${(shape as { type: string }).type}"`)
   return false
 }
 

@@ -4,10 +4,10 @@
 
 **Phase**: Final Sprint - Rubric-Focused Enhancement (4 Days Remaining)  
 **Version**: v1.2 → v2.0 (Major Upgrade)  
-**Last Completed**: PR #11 - Circle/Ellipse Shape + Flicker Fix ✅ COMPLETE  
+**Last Completed**: PR #12 - Line Shape ✅ COMPLETE  
 **Live Production**: https://collab-canvas-ben-cohen.vercel.app/
 
-**Current Grade**: **46/100 (F)** | **Target**: **70-75/100 (C/C+)** | **Stretch**: **80+/100 (B)**
+**Current Grade**: **48/100 (F)** | **Target**: **70-75/100 (C/C+)** | **Stretch**: **80+/100 (B)**
 
 ## 🚨 Critical Priority Shift 🚨
 
@@ -18,34 +18,41 @@ The project is being evaluated against a comprehensive rubric. Based on analysis
 
 **Revised Strategy**: Build feature-rich canvas FIRST (shapes, colors, multi-select), THEN implement AI agent with meaningful commands.
 
-## Recent Changes (PR #11 - Just Completed) ✅
+## Recent Changes (PR #12 - Just Completed) ✅
 
-### Circle/Ellipse Shape Feature
-- **New Shape Type**: Added circle/ellipse tool to toolbar with Circle icon
-- **Polymorphic Architecture**: Discriminated union types (RectangleShape | CircleShape)
-- **Full Feature Parity**: Circles support all rectangle features:
+### Line Shape Feature
+- **New Shape Type**: Added line tool to toolbar with Minus icon
+- **Two-Endpoint Architecture**: Lines defined by `(x, y)` and `(x2, y2)` properties
+- **Full Feature Parity**: Lines support core shape features:
   - Click-and-drag creation with visual feedback
-  - Resize via corner/edge handles (maintains aspect ratio)
-  - Rotation via corner rotation zones
-  - Drag to move with collision avoidance
-  - Dimension labels (radiusX × radiusY)
+  - Endpoint manipulation (drag start/end points independently)
+  - Drag to move entire line with proper center-based positioning
+  - Dimension labels (length in pixels, positioned below lower endpoint)
   - Multi-user real-time sync (Firestore + RTDB)
-  - Locking system and visual feedback
+  - Locking system and visual feedback (colored borders)
+  - Visual endpoint handles when selected (blue circles)
 
 ### Technical Implementation
-- **Type System**: `CircleShape` interface with `radiusX`, `radiusY` properties
-- **Polymorphic Helpers**: `getShapeWidth()`, `getShapeHeight()` for dimension access
-- **Canvas Rendering**: Konva `Ellipse` component with proper positioning
-- **Shape Creation**: `useShapeCreation` hook supports both rectangle and circle
-- **Manipulation**: All manipulation functions work with both shape types
-- **Firebase Sync**: Both Firestore and RTDB handle circle properties
-- **Tests**: All existing tests pass, no regressions introduced
+- **Type System**: `LineShape` interface with `x`, `y`, `x2`, `y2`, `strokeWidth` properties
+- **DRY Refactoring**: Created centralized `shapeFactory.ts` for polymorphic shape operations
+- **Unified Rendering**: New `ShapeRenderer.tsx` component handles all shape types
+- **Group-Based Rendering**: Lines use Konva `Group` for proper drag/rotation behavior
+- **Manipulation Zones**: New `start-point` and `end-point` zones for endpoint dragging
+- **Firebase Sync**: Both Firestore and RTDB handle line properties with explicit type checks
+- **Defensive Programming**: Replaced implicit `else` defaults with explicit type checking and error logging
 
-### Shape Creation Flicker Fix
-- **Root Cause**: Remote users saw shapes appear/disappear during creation
-- **Solution**: Include `lockedBy: userId` in initial shape creation
-- **Implementation**: Updated `handleShapeCreatedLocal` in Canvas.tsx
-- **Result**: Smooth shape creation experience for all users
+### Code Quality Improvements
+- **Constants Extraction**: Created `src/constants.ts` for UI colors (selection, handles, new shapes)
+- **Zustand Pattern**: Refactored `CanvasPage.tsx` to use cleaner `getState()` destructuring pattern
+- **ESLint Compliance**: Fixed all `any` type errors with proper type assertions
+- **User Color System**: Deterministic hash-based user colors (20 distinct colors) for consistent remote user borders
+
+### Bug Fixes
+- **Line Dragging**: Fixed flicker, wrong drag origin, and border desync by using Konva Groups
+- **Dimension Labels**: Lines now consistently show labels below the lower endpoint
+- **Resize/Drag Conflict**: Fixed issue where drag would override resize by checking `isHoveringManipulationZone`
+- **Sign Out/In Color**: Fixed race condition where user colors would reset to black after sign out/in
+- **Double Unlock**: Fixed race condition causing double `unlockShape` calls with deferred Firestore sync
 
 ## Previous Changes (PR #9 - Completed)
 
@@ -111,14 +118,15 @@ Validate conflict resolution, persistence, reconnection, and performance with 10
 - Demo Video (avoid -10 penalty)
 - Final polish
 
-### Next Immediate Task: PR #12 - Line Shape
+### Next Immediate Task: PR #13 - Text Shape with Inline Editing
 
 **Implementation Focus**:
-1. **Line.tsx component** - Use Konva Line with two endpoints
-2. **Two-point creation** - Click start point, drag to end point
-3. **Endpoint manipulation** - Drag endpoints to resize, drag line body to move
-4. **Reuse manipulation patterns** - From Rectangle.tsx (zones, cursors, locking)
-5. **Firestore schema** - Add `x1`, `y1`, `x2`, `y2` fields to shape type
+1. **Text rendering** - Use Konva Text component (already scaffolded in `shapeFactory.ts`)
+2. **Click-to-create** - Single click creates text box, enters edit mode
+3. **HTML overlay editing** - Position HTML input/textarea at canvas position for editing
+4. **Double-click to edit** - Existing text can be edited
+5. **Exit edit mode** - Click outside or press Escape saves and syncs to Firestore
+6. **Text properties** - Support `text`, `fontSize`, `fontFamily`, `textColor`, `width` fields
 
 ## Active Decisions & Considerations
 
@@ -216,34 +224,27 @@ Validate conflict resolution, persistence, reconnection, and performance with 10
 
 ## Next Session Priorities (In Order)
 
-### 1. **PR #12: Line Shape** (Start immediately)
-   - Create `Line.tsx` component
-   - Copy manipulation patterns from `Rectangle.tsx`
-   - Update `Canvas.tsx` to render lines
-   - Update `types/shape.ts` to include line type
-   - Add line tool to `Toolbar.tsx`
+### 1. **PR #13: Text Shape with Inline Editing** (Start immediately)
+   - Implement HTML overlay for text editing
+   - Click-to-create workflow
+   - Double-click to edit existing text
+   - Sync text content and properties to Firestore
+   - Respect locking mechanism during editing
    - 10-15 unit tests
 
-### 2. **PR #13: Text Shape** (Same day)
-   - Create `Text.tsx` component
-   - Two-point creation + endpoint manipulation
-   - Update Canvas and types
-   - Add text tool to toolbar
-   - 8-12 unit tests
-
-### 3. **PR #14: Color Picker** (End of Day 1)
+### 2. **PR #14: Color Picker** (End of Day 1)
    - Simple custom picker (presets + recent colors)
    - Show when shape selected
    - Update all shape types to support color changes
    - 5-8 unit tests
 
-### 4. **PR #15: Multi-Select** (Early Day 2)
+### 3. **PR #15: Multi-Select** (Early Day 2)
    - Shift+click to add to selection
    - Multi-drag, multi-delete
    - Update locking for multiple shapes
    - 15-20 unit tests
 
-### 5. **PR #16: Keyboard Shortcuts** (Day 2)
+### 4. **PR #16: Keyboard Shortcuts** (Day 2)
    - Arrow keys for nudging shapes
    - Delete/Backspace for deletion
    - Ctrl+A for select all

@@ -4,52 +4,20 @@
  * Utilities for syncing cursor positions and user presence via Firebase Realtime Database
  */
 
-import { ref, onValue, set, onDisconnect, serverTimestamp, remove, get } from 'firebase/database'
+import { ref, onValue, set, onDisconnect, serverTimestamp, remove } from 'firebase/database'
 import { rtdb } from './firebase'
 import { Cursor, RemoteCursor } from '../types'
-
-// Available colors for online users (10 unique colors)
-const AVAILABLE_COLORS = [
-  '#FF5733', // Red-Orange
-  '#33FF57', // Green
-  '#3357FF', // Blue
-  '#F033FF', // Magenta
-  '#FF33F0', // Pink
-  '#33FFF0', // Cyan
-  '#F0FF33', // Yellow
-  '#FF8C33', // Orange
-  '#8C33FF', // Purple
-  '#33FF8C', // Mint
-]
+import { getUserColorFromId } from './userColors'
 
 /**
- * Select an available color for a new user
- * Picks the first color not currently in use by online users
- * If all colors are taken, picks a random one (for 11+ concurrent users)
+ * Get the deterministic color for a user based on their user ID.
+ * This ensures all clients see the same color for the same user.
+ * 
+ * @param userId - The unique user identifier
+ * @returns A hex color string from the curated palette
  */
-async function selectAvailableColor(): Promise<string> {
-  const presenceRef = ref(rtdb, 'presence')
-  const snapshot = await get(presenceRef)
-  
-  if (!snapshot.exists()) {
-    // No one online, return first color
-    return AVAILABLE_COLORS[0]
-  }
-  
-  // Get all colors currently in use
-  const data = snapshot.val()
-  const usedColors = new Set<string>()
-  Object.values(data).forEach((userData) => {
-    if (userData && typeof userData === 'object' && 'color' in userData) {
-      usedColors.add(userData.color as string)
-    }
-  })
-  
-  // Find first available color
-  const availableColor = AVAILABLE_COLORS.find(color => !usedColors.has(color))
-  
-  // If all colors taken (11+ users), pick a random one
-  return availableColor || AVAILABLE_COLORS[Math.floor(Math.random() * AVAILABLE_COLORS.length)]
+function getUserColor(userId: string): string {
+  return getUserColorFromId(userId)
 }
 
 /**
@@ -129,8 +97,8 @@ export async function initUserPresence(
   const userStatusRef = ref(rtdb, `presence/${userId}`)
   const connectedRef = ref(rtdb, '.info/connected')
   
-  // Select an available color based on current online users
-  const color = await selectAvailableColor()
+  // Get deterministic color based on user ID (same for all clients)
+  const color = getUserColor(userId)
   
   const userData = {
     displayName,

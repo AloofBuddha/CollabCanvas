@@ -18,6 +18,7 @@ export type ManipulationZone =
   | 'nw-corner' | 'ne-corner' | 'sw-corner' | 'se-corner'
   | 'n-edge' | 's-edge' | 'e-edge' | 'w-edge'
   | 'nw-rotate' | 'ne-rotate' | 'sw-rotate' | 'se-rotate'
+  | 'start-point' | 'end-point' // For line shapes
 
 export interface HitResult {
   zone: ManipulationZone
@@ -33,6 +34,47 @@ export function detectManipulationZone(
   mouseY: number,
   stageScale: number = 1
 ): HitResult {
+  // Handle line shapes differently
+  if (shape.type === 'line') {
+    const line = shape as import('../types').LineShape
+    const cornerSize = CORNER_HIT_SIZE / stageScale
+    
+    // Calculate distances to line endpoints
+    const distToStart = Math.sqrt(Math.pow(mouseX - line.x, 2) + Math.pow(mouseY - line.y, 2))
+    const distToEnd = Math.sqrt(Math.pow(mouseX - line.x2, 2) + Math.pow(mouseY - line.y2, 2))
+    
+    // Check if near start point
+    if (distToStart <= cornerSize) {
+      return { zone: 'start-point', cursor: 'grab' }
+    }
+    
+    // Check if near end point
+    if (distToEnd <= cornerSize) {
+      return { zone: 'end-point', cursor: 'grab' }
+    }
+    
+    // Check if near the line itself (for dragging)
+    const lineLength = Math.sqrt(Math.pow(line.x2 - line.x, 2) + Math.pow(line.y2 - line.y, 2))
+    if (lineLength > 0) {
+      // Calculate distance from point to line
+      const A = line.y2 - line.y
+      const B = line.x - line.x2
+      const C = line.x2 * line.y - line.x * line.y2
+      const distance = Math.abs(A * mouseX + B * mouseY + C) / Math.sqrt(A * A + B * B)
+      
+      // Check if within line bounds
+      const t = ((mouseX - line.x) * (line.x2 - line.x) + (mouseY - line.y) * (line.y2 - line.y)) / (lineLength * lineLength)
+      const withinBounds = t >= 0 && t <= 1
+      
+      if (distance <= cornerSize && withinBounds) {
+        return { zone: 'center', cursor: 'move' }
+      }
+    }
+    
+    return { zone: 'center', cursor: 'default' }
+  }
+  
+  // Handle other shapes (rectangles, circles) with existing logic
   const { x, y, rotation = 0 } = shape
   
   // Get shape dimensions polymorphically
@@ -64,13 +106,13 @@ export function detectManipulationZone(
   // Check rotation zones (outside corners with larger trigger area)
   const rotationZoneWidth = ROTATION_ZONE_WIDTH / stageScale
   const inNWRotation = distFromLeft < 0 && distFromLeft > -rotationZoneWidth && 
-                        distFromTop < 0 && distFromTop > -rotationZoneWidth
+                      distFromTop < 0 && distFromTop > -rotationZoneWidth
   const inNERotation = distFromRight < 0 && distFromRight > -rotationZoneWidth && 
-                        distFromTop < 0 && distFromTop > -rotationZoneWidth
+                      distFromTop < 0 && distFromTop > -rotationZoneWidth
   const inSWRotation = distFromLeft < 0 && distFromLeft > -rotationZoneWidth && 
-                        distFromBottom < 0 && distFromBottom > -rotationZoneWidth
+                      distFromBottom < 0 && distFromBottom > -rotationZoneWidth
   const inSERotation = distFromRight < 0 && distFromRight > -rotationZoneWidth && 
-                        distFromBottom < 0 && distFromBottom > -rotationZoneWidth
+                      distFromBottom < 0 && distFromBottom > -rotationZoneWidth
   
   if (inNWRotation || inNERotation || inSWRotation || inSERotation) {
     const zone: ManipulationZone = inNWRotation ? 'nw-rotate' : 
@@ -132,6 +174,28 @@ export function calculateResize(
   _startMouseY: number,
   originalShape: Shape
 ): Partial<Shape> {
+  // Handle line shapes differently
+  if (originalShape.type === 'line') {
+    switch (zone) {
+      case 'start-point':
+        return {
+          x: mouseX,
+          y: mouseY,
+        }
+        
+      case 'end-point':
+        return {
+          x2: mouseX,
+          y2: mouseY,
+        }
+        
+      default:
+        // Center - no resize for lines
+        return {}
+    }
+  }
+  
+  // Handle other shapes (rectangles, circles) with existing logic
   const { rotation = 0 } = originalShape
   const radians = -(rotation * Math.PI / 180)
   
@@ -317,7 +381,10 @@ export function getShapeWidth(shape: Shape): number {
     return shape.width
   } else if (shape.type === 'circle') {
     return shape.radiusX * 2
+  } else if (shape.type === 'line') {
+    return Math.abs(shape.x2 - shape.x)
   }
+  console.error(`[shapeManipulation] getShapeWidth: Unknown shape type "${shape.type}"`)
   return 0
 }
 
@@ -329,7 +396,10 @@ export function getShapeHeight(shape: Shape): number {
     return shape.height
   } else if (shape.type === 'circle') {
     return shape.radiusY * 2
+  } else if (shape.type === 'line') {
+    return Math.abs(shape.y2 - shape.y)
   }
+  console.error(`[shapeManipulation] getShapeHeight: Unknown shape type "${shape.type}"`)
   return 0
 }
 

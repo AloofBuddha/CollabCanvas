@@ -6,10 +6,17 @@
  */
 
 import { Fragment } from 'react'
-import { Rect, Ellipse, Line, Text as KonvaText } from 'react-konva'
+import { Rect, Ellipse, Line, Text as KonvaText, Group, Circle } from 'react-konva'
 import Konva from 'konva'
 import { Shape, RectangleShape, CircleShape, LineShape, TextShape } from '../types'
 import ShapeDimensionLabel from './ShapeDimensionLabel'
+import {
+  SELECTION_COLOR_LOCAL,
+  SELECTION_COLOR_REMOTE_FALLBACK,
+  LINE_HANDLE_FILL,
+  LINE_HANDLE_STROKE,
+  NEW_SHAPE_COLOR,
+} from '../constants'
 
 interface ShapeRendererProps {
   shape: Shape
@@ -17,7 +24,9 @@ interface ShapeRendererProps {
   isLockedByMe: boolean
   isLockedByOther: boolean
   isManipulating: boolean
+  isHoveringManipulationZone: boolean // True when hovering over resize/rotate handles
   stageScale: number
+  remoteUserColor?: string // Color of the remote user who locked this shape
   onMouseDown: (e: Konva.KonvaEventObject<MouseEvent>, shapeId: string, isLockedByOther: boolean, shape: Shape) => void
   onMouseMove: (e: Konva.KonvaEventObject<MouseEvent>, shape: Shape, isSelected: boolean) => void
   onMouseLeave: () => void
@@ -35,7 +44,9 @@ export default function ShapeRenderer({
   isLockedByMe,
   isLockedByOther,
   isManipulating,
+  isHoveringManipulationZone,
   stageScale,
+  remoteUserColor,
   onMouseDown,
   onMouseMove,
   onMouseLeave,
@@ -43,9 +54,11 @@ export default function ShapeRenderer({
   onDragMove,
   onDragEnd,
 }: ShapeRendererProps) {
-  const canDrag = !isLockedByOther
-  const showBorder = isSelected && isLockedByMe && !isManipulating
-  const borderColor = isLockedByMe ? '#3B82F6' : '#EF4444' // Blue for local, red for remote
+  // Disable drag when hovering over manipulation zones (resize/rotate handles)
+  // or when already manipulating
+  const canDrag = !isLockedByOther && !isHoveringManipulationZone && !isManipulating
+  const showBorder = (isSelected && isLockedByMe && !isManipulating) || isLockedByOther
+  const borderColor = isLockedByMe ? SELECTION_COLOR_LOCAL : (remoteUserColor || SELECTION_COLOR_REMOTE_FALLBACK)
 
   const commonProps = {
     rotation: shape.rotation || 0,
@@ -94,14 +107,22 @@ export default function ShapeRenderer({
       
       case 'line': {
         const line = shape as LineShape
+        // Calculate center point for drag offset
+        const centerX = (line.x + line.x2) / 2
+        const centerY = (line.y + line.y2) / 2
+        // Points relative to center
+        const points = [
+          line.x - centerX, 
+          line.y - centerY, 
+          line.x2 - centerX, 
+          line.y2 - centerY
+        ]
+        
         return (
-          <Line
-            x={0}
-            y={0}
-            points={[line.x, line.y, line.x2, line.y2]}
-            stroke={line.color}
-            strokeWidth={line.strokeWidth}
-            opacity={SHAPE_OPACITY}
+          <Group
+            x={centerX}
+            y={centerY}
+            rotation={shape.rotation || 0}
             draggable={canDrag}
             onMouseDown={(e: Konva.KonvaEventObject<MouseEvent>) => onMouseDown(e, shape.id, isLockedByOther, shape)}
             onMouseMove={(e: Konva.KonvaEventObject<MouseEvent>) => onMouseMove(e, shape, isSelected)}
@@ -109,7 +130,48 @@ export default function ShapeRenderer({
             onDragStart={(e: Konva.KonvaEventObject<DragEvent>) => onDragStart(e, shape)}
             onDragMove={(e: Konva.KonvaEventObject<DragEvent>) => onDragMove(e, shape)}
             onDragEnd={() => onDragEnd(shape)}
-          />
+          >
+            {/* Border/selection indicator for line */}
+            {showBorder && (
+              <Line
+                points={points}
+                stroke={borderColor}
+                strokeWidth={line.strokeWidth + 4}
+                opacity={0.5}
+                listening={false}
+              />
+            )}
+            {/* Actual line */}
+            <Line
+              points={points}
+              stroke={line.color}
+              strokeWidth={line.strokeWidth}
+              opacity={SHAPE_OPACITY}
+            />
+            {/* Endpoint handles - only show when selected */}
+            {isSelected && isLockedByMe && (
+              <Fragment>
+                {/* Start point handle */}
+                <Circle
+                  x={points[0]}
+                  y={points[1]}
+                  radius={6 / stageScale}
+                  fill={LINE_HANDLE_FILL}
+                  stroke={LINE_HANDLE_STROKE}
+                  strokeWidth={2 / stageScale}
+                />
+                {/* End point handle */}
+                <Circle
+                  x={points[2]}
+                  y={points[3]}
+                  radius={6 / stageScale}
+                  fill={LINE_HANDLE_FILL}
+                  stroke={LINE_HANDLE_STROKE}
+                  strokeWidth={2 / stageScale}
+                />
+              </Fragment>
+            )}
+          </Group>
         )
       }
       
@@ -167,7 +229,7 @@ export function NewShapeRenderer({
   shape: Shape
 }) {
   const commonProps = {
-    fill: '#D1D5DB',
+    fill: NEW_SHAPE_COLOR,
     opacity: NEW_SHAPE_OPACITY,
   }
 
@@ -202,10 +264,10 @@ export function NewShapeRenderer({
       const line = shape as LineShape
       return (
         <Line
-          x={0}
-          y={0}
-          points={[line.x, line.y, line.x2, line.y2]}
-          stroke="#D1D5DB"
+          x={line.x}
+          y={line.y}
+          points={[0, 0, line.x2 - line.x, line.y2 - line.y]}
+          stroke={NEW_SHAPE_COLOR}
           strokeWidth={2}
           opacity={NEW_SHAPE_OPACITY}
         />

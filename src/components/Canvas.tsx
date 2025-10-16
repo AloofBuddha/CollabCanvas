@@ -1,11 +1,11 @@
-import { useRef, useState, useEffect, Fragment } from 'react'
-import { Stage, Layer, Rect, Ellipse } from 'react-konva'
+import { useRef, useState, useEffect } from 'react'
+import { Stage, Layer } from 'react-konva'
 import Konva from 'konva'
 import useShapeStore from '../stores/useShapeStore'
 import useUserStore from '../stores/useUserStore'
 import useCursorStore from '../stores/useCursorStore'
 import RemoteCursor from './RemoteCursor'
-import ShapeDimensionLabel from './ShapeDimensionLabel'
+import ShapeRenderer, { NewShapeRenderer } from './ShapeRenderer'
 import { useCanvasPanning } from '../hooks/useCanvasPanning'
 import { useShapeCreation } from '../hooks/useShapeCreation'
 import { useShapeDragging } from '../hooks/useShapeDragging'
@@ -18,11 +18,8 @@ import { Cursor, Shape } from '../types'
 import { detectManipulationZone, getPointerPosition } from '../utils/shapeManipulation'
 import {
   HEADER_HEIGHT,
-  SHAPE_OPACITY,
-  NEW_SHAPE_OPACITY,
-  NEW_SHAPE_STROKE_WIDTH,
-  NEW_SHAPE_DASH,
 } from '../utils/canvasConstants'
+import { getUserColorFromId } from '../utils/userColors'
 
 type Tool = 'select' | 'rectangle' | 'circle' | 'line' | 'text'
 
@@ -35,7 +32,6 @@ interface CanvasProps {
   onShapeUpdate?: (shape: Shape) => void // For drag/manipulation end -> Firestore persistence
   onShapeLock?: (shapeId: string) => void
   onShapeUnlock?: (shapeId: string) => void
-  onlineUsers: import('../types').User[]
 }
 
 export default function Canvas({
@@ -47,7 +43,6 @@ export default function Canvas({
   onShapeUpdate,
   onShapeLock,
   onShapeUnlock,
-  onlineUsers,
 }: CanvasProps) {
   const stageRef = useRef<Konva.Stage>(null)
   const [stageScale, setStageScale] = useState(1)
@@ -56,7 +51,7 @@ export default function Canvas({
   const isAltPressed = useRef(false)
   
   const { shapes, updateShape } = useShapeStore()
-  const { userId, color } = useUserStore()
+  const { userId } = useUserStore()
   const { remoteCursors } = useCursorStore()
 
   // Track Alt key state for duplication
@@ -124,11 +119,14 @@ export default function Canvas({
     userId,
     onShapeCreated: handleShapeCreatedLocal,
     onToolChange: (newTool) => {
-      if (newTool === 'select' || newTool === 'rectangle' || newTool === 'circle') {
+      if (newTool === 'select' || newTool === 'rectangle' || newTool === 'circle' || newTool === 'line' || newTool === 'text') {
         onToolChange(newTool as Tool)
       }
     },
-    shapeType: tool === 'rectangle' ? 'rectangle' : tool === 'circle' ? 'circle' : 'rectangle',
+    shapeType: tool === 'rectangle' ? 'rectangle' : 
+               tool === 'circle' ? 'circle' : 
+               tool === 'line' ? 'line' : 
+               tool === 'text' ? 'text' : 'rectangle',
   })
   
   const {
@@ -151,6 +149,7 @@ export default function Canvas({
   // Shape manipulation (resize & rotate)
   const {
     isManipulating,
+    hoveredZone,
     currentCursor: manipulationCursor,
     handleShapeMouseMove: handleManipulationMouseMove,
     handleStageMouseMove: handleManipulationStageMouseMove,
@@ -197,8 +196,8 @@ export default function Canvas({
       }
     }
 
-    // Left mouse button with rectangle or circle tool - start creating
-    if ((tool === 'rectangle' || tool === 'circle') && evt.button === 0) {
+    // Left mouse button with shape creation tools - start creating
+    if ((tool === 'rectangle' || tool === 'circle' || tool === 'line' || tool === 'text') && evt.button === 0) {
       startCreating(e)
     }
   }
@@ -370,11 +369,6 @@ export default function Canvas({
     }
   }
   
-  // Get user color by userId
-  const getUserColor = (userId: string): string => {
-    const user = onlineUsers.find(u => u.userId === userId)
-    return user?.color || '#666666'
-  }
 
   return (
     <div
@@ -399,117 +393,35 @@ export default function Canvas({
             const isLockedByMe = shape.lockedBy === userId
             const isLockedByOther = !!(shape.lockedBy && shape.lockedBy !== userId)
             
-            // Border logic:
-            // - Show blue border if: I selected it AND I own the lock AND not currently manipulating
-            // - Show colored border if: locked by another user (always visible)
-            const showLocalBorder = isSelected && isLockedByMe && !isManipulating
-            const showRemoteBorder = isLockedByOther
-            
-            const borderColor = showRemoteBorder 
-              ? getUserColor(shape.lockedBy!) 
-              : '#3b82f6'
-            const showBorder = showLocalBorder || showRemoteBorder
+            // Get the remote user's color if locked by another user
+            const remoteUserColor = shape.lockedBy && shape.lockedBy !== userId 
+              ? getUserColorFromId(shape.lockedBy) 
+              : undefined
 
-            // Can only drag if not locked by another user and not manipulating
-            const canDrag = tool === 'select' && !isLockedByOther && !isManipulating
-
-            // Render shape based on type
-            if (shape.type === 'rectangle') {
-              return (
-                <Fragment key={shape.id}>
-                  <Rect
-                    x={shape.x + shape.width / 2}
-                    y={shape.y + shape.height / 2}
-                    width={shape.width}
-                    height={shape.height}
-                    rotation={shape.rotation || 0}
-                    offsetX={shape.width / 2}
-                    offsetY={shape.height / 2}
-                    fill={shape.color}
-                    opacity={SHAPE_OPACITY}
-                    draggable={canDrag}
-                    onMouseDown={(e) => handleShapeMouseDown(e, shape.id, isLockedByOther, shape)}
-                    onMouseMove={(e) => handleManipulationMouseMove(e, shape, isSelected)}
-                    onMouseLeave={handleShapeMouseLeave}
-                    onDragStart={(e) => handleCombinedDragStart(e, shape)}
-                    onDragMove={(e) => handleDragMove(e, shape)}
-                    onDragEnd={() => handleCombinedDragEnd(shape)}
-                    stroke={showBorder ? borderColor : undefined}
-                    strokeWidth={showBorder ? 2 : 0}
-                  />
-                  {/* Show dimension label for selected shape */}
-                  {isSelected && isLockedByMe && !isManipulating && (
-                    <ShapeDimensionLabel 
-                      key={`${shape.id}-label`}
-                      shape={shape} 
-                      stageScale={stageScale} 
-                    />
-                  )}
-                </Fragment>
-              )
-            } else if (shape.type === 'circle') {
-              return (
-                <Fragment key={shape.id}>
-                  <Ellipse
-                    x={shape.x + shape.radiusX}
-                    y={shape.y + shape.radiusY}
-                    radiusX={shape.radiusX}
-                    radiusY={shape.radiusY}
-                    rotation={shape.rotation || 0}
-                    fill={shape.color}
-                    opacity={SHAPE_OPACITY}
-                    draggable={canDrag}
-                    onMouseDown={(e) => handleShapeMouseDown(e, shape.id, isLockedByOther, shape)}
-                    onMouseMove={(e) => handleManipulationMouseMove(e, shape, isSelected)}
-                    onMouseLeave={handleShapeMouseLeave}
-                    onDragStart={(e) => handleCombinedDragStart(e, shape)}
-                    onDragMove={(e) => handleDragMove(e, shape)}
-                    onDragEnd={() => handleCombinedDragEnd(shape)}
-                    stroke={showBorder ? borderColor : undefined}
-                    strokeWidth={showBorder ? 2 : 0}
-                  />
-                  {/* Show dimension label for selected shape */}
-                  {isSelected && isLockedByMe && !isManipulating && (
-                    <ShapeDimensionLabel 
-                      key={`${shape.id}-label`}
-                      shape={shape} 
-                      stageScale={stageScale} 
-                    />
-                  )}
-                </Fragment>
-              )
-            }
-            return null
+            // Render shape using ShapeRenderer
+            return (
+              <ShapeRenderer
+                key={shape.id}
+                shape={shape}
+                isSelected={isSelected}
+                isLockedByMe={isLockedByMe}
+                isLockedByOther={isLockedByOther}
+                isManipulating={isManipulating}
+                isHoveringManipulationZone={isSelected && hoveredZone !== null && hoveredZone !== 'center'}
+                stageScale={stageScale}
+                remoteUserColor={remoteUserColor}
+                onMouseDown={handleShapeMouseDown}
+                onMouseMove={handleManipulationMouseMove}
+                onMouseLeave={handleShapeMouseLeave}
+                onDragStart={handleCombinedDragStart}
+                onDragMove={handleDragMove}
+                onDragEnd={handleCombinedDragEnd}
+              />
+            )
           })}
 
           {/* Render shape being created */}
-          {newShape && (
-            newShape.type === 'rectangle' ? (
-              <Rect
-                x={newShape.x}
-                y={newShape.y}
-                width={newShape.width}
-                height={newShape.height}
-                fill="#D1D5DB"
-                opacity={NEW_SHAPE_OPACITY}
-                stroke={color}
-                strokeWidth={NEW_SHAPE_STROKE_WIDTH}
-                dash={NEW_SHAPE_DASH}
-              />
-            ) : newShape.type === 'circle' ? (
-              <Ellipse
-                x={newShape.x + newShape.radiusX}
-                y={newShape.y + newShape.radiusY}
-                radiusX={newShape.radiusX}
-                radiusY={newShape.radiusY}
-                fill="#D1D5DB"
-                opacity={NEW_SHAPE_OPACITY}
-                stroke={color}
-                strokeWidth={NEW_SHAPE_STROKE_WIDTH}
-                dash={NEW_SHAPE_DASH}
-              />
-            ) : null
-          )}
+          {newShape && <NewShapeRenderer shape={newShape} />}
 
           {/* Render remote cursors inside the canvas layer */}
           {Object.values(remoteCursors).map((cursor) => (

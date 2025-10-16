@@ -35,8 +35,6 @@ export const signUp = async (
       createdAt: new Date().toISOString(),
     })
 
-    // Update local store (color will be set when presence initializes)
-    useUserStore.getState().setUser(userId, displayName)
 
     return { success: true }
   } catch (error) {
@@ -66,10 +64,6 @@ export const signIn = async (
       return { success: false, error: 'User profile not found' }
     }
 
-    const userData = userDoc.data()
-    
-    // Update local store (color will be assigned when presence initializes)
-    useUserStore.getState().setUser(userId, userData.displayName)
 
     return { success: true }
   } catch (error) {
@@ -125,8 +119,14 @@ export const initAuthListener = (): (() => void) => {
         
         if (userDoc.exists()) {
           const userData = userDoc.data()
-          // Color will be assigned when presence initializes
-          useUserStore.getState().setUser(user.uid, userData.displayName)
+          const currentState = useUserStore.getState()
+          
+          // Only update if userId changed or user is not yet authenticated
+          // This prevents overwriting the color set by presence initialization
+          if (currentState.userId !== user.uid || currentState.authStatus !== 'authenticated') {
+            // Color will be assigned when presence initializes
+            useUserStore.getState().setUser(user.uid, userData.displayName)
+          }
         } else {
           // Profile doesn't exist, sign out
           useUserStore.getState().setAuthStatus('unauthenticated')

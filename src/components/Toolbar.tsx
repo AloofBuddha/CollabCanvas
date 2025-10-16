@@ -1,4 +1,4 @@
-import { MousePointer2, Square, Circle } from 'lucide-react'
+import { MousePointer2, Square, Circle, Pen } from 'lucide-react'
 
 type Tool = 'select' | 'rectangle' | 'circle' | 'line' | 'text'
 
@@ -12,6 +12,7 @@ export default function Toolbar({ selectedTool, onSelectTool }: ToolbarProps) {
     { id: 'select', icon: MousePointer2, label: 'Select' },
     { id: 'rectangle', icon: Square, label: 'Rectangle' },
     { id: 'circle', icon: Circle, label: 'Circle' },
+    { id: 'line', icon: Pen, label: 'Line' },
   ]
 
   return (

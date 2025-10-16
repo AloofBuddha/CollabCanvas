@@ -6,7 +6,7 @@
  */
 
 import { Text } from 'react-konva'
-import { Shape } from '../types'
+import { Shape, LineShape } from '../types'
 import { getShapeDimensions, formatShapeDimensions } from '../utils/shapeFactory'
 
 // Display constants
@@ -22,38 +22,53 @@ interface ShapeDimensionLabelProps {
 export default function ShapeDimensionLabel({ shape, stageScale }: ShapeDimensionLabelProps) {
   const { x, y, rotation = 0 } = shape
   
-  // Get shape dimensions polymorphically
-  const { width, height } = getShapeDimensions(shape)
+  let labelX: number
+  let labelY: number
   
-  // Calculate the center of the shape
-  const centerX = x + width / 2
-  const centerY = y + height / 2
-  
-  // Calculate all four corners of the shape before rotation
-  const corners = [
-    { x: x, y: y },                    // top-left
-    { x: x + width, y: y },            // top-right
-    { x: x, y: y + height },           // bottom-left
-    { x: x + width, y: y + height },   // bottom-right
-  ]
-  
-  // Rotate all corners around the center
-  const radians = rotation * Math.PI / 180
-  const rotatedCorners = corners.map(corner => {
-    const dx = corner.x - centerX
-    const dy = corner.y - centerY
-    return {
-      x: centerX + (dx * Math.cos(radians) - dy * Math.sin(radians)),
-      y: centerY + (dx * Math.sin(radians) + dy * Math.cos(radians))
-    }
-  })
-  
-  // Find the bottom-most point of the rotated bounding box
-  const maxY = Math.max(...rotatedCorners.map(c => c.y))
-  
-  // Position label at horizontal center, below the bounding box
-  const labelX = centerX
-  const labelY = maxY
+  // Handle line shapes differently - position label below the lower endpoint
+  if (shape.type === 'line') {
+    const line = shape as LineShape
+    const centerX = (line.x + line.x2) / 2
+    
+    // Find the lower of the two endpoints (higher Y value)
+    const lowerY = Math.max(line.y, line.y2)
+    
+    labelX = centerX
+    labelY = lowerY
+  } else {
+    // Get shape dimensions polymorphically for rectangles/circles
+    const { width, height } = getShapeDimensions(shape)
+    
+    // Calculate the center of the shape
+    const centerX = x + width / 2
+    const centerY = y + height / 2
+    
+    // Calculate all four corners of the shape before rotation
+    const corners = [
+      { x: x, y: y },                    // top-left
+      { x: x + width, y: y },            // top-right
+      { x: x, y: y + height },           // bottom-left
+      { x: x + width, y: y + height },   // bottom-right
+    ]
+    
+    // Rotate all corners around the center
+    const radians = rotation * Math.PI / 180
+    const rotatedCorners = corners.map(corner => {
+      const dx = corner.x - centerX
+      const dy = corner.y - centerY
+      return {
+        x: centerX + (dx * Math.cos(radians) - dy * Math.sin(radians)),
+        y: centerY + (dx * Math.sin(radians) + dy * Math.cos(radians))
+      }
+    })
+    
+    // Find the bottom-most point of the rotated bounding box
+    const maxY = Math.max(...rotatedCorners.map(c => c.y))
+    
+    // Position label at horizontal center, below the bounding box
+    labelX = centerX
+    labelY = maxY
+  }
   
   // Format dimensions using shape factory
   const text = formatShapeDimensions(shape)

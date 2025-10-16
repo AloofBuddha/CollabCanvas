@@ -37,8 +37,7 @@ type Tool = 'select' | 'rectangle' | 'circle' | 'line' | 'text'
  */
 export default function CanvasPage() {
   const { userId, displayName, color } = useUserStore()
-  const { setRemoteCursor, clearRemoteCursors } = useCursorStore()
-  const { setShapes, lockShape, unlockShape } = useShapeStore()
+  const { lockShape, unlockShape } = useShapeStore()
   const [selectedTool, setSelectedTool] = useState<Tool>('select')
   const [onlineUsers, setOnlineUsers] = useState<User[]>([])
   const [isPresenceReady, setIsPresenceReady] = useState(false)
@@ -47,7 +46,23 @@ export default function CanvasPage() {
 
   // Initialize cursor sync and presence
   useEffect(() => {
-    if (!userId) return
+    if (!userId) {
+      // Reset presence ready flag when no user
+      setIsPresenceReady(false)
+      return
+    }
+
+    // Reset presence ready flag at the start of initialization
+    setIsPresenceReady(false)
+
+    // Destructure Zustand actions at the top of the effect for cleaner code
+    // We use getState() instead of destructuring at component level because:
+    // 1. Zustand actions are stable references, but destructuring creates new refs on each render
+    // 2. Including them in deps array causes infinite loops
+    // 3. Using getState() inside callbacks/effects avoids React's reactivity system
+    const { setUser } = useUserStore.getState()
+    const { setRemoteCursor, clearRemoteCursors } = useCursorStore.getState()
+    const { setShapes } = useShapeStore.getState()
 
     let unsubscribeRTDBShapes: (() => void) | null = null
     let unsubscribePresence: (() => void) | null = null
@@ -58,7 +73,7 @@ export default function CanvasPage() {
       unsubscribePresence = unsubscribe
       
       // Update user store with assigned color
-      useUserStore.getState().setUser(userId, displayName, assignedColor)
+      setUser(userId, displayName, assignedColor)
 
       // Initialize cursor sync with assigned color
       const updateCursor = initCursorSync(userId, displayName, assignedColor)
@@ -141,7 +156,7 @@ export default function CanvasPage() {
       }
       clearRemoteCursors()
     }
-  }, [userId, displayName, setRemoteCursor, clearRemoteCursors, setShapes])
+  }, [userId, displayName])
 
   const handleCursorMove = useCallback((cursor: Cursor) => {
     if (updateCursorRef.current) {
@@ -284,7 +299,6 @@ export default function CanvasPage() {
           onShapeUpdate={handleShapeUpdate}
           onShapeLock={handleShapeLock}
           onShapeUnlock={handleShapeUnlock}
-          onlineUsers={onlineUsers}
         />
         <Toolbar selectedTool={selectedTool} onSelectTool={setSelectedTool} />
       </div>

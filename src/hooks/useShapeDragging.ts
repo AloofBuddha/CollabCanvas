@@ -76,17 +76,38 @@ export function useShapeDragging({
 
   const handleDragMove = (e: Konva.KonvaEventObject<DragEvent>, shape: Shape) => {
     const node = e.target
-    // Node x/y represents the center (due to offset), convert back to top-left
-    const updates = {
-      x: node.x() - getShapeWidth(shape) / 2,
-      y: node.y() - getShapeHeight(shape) / 2,
+    
+    let updates: Partial<Shape>
+    
+    if (shape.type === 'line') {
+      // For lines, the Group is positioned at the center
+      // node.x() and node.y() give us the new center position
+      // We need to calculate new endpoints maintaining the line's length and angle
+      const line = shape as import('../types').LineShape
+      const oldCenterX = (line.x + line.x2) / 2
+      const oldCenterY = (line.y + line.y2) / 2
+      const deltaX = node.x() - oldCenterX
+      const deltaY = node.y() - oldCenterY
+      
+      updates = {
+        x: line.x + deltaX,
+        y: line.y + deltaY,
+        x2: line.x2 + deltaX,
+        y2: line.y2 + deltaY,
+      }
+    } else {
+      // For other shapes, use center-based positioning
+      updates = {
+        x: node.x() - getShapeWidth(shape) / 2,
+        y: node.y() - getShapeHeight(shape) / 2,
+      }
     }
     
     // Update local Zustand store immediately (optimistic)
     updateShape(shape.id, updates)
     
     // Get the updated shape from store for RTDB sync
-    const updatedShape = { ...shapes[shape.id], ...updates }
+    const updatedShape = { ...shapes[shape.id], ...updates } as Shape
     
     // Sync to RTDB for real-time updates (throttled to 50ms)
     if (throttledRTDBSync.current) {

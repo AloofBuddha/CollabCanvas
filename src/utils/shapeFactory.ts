@@ -147,7 +147,7 @@ const shapeTypeRegistry: Record<string, ShapeTypeConfig> = {
       y,
       x2: x,
       y2: y,
-      strokeWidth: 2,
+      strokeWidth: 4,
       color: '#D1D5DB',
       createdBy: userId,
     }),

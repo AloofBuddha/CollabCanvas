@@ -62,6 +62,7 @@ export function listenToShapes(
     
     snapshot.forEach((doc) => {
       const data = doc.data()
+
       // Create shape based on type
       if (data.type === 'circle') {
         shapes[doc.id] = {
@@ -76,8 +77,21 @@ export function listenToShapes(
           createdBy: data.createdBy || '',
           lockedBy: data.lockedBy || null,
         }
-      } else {
-        // Default to rectangle
+      } else if (data.type === 'line') {
+        shapes[doc.id] = {
+          id: doc.id,
+          type: 'line',
+          x: data.x || 0,
+          y: data.y || 0,
+          x2: data.x2 || 0,
+          y2: data.y2 || 0,
+          strokeWidth: data.strokeWidth || 2,
+          rotation: data.rotation || 0,
+          color: data.color || '#000000',
+          createdBy: data.createdBy || '',
+          lockedBy: data.lockedBy || null,
+        }
+      } else if (data.type === 'rectangle') {
         shapes[doc.id] = {
           id: doc.id,
           type: 'rectangle',
@@ -90,6 +104,9 @@ export function listenToShapes(
           createdBy: data.createdBy || '',
           lockedBy: data.lockedBy || null,
         }
+      } else {
+        // Unknown shape type - log error and skip
+        console.error(`[firebaseShapes] Unknown shape type "${data.type}" for shape ${doc.id}. Skipping.`, data)
       }
     })
     
@@ -231,8 +248,21 @@ export function listenToRTDBShapes(
           createdBy: shapeData.createdBy || '',
           lockedBy: shapeData.lockedBy || null,
         }
-      } else {
-        // Default to rectangle
+      } else if (shapeData.type === 'line') {
+        shapes[shapeId] = {
+          id: shapeId,
+          type: 'line',
+          x: shapeData.x || 0,
+          y: shapeData.y || 0,
+          x2: shapeData.x2 || 0,
+          y2: shapeData.y2 || 0,
+          strokeWidth: shapeData.strokeWidth || 2,
+          rotation: shapeData.rotation || 0,
+          color: shapeData.color || '#000000',
+          createdBy: shapeData.createdBy || '',
+          lockedBy: shapeData.lockedBy || null,
+        }
+      } else if (shapeData.type === 'rectangle') {
         shapes[shapeId] = {
           id: shapeId,
           type: 'rectangle',
@@ -245,6 +275,9 @@ export function listenToRTDBShapes(
           createdBy: shapeData.createdBy || '',
           lockedBy: shapeData.lockedBy || null,
         }
+      } else {
+        // Unknown shape type - log error and skip
+        console.error(`[firebaseShapes] Unknown shape type "${shapeData.type}" for shape ${shapeId}. Skipping.`, shapeData)
       }
     })
 
