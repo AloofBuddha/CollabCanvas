@@ -44,12 +44,5 @@ node_modules/
 .vscode
 # OS specific
 
-# Task files
-# tasks.json
-# tasks/ 
-
 # Cursor files
 .cursor/
-
-# taskmaster files
-.taskmaster/

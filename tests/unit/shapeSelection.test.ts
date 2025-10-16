@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useShapeSelection } from '../../src/hooks/useShapeSelection'
+import type { Shape } from '../../src/types'
+
+// Helper type for creating minimal shape mocks for testing
+type MockShape = Pick<Shape, 'id' | 'type'> & Partial<Shape>
 
 describe('useShapeSelection', () => {
   beforeEach(() => {
@@ -214,7 +218,7 @@ describe('useShapeSelection', () => {
         window.dispatchEvent(deleteEvent)
       })
       
-      expect(onDelete).toHaveBeenCalledWith('shape-1')
+      expect(onDelete).toHaveBeenCalledWith(['shape-1'])
       expect(result.current.selectedShapeId).toBeNull()
     })
 
@@ -236,7 +240,7 @@ describe('useShapeSelection', () => {
         window.dispatchEvent(backspaceEvent)
       })
       
-      expect(onDelete).toHaveBeenCalledWith('shape-1')
+      expect(onDelete).toHaveBeenCalledWith(['shape-1'])
       expect(result.current.selectedShapeId).toBeNull()
     })
 
@@ -367,7 +371,7 @@ describe('useShapeSelection', () => {
         window.dispatchEvent(deleteEvent1)
       })
       
-      expect(onDelete).toHaveBeenCalledWith('shape-1')
+      expect(onDelete).toHaveBeenCalledWith(['shape-1'])
       expect(result.current.selectedShapeId).toBeNull()
       
       // Select and delete second shape
@@ -380,7 +384,7 @@ describe('useShapeSelection', () => {
         window.dispatchEvent(deleteEvent2)
       })
       
-      expect(onDelete).toHaveBeenCalledWith('shape-2')
+      expect(onDelete).toHaveBeenCalledWith(['shape-2'])
       expect(result.current.selectedShapeId).toBeNull()
     })
   })
@@ -517,6 +521,277 @@ describe('useShapeSelection', () => {
       })
       
       expect(result.current.selectedShapeId).toBeNull()
+    })
+  })
+
+  describe('Multi-Select', () => {
+    it('should support selecting multiple shapes via drag-to-select', () => {
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      
+      // Start selection at (0, 0)
+      act(() => {
+        result.current.startSelection(0, 0)
+      })
+      
+      expect(result.current.isSelecting).toBe(true)
+      expect(result.current.selectionBox).toEqual({ x: 0, y: 0, width: 0, height: 0 })
+      
+      // Update selection to (100, 100)
+      act(() => {
+        result.current.updateSelection(100, 100)
+      })
+      
+      expect(result.current.selectionBox).toEqual({ x: 0, y: 0, width: 100, height: 100 })
+      
+      // Create mock shapes that overlap the selection box
+      const mockShapes = new Map<string, Shape>([
+        ['shape-1', { id: 'shape-1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50 } as MockShape as Shape],
+        ['shape-2', { id: 'shape-2', type: 'circle', x: 60, y: 60, radiusX: 20, radiusY: 20 } as MockShape as Shape],
+        ['shape-3', { id: 'shape-3', type: 'rectangle', x: 200, y: 200, width: 50, height: 50 } as MockShape as Shape], // Outside box
+      ])
+      
+      // Finish selection
+      act(() => {
+        result.current.finishSelection(mockShapes)
+      })
+      
+      expect(result.current.isSelecting).toBe(false)
+      expect(result.current.selectionBox).toBeNull()
+      expect(result.current.selectedShapeIds.size).toBe(2)
+      expect(result.current.selectedShapeIds.has('shape-1')).toBe(true)
+      expect(result.current.selectedShapeIds.has('shape-2')).toBe(true)
+      expect(result.current.selectedShapeIds.has('shape-3')).toBe(false)
+    })
+
+    it('should delete all selected shapes when Delete key is pressed', () => {
+      const onDelete = vi.fn()
+      const { result } = renderHook(() => useShapeSelection({ onDelete, tool: 'select' }))
+      
+      // Start selection
+      act(() => {
+        result.current.startSelection(0, 0)
+      })
+      
+      act(() => {
+        result.current.updateSelection(100, 100)
+      })
+      
+      const mockShapes = new Map<string, Shape>([
+        ['shape-1', { id: 'shape-1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50 } as MockShape as Shape],
+        ['shape-2', { id: 'shape-2', type: 'rectangle', x: 60, y: 60, width: 50, height: 50 } as MockShape as Shape],
+      ])
+      
+      act(() => {
+        result.current.finishSelection(mockShapes)
+      })
+      
+      expect(result.current.selectedShapeIds.size).toBe(2)
+      
+      // Press Delete key
+      const deleteEvent = new KeyboardEvent('keydown', { key: 'Delete' })
+      act(() => {
+        window.dispatchEvent(deleteEvent)
+      })
+      
+      expect(onDelete).toHaveBeenCalledWith(['shape-1', 'shape-2'])
+      expect(result.current.selectedShapeIds.size).toBe(0)
+    })
+
+    it('should deselect all shapes when Escape key is pressed', () => {
+      const onDeselectAll = vi.fn()
+      const { result } = renderHook(() => useShapeSelection({ onDeselectAll, tool: 'select' }))
+      
+      // Simulate multi-select
+      act(() => {
+        result.current.startSelection(0, 0)
+      })
+      
+      act(() => {
+        result.current.updateSelection(100, 100)
+      })
+      
+      const mockShapes = new Map<string, Shape>([
+        ['shape-1', { id: 'shape-1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50 } as MockShape as Shape],
+        ['shape-2', { id: 'shape-2', type: 'rectangle', x: 60, y: 60, width: 50, height: 50 } as MockShape as Shape],
+      ])
+      
+      act(() => {
+        result.current.finishSelection(mockShapes)
+      })
+      
+      expect(result.current.selectedShapeIds.size).toBe(2)
+      
+      // Press Escape key
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape' })
+      act(() => {
+        window.dispatchEvent(escapeEvent)
+      })
+      
+      expect(onDeselectAll).toHaveBeenCalled()
+      expect(result.current.selectedShapeIds.size).toBe(0)
+    })
+
+    it('should clear multi-select when clicking on a single shape', () => {
+      const onDeselectAll = vi.fn()
+      const { result } = renderHook(() => useShapeSelection({ onDeselectAll, tool: 'select' }))
+      
+      // Simulate multi-select
+      act(() => {
+        result.current.startSelection(0, 0)
+      })
+      
+      act(() => {
+        result.current.updateSelection(100, 100)
+      })
+      
+      const mockShapes = new Map<string, Shape>([
+        ['shape-1', { id: 'shape-1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50 } as MockShape as Shape],
+        ['shape-2', { id: 'shape-2', type: 'rectangle', x: 60, y: 60, width: 50, height: 50 } as MockShape as Shape],
+      ])
+      
+      act(() => {
+        result.current.finishSelection(mockShapes)
+      })
+      
+      expect(result.current.selectedShapeIds.size).toBe(2)
+      
+      // Click on a different single shape
+      const mockEvent = {
+        evt: { button: 0 },
+      } as any // eslint-disable-line @typescript-eslint/no-explicit-any
+      
+      act(() => {
+        result.current.handleShapeClick(mockEvent, 'shape-3')
+      })
+      
+      expect(onDeselectAll).toHaveBeenCalled()
+      expect(result.current.selectedShapeIds.size).toBe(1)
+      expect(result.current.selectedShapeIds.has('shape-3')).toBe(true)
+      expect(result.current.selectedShapeId).toBe('shape-3')
+    })
+
+    it('should set selectedShapeId to null when multiple shapes are selected', () => {
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      
+      act(() => {
+        result.current.startSelection(0, 0)
+      })
+      
+      act(() => {
+        result.current.updateSelection(100, 100)
+      })
+      
+      const mockShapes = new Map<string, Shape>([
+        ['shape-1', { id: 'shape-1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50 } as MockShape as Shape],
+        ['shape-2', { id: 'shape-2', type: 'rectangle', x: 60, y: 60, width: 50, height: 50 } as MockShape as Shape],
+      ])
+      
+      act(() => {
+        result.current.finishSelection(mockShapes)
+      })
+      
+      // When multiple shapes are selected, selectedShapeId should be null
+      expect(result.current.selectedShapeIds.size).toBe(2)
+      expect(result.current.selectedShapeId).toBeNull()
+      
+      // When only one shape is selected, selectedShapeId should return that shape
+      const mockEvent = {
+        evt: { button: 0 },
+      } as any // eslint-disable-line @typescript-eslint/no-explicit-any
+      
+      act(() => {
+        result.current.handleShapeClick(mockEvent, 'shape-1')
+      })
+      
+      expect(result.current.selectedShapeIds.size).toBe(1)
+      expect(result.current.selectedShapeId).toBe('shape-1')
+    })
+
+    it('should handle dragging in any direction for selection box', () => {
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      
+      // Drag from bottom-right to top-left
+      act(() => {
+        result.current.startSelection(100, 100)
+      })
+      
+      act(() => {
+        result.current.updateSelection(0, 0)
+      })
+      
+      // Box should normalize coordinates
+      expect(result.current.selectionBox).toEqual({ x: 0, y: 0, width: 100, height: 100 })
+    })
+
+    it('should not select shapes outside the selection box', () => {
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      
+      act(() => {
+        result.current.startSelection(0, 0)
+      })
+      
+      act(() => {
+        result.current.updateSelection(50, 50)
+      })
+      
+      const mockShapes = new Map<string, Shape>([
+        ['shape-1', { id: 'shape-1', type: 'rectangle', x: 10, y: 10, width: 20, height: 20 } as MockShape as Shape], // Inside
+        ['shape-2', { id: 'shape-2', type: 'rectangle', x: 100, y: 100, width: 20, height: 20 } as MockShape as Shape], // Outside
+        ['shape-3', { id: 'shape-3', type: 'circle', x: 200, y: 200, radiusX: 10, radiusY: 10 } as MockShape as Shape], // Outside
+      ])
+      
+      act(() => {
+        result.current.finishSelection(mockShapes)
+      })
+      
+      expect(result.current.selectedShapeIds.size).toBe(1)
+      expect(result.current.selectedShapeIds.has('shape-1')).toBe(true)
+      expect(result.current.selectedShapeIds.has('shape-2')).toBe(false)
+      expect(result.current.selectedShapeIds.has('shape-3')).toBe(false)
+    })
+
+    it('should clear selection box when clicking empty space with no overlapping shapes', () => {
+      const onDeselectAll = vi.fn()
+      const { result } = renderHook(() => useShapeSelection({ onDeselectAll, tool: 'select' }))
+      
+      // Pre-select some shapes
+      act(() => {
+        result.current.startSelection(0, 0)
+      })
+      
+      act(() => {
+        result.current.updateSelection(100, 100)
+      })
+      
+      const mockShapesInitial = new Map<string, Shape>([
+        ['shape-1', { id: 'shape-1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50 } as MockShape as Shape],
+      ])
+      
+      act(() => {
+        result.current.finishSelection(mockShapesInitial)
+      })
+      
+      expect(result.current.selectedShapeIds.size).toBe(1)
+      
+      // Now drag in an empty area with no shapes
+      act(() => {
+        result.current.startSelection(200, 200)
+      })
+      
+      act(() => {
+        result.current.updateSelection(250, 250)
+      })
+      
+      const mockShapesEmpty = new Map<string, Shape>([
+        ['shape-1', { id: 'shape-1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50 } as MockShape as Shape],
+      ])
+      
+      act(() => {
+        result.current.finishSelection(mockShapesEmpty)
+      })
+      
+      expect(onDeselectAll).toHaveBeenCalled()
+      expect(result.current.selectedShapeIds.size).toBe(0)
     })
   })
 })

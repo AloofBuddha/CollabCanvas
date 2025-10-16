@@ -238,7 +238,54 @@ interface ShapeState {
 * Multi-canvas workspaces
 * Role-based permissions
 * Advanced performance optimization (FPS >60)
-* AI Agent integration in v2
+* AI Canvas Agent integration (v2.0)
+
+### 6. AI Canvas Agent Requirements (v2.0)
+
+**Core AI Features:**
+* Natural language command processing for canvas operations
+* Support for 8+ command types across creation, manipulation, layout, and complex operations
+* Real-time AI response with sub-3 second target latency
+* Secure API integration with configurable AI provider (Grok/OpenAI/Claude/Gemini)
+* Atomic operation execution (all-or-nothing for complex commands)
+
+**Command Categories (Minimum 8 total commands):**
+
+**Creation Commands (2-3 required):**
+* "Create a [color] [shape] at position X, Y"
+* "Add text that says '[text]' at [position]"
+* "Make a [width]x[height] rectangle"
+
+**Manipulation Commands (2-3 required):**
+* "Move [shape identifier] to [position/direction]"
+* "Change the color of [shape] to [color]"
+* "Resize [shape] to [dimensions]"
+* "Rotate [shape] [degrees] degrees"
+
+**Layout Commands (2 required):**
+* "Arrange [shapes] in a horizontal/vertical row"
+* "Create a grid of [n]x[m] [shapes]"
+* "Center [shape] on the canvas"
+* "Distribute [shapes] evenly"
+
+**Complex Commands (2 required):**
+* "Create a login form" → username field, password field, submit button, title
+* "Build a navigation bar with [n] menu items"
+* "Make a card layout with title, description, and image placeholder"
+
+**User Experience:**
+* Dedicated AI command input interface (floating panel or toolbar integration)
+* Loading states with progress indicators during AI processing
+* Natural language support with synonyms and informal language
+* Graceful error handling with user-friendly messages
+* Command history and success rate logging for debugging
+
+**Technical Requirements:**
+* AI service module with configurable provider switching
+* Command parsing and validation pipeline
+* Real-time sync of AI-generated operations to Firestore
+* Performance monitoring and response time tracking
+* Multi-user AI command support with conflict resolution
 
 ---
 

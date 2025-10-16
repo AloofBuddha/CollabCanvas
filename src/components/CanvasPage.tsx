@@ -12,6 +12,7 @@ import {
   deleteShape,
   lockShape as lockShapeInFirestore,
   unlockShape as unlockShapeInFirestore,
+  batchUpdateShapeFields,
   // RTDB functions for real-time updates
   listenToRTDBShapes,
   syncShapeToRTDB,
@@ -286,6 +287,82 @@ export default function CanvasPage() {
     }, 0)
   }, [userId, unlockShape])
 
+  // Handle batch locking for multi-select (prevents race conditions)
+  const handleBatchShapeLock = useCallback(async (shapeIds: string[]) => {
+    if (!userId || shapeIds.length === 0) return
+    
+    const shapesToLock: string[] = []
+    
+    // Check which shapes can be locked
+    shapeIds.forEach(shapeId => {
+      const shape = useShapeStore.getState().shapes[shapeId]
+      // Don't steal locks from other users
+      if (!shape?.lockedBy || shape.lockedBy === userId) {
+        shapesToLock.push(shapeId)
+      }
+    })
+    
+    if (shapesToLock.length === 0) return
+    
+    try {
+      // Optimistically update local state for all shapes
+      shapesToLock.forEach(shapeId => lockShape(shapeId, userId))
+      
+      // Batch update Firestore in a single atomic operation
+      await batchUpdateShapeFields(
+        shapesToLock.map(shapeId => ({
+          shapeId,
+          fields: { lockedBy: userId }
+        }))
+      )
+    } catch (error) {
+      console.error('Failed to lock shapes in batch:', error)
+      // Rollback optimistic updates on error
+      shapesToLock.forEach(shapeId => unlockShape(shapeId))
+    }
+  }, [userId, lockShape, unlockShape])
+
+  // Handle batch unlocking for multi-select (prevents race conditions)
+  const handleBatchShapeUnlock = useCallback(async (shapeIds: string[]) => {
+    if (!userId || shapeIds.length === 0) return
+    
+    const shapesToUnlock: string[] = []
+    
+    // Only unlock shapes we own
+    shapeIds.forEach(shapeId => {
+      const shape = useShapeStore.getState().shapes[shapeId]
+      if (shape?.lockedBy === userId) {
+        shapesToUnlock.push(shapeId)
+      }
+    })
+    
+    if (shapesToUnlock.length === 0) return
+    
+    // Debounce batch unlocks
+    const now = Date.now()
+    if (now - lastUnlockTime.current < UNLOCK_DEBOUNCE_MS) {
+      return
+    }
+    lastUnlockTime.current = now
+    
+    try {
+      // Optimistically update local state for all shapes
+      shapesToUnlock.forEach(shapeId => unlockShape(shapeId))
+      
+      // Batch update Firestore in a single atomic operation
+      await batchUpdateShapeFields(
+        shapesToUnlock.map(shapeId => ({
+          shapeId,
+          fields: { lockedBy: null }
+        }))
+      )
+    } catch (error) {
+      console.error('Failed to unlock shapes in batch:', error)
+      // Rollback: re-lock locally
+      shapesToUnlock.forEach(shapeId => lockShape(shapeId, userId))
+    }
+  }, [userId, lockShape, unlockShape])
+
   const handleSignOut = async () => {
     await signOut()
   }
@@ -317,6 +394,8 @@ export default function CanvasPage() {
           onShapeUpdate={handleShapeUpdate}
           onShapeLock={handleShapeLock}
           onShapeUnlock={handleShapeUnlock}
+          onBatchShapeLock={handleBatchShapeLock}
+          onBatchShapeUnlock={handleBatchShapeUnlock}
         />
         <Toolbar selectedTool={selectedTool} onSelectTool={setSelectedTool} />
       </div>

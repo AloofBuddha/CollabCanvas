@@ -1,0 +1,242 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Set up project structure and dependencies",
+        "description": "Initialize the React TypeScript project with necessary dependencies including Konva, Zustand, Firebase, TailwindCSS, and Vitest for testing.",
+        "details": "Create a new React project using Vite or Create React App with TypeScript. Install dependencies: react-konva, zustand, firebase, tailwindcss, vitest. Configure TailwindCSS for styling. Set up project folders: components, stores, utils, tests. Ensure Firebase is configured with project ID, API key, etc., for Auth, Firestore, and Realtime DB.",
+        "testStrategy": "Verify project builds successfully and all dependencies are installed without errors. Run a basic test to ensure Vitest is set up.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-10-16T15:31:54.695Z"
+      },
+      {
+        "id": 2,
+        "title": "Implement Firebase Auth integration",
+        "description": "Set up Firebase Authentication for email/password sign-up and login, including saving user data to Firestore.",
+        "details": "Initialize Firebase app with config. Create auth functions for signUp, login, logout using Firebase Auth SDK. On sign-up, save displayName and assign a random color to /users/{userId} in Firestore. Handle auth state changes to update user store.",
+        "testStrategy": "Unit tests for signUp, login, logout functions using Vitest mocks for Firebase. Manual test: sign up, log in, check Firestore data.",
+        "priority": "high",
+        "dependencies": [
+          "1"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-10-16T15:31:56.765Z"
+      },
+      {
+        "id": 3,
+        "title": "Create Auth page UI and routing",
+        "description": "Build the authentication page with forms for sign-up and login, including validation and error handling.",
+        "details": "Create AuthPage component with email, password, displayName fields. Use React Hook Form or native state for validation (email format, password length). Add buttons for Sign Up, Login. Implement routing to protect canvas route, redirecting unauthenticated users to auth page. Style with TailwindCSS for full-screen modal aesthetic.",
+        "testStrategy": "Manual tests: fill forms, submit, check validation errors. Unit tests for form validation logic.",
+        "priority": "high",
+        "dependencies": [
+          "2"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-10-16T15:31:58.816Z"
+      },
+      {
+        "id": 4,
+        "title": "Set up Zustand stores for state management",
+        "description": "Implement useUserStore, useCursorStore, and useShapeStore as per the PRD specifications.",
+        "details": "Create Zustand stores with the provided interfaces. For useUserStore: manage userId, displayName, color, online, authStatus. For useCursorStore: localCursor and remoteCursors. For useShapeStore: shapes map with add, update, remove methods. Ensure stores are reactive and integrate with Firebase listeners.",
+        "testStrategy": "Unit tests for store actions: addShape, updateShape, etc. Verify state updates correctly.",
+        "priority": "medium",
+        "dependencies": [
+          "1"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-10-16T15:32:00.928Z"
+      },
+      {
+        "id": 5,
+        "title": "Implement canvas rendering with Konva",
+        "description": "Set up the canvas component using React Konva for rendering shapes and handling interactions.",
+        "details": "Create Canvas component with Stage and Layer. Set canvas size to 5000x5000px, enable panning with spacebar. Render rectangles from shapeStore. Add event handlers for mouse movements to update localCursor. Style with white background and light-gray grid.",
+        "testStrategy": "Manual test: render empty canvas, pan around. Unit test: verify canvas dimensions and grid rendering.",
+        "priority": "medium",
+        "dependencies": [
+          "4"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-10-16T15:32:02.976Z"
+      },
+      {
+        "id": 6,
+        "title": "Add local rectangle creation and movement",
+        "description": "Implement creating and moving rectangles locally without sync yet.",
+        "details": "Add toolbar component (bottom-center) with Select and Rectangle tools. On Rectangle tool, handle click+drag to create preview rectangle, commit on mouseup. For movement: select rectangle, drag to update position. Update shapeStore locally. Show border in user color during drag.",
+        "testStrategy": "Manual tests: create rectangle, move it. Unit tests for shape creation logic.",
+        "priority": "medium",
+        "dependencies": [
+          "5"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-10-16T15:32:04.990Z"
+      },
+      {
+        "id": 7,
+        "title": "Sync shapes with Firestore",
+        "description": "Integrate shape synchronization with Firestore for real-time updates.",
+        "details": "Listen to /canvas/state/shapes in Firestore, update shapeStore on changes. On local add/update/remove, write to Firestore. Handle conflicts by last-write-wins. Ensure shapes persist across sessions.",
+        "testStrategy": "Manual multi-user test: create/move shapes, verify sync. Unit tests for Firestore listeners and writes.",
+        "priority": "medium",
+        "dependencies": [
+          "6"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-10-16T15:32:07.140Z"
+      },
+      {
+        "id": 8,
+        "title": "Implement real-time cursors and presence",
+        "description": "Add cursor tracking and user presence using Realtime DB.",
+        "details": "Track local cursor position, send to /presence/{userId}/cursor. Listen to all presence, update remoteCursors with color and name (initials). Render cursors on canvas with labels. Handle online/offline, remove cursors on disconnect. Display avatars top-right.",
+        "testStrategy": "Manual tests: move cursor, see remote cursors; disconnect user, verify removal. Unit tests for cursor updates.",
+        "priority": "medium",
+        "dependencies": [
+          "7"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-10-16T15:32:09.270Z"
+      },
+      {
+        "id": 9,
+        "title": "Add persistence with localStorage",
+        "description": "Implement canvas state restoration using localStorage.",
+        "details": "On app load, load shapes from localStorage if Firestore is unavailable. Save shapes to localStorage on changes. Ensure seamless restore on reload.",
+        "testStrategy": "Manual test: reload page, verify shapes persist. Unit test: localStorage read/write functions.",
+        "priority": "low",
+        "dependencies": [
+          "8"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-10-16T15:32:11.265Z"
+      },
+      {
+        "id": 10,
+        "title": "Implement unit tests with Vitest",
+        "description": "Write unit tests for auth, stores, and shape logic as per testing plan.",
+        "details": "Use Vitest to test auth functions, store actions (addShape, updateShape), cursor throttling, and shape creation/movement logic. Mock Firebase for isolated tests.",
+        "testStrategy": "Run Vitest suite, ensure all tests pass. Coverage for key functions.",
+        "priority": "low",
+        "dependencies": [
+          "1",
+          "2",
+          "4",
+          "6",
+          "7",
+          "8"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-10-16T15:32:13.329Z"
+      },
+      {
+        "id": 11,
+        "title": "Implement Multi-Select with Shift+Click",
+        "description": "Enable users to select and manipulate multiple shapes simultaneously by supporting drag-to-select with a rectangle for selecting multiple shapes at once, and bulk operations such as deleting or moving selected shapes.",
+        "status": "done",
+        "dependencies": [
+          4,
+          5,
+          6
+        ],
+        "priority": "high",
+        "details": "Implemented multi-select feature with drag-to-select functionality. Updated the useShapeSelection hook to support multi-selection using a Set<string> for tracking selected shape IDs, including selectedShapeIds, isSelecting, and selectionBox state, while maintaining backward compatibility with selectedShapeId for single-selection. In the Canvas component, integrated drag-to-select: users can click and drag on empty canvas space to create a blue translucent selection rectangle; on mouse release, all shapes overlapping the rectangle (using AABB collision detection) are selected. Added visual feedback: selected shapes show selection borders, and the selection box renders with blue translucent fill and dashed stroke, scaling with canvas zoom. Supported multi-select operations: multi-drag (all selected shapes move together when dragging any of them), multi-delete (Delete or Backspace key removes all selected shapes), and ESC key to deselect all. Properly managed Firebase locks for all selected shapes during operations. UX constraints: DetailPane does not open for multi-select (only single selection); manipulation handles (resize/rotate) are disabled for multi-select, supporting only drag and delete. Files modified: src/hooks/useShapeSelection.ts (complete rewrite for multi-select with drag-to-select) and src/components/Canvas.tsx (integrated multi-select rendering, events, and multi-drag logic). Used Konva Rect for selection box rendering and extended delete callback to handle arrays of shape IDs.",
+        "testStrategy": "Perform manual tests: create multiple shapes, drag a rectangle over shapes to select them en masse and verify selectedShapeIds updates; with multiple selected, press Delete or Backspace to remove them and confirm they disappear from canvas and Firestore; drag selected shapes to move them together and verify positions update in store and sync; press ESC to deselect all. Unit tests: mock useShapeSelection actions for multi-select operations, test AABB collision detection for drag-select, and verify bulk delete/move functions update the store correctly. Run Vitest suite for coverage on new selection logic, and conduct multi-user manual tests to ensure selections and operations sync properly without conflicts.",
+        "subtasks": null
+      },
+      {
+        "id": 12,
+        "title": "Implement AI Canvas Agent for Natural Language Commands",
+        "description": "Develop an AI-powered agent that interprets natural language commands to create, manipulate, and layout shapes on the canvas, supporting at least 8+ commands across creation, manipulation, layout, and complex operations like generating a login form. Integrate with the Grok API for command processing and ensure all operations sync to Firestore for real-time collaboration, targeting sub-3 second response times, atomic operations, and multi-user support to align with 25-point rubric requirements.",
+        "status": "pending",
+        "dependencies": [
+          2,
+          4,
+          5,
+          6,
+          7
+        ],
+        "priority": "high",
+        "details": "Create a new AI Agent component or service that handles user input via a text input field or chat interface integrated into the canvas UI (e.g., a floating input box or sidebar). Use the Grok API to send natural language commands and receive structured responses (e.g., JSON objects specifying actions like createShape, updateShape, or layoutShapes), aiming for sub-3 second response times. Parse the API response to execute atomic actions on the shapeStore, such as creating rectangles, circles, or text elements based on commands like 'create a red rectangle at position 100,100', 'move selected shapes to the right', 'arrange shapes in a grid', or 'create a login form' which could generate multiple shapes (e.g., input fields, buttons). For complex operations, define a command parser that maps API outputs to store actions, ensuring compatibility with existing shape types from Task 6. Integrate error handling for invalid commands or API failures, displaying user-friendly messages. Sync all shape changes to Firestore via the existing sync mechanism from Task 7, ensuring operations are persisted and real-time, with atomic operations to prevent conflicts in multi-user scenarios. Consider rate limiting API calls to avoid overuse, and store command history locally for undo/redo if needed. Update the UI to reflect AI-generated changes, and ensure the agent works with multi-user scenarios by syncing via Firestore. Use Zustand stores from Task 4 for state management, and render shapes on the Konva canvas from Task 5. For user authentication, leverage Task 2 to associate commands with the current user if required by the API. Align implementation with 25-point rubric requirements, including support for 8+ commands across categories, response time targets, atomicity, and multi-user support.",
+        "testStrategy": "Conduct manual tests by entering various commands (e.g., 'create a blue circle', 'delete all rectangles', 'create a login form', 'align shapes vertically') and verify shapes appear, update, or layout correctly on the canvas within sub-3 seconds; check Firestore for synced changes in real-time. Test edge cases like invalid commands (e.g., 'fly to the moon') to ensure graceful error handling without crashing. Perform multi-user tests: have two users issue commands simultaneously and confirm shapes sync without conflicts, verifying atomic operations. Unit tests: Mock the Grok API responses and test command parsing logic, shape creation/manipulation functions, and integration with shapeStore actions using Vitest, including response time checks. Verify API call throttling and error handling. Integration tests: Simulate full workflows, such as creating a form via command and checking if all elements render and persist, ensuring alignment with rubric requirements.",
+        "subtasks": null
+      },
+      {
+        "id": 13,
+        "title": "Implement Comprehensive Testing and Performance Optimization",
+        "description": "Conduct thorough testing for conflict resolution in shape synchronization (including simultaneous operations, rapid edits, and delete vs edit conflicts), persistence and reconnection handling (including refresh, disconnect/reconnect, and network simulation), and performance validation with 100+ shapes and 5+ concurrent users, including FPS monitoring and bottleneck optimization. Additionally, implement connection status UI and ensure comprehensive results documentation.",
+        "status": "pending",
+        "dependencies": [
+          "2",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "priority": "high",
+        "details": "This task focuses on end-to-end testing and optimization of the collaborative canvas application. Begin by setting up a testing environment that simulates multi-user scenarios using multiple browser tabs or instances, authenticated via Firebase Auth (from Task 2). Implement conflict resolution testing by creating scenarios where multiple users edit the same shapes simultaneously, verifying that the last-write-wins strategy (from Task 7) resolves conflicts correctly without data loss; include testing for simultaneous operations, rapid edits, and delete vs edit conflicts. For persistence and reconnection, test localStorage fallback (Task 9) by disconnecting and reconnecting to Firestore, ensuring shapes restore seamlessly and sync upon reconnection; incorporate refresh scenarios, disconnect/reconnect, and network simulation. Develop performance tests with 100+ shapes: generate and render a large number of shapes (rectangles, circles, etc.) using the shape store (Task 4 and 6), and sync them via Firestore (Task 7). Simulate 5+ concurrent users by running parallel sessions, tracking real-time updates and presence (Task 8). Add FPS monitoring by integrating a library like Stats.js or custom code to measure frame rates during canvas rendering (Task 5), logging FPS drops during high-load operations like panning, zooming, or shape manipulations. Identify bottlenecks through profiling tools (e.g., Chrome DevTools Performance tab) and optimize: reduce unnecessary re-renders in React Konva, throttle Firestore writes, optimize shape data structures in Zustand stores, and implement lazy loading for large canvases. Consider edge cases like network latency, offline mode, and memory usage with many shapes. Ensure all optimizations maintain real-time collaboration integrity. Implement a connection status UI to display real-time connection state (e.g., online/offline indicators) for better user feedback during testing and usage. Ensure comprehensive documentation of test results, including metrics for conflict resolution accuracy, persistence reliability, reconnection success rates, FPS under load, sync latency, memory consumption, and before/after optimization improvements.",
+        "testStrategy": "Set up automated scripts or manual procedures to run tests in a controlled environment. For conflict resolution: Use 2-3 browser instances logged in as different users; simultaneously edit overlapping shapes (e.g., move/resize the same rectangle), perform rapid edits, and simulate delete vs edit conflicts; verify that the final state matches the last edit via Firestore logs and visual inspection. For persistence/reconnection: Disconnect internet, make changes, reconnect, and confirm shapes persist via localStorage and sync back to Firestore without loss; include refresh scenarios, disconnect/reconnect, and network simulation using tools like Chrome DevTools Network Throttling. For performance: Create a script to generate 100+ shapes programmatically; run with 5+ concurrent users (simulate via multiple tabs or devices); monitor FPS using integrated monitoring (target 30+ FPS under load); use Chrome DevTools to profile CPU/memory usage, identifying and measuring improvements after optimizations (e.g., reduce render time by 20%). Conduct load testing with tools like Artillery or manual multi-tab setups to ensure stability. Document results comprehensively, including before/after metrics for FPS, sync latency, memory consumption, conflict resolution success rates, persistence/reconnection reliability, and any UI feedback from connection status indicators. Run tests on various devices/browsers to ensure cross-platform reliability.",
+        "subtasks": null
+      },
+      {
+        "id": 14,
+        "title": "Implement Keyboard Shortcuts for Shape Manipulation",
+        "description": "Add keyboard shortcuts for nudging selected shapes with arrow keys (1px or 10px with Shift), duplicating shapes with Cmd/Ctrl+D, selecting all shapes with Cmd/Ctrl+A, and deselecting with Escape. Update the README to document all available shortcuts.",
+        "details": "This task involves enhancing the canvas interaction by adding global keyboard event listeners to handle the specified shortcuts. Use React's useEffect hook in the main Canvas component (from Task 5) to attach event listeners to the window for keydown events, ensuring they work regardless of focus. For arrow key nudging: Check if shapes are selected (using the selectedShapes array from Task 11), then update their positions by 1px (or 10px if Shift is held) in the direction of the arrow key, updating the useShapeStore accordingly and syncing to Firestore if applicable. Prevent default browser behavior for these keys to avoid page scrolling. For duplication (Cmd/Ctrl+D): Clone the selected shapes by creating new shape objects with incremented positions (e.g., offset by 10px), add them to the store, and select the new shapes. For select all (Cmd/Ctrl+A): Set all shape IDs to the selectedShapes array. For deselect (Escape): Clear the selectedShapes array. Ensure cross-platform compatibility by checking for 'metaKey' (Cmd on Mac) or 'ctrlKey' (Ctrl on Windows/Linux). Integrate with existing shape movement logic from Task 6 for consistency. Update the README.md file in the project root to include a new section listing all shortcuts, such as arrow keys for nudging, Cmd/Ctrl+D for duplicate, etc., with brief descriptions. Consider accessibility by ensuring shortcuts don't conflict with screen readers or other tools.",
+        "testStrategy": "Perform manual tests in the application: Create multiple shapes on the canvas. Test arrow key nudging by selecting shapes and pressing arrow keys (verify 1px movement) and Shift+arrow (verify 10px movement), checking position updates in the store and visual rendering. Test duplication by selecting shapes, pressing Cmd/Ctrl+D, and confirming new shapes appear offset and are selected. Test select all with Cmd/Ctrl+A, ensuring all shapes are highlighted; test deselect with Escape, verifying no shapes are selected. Verify persistence by reloading the page after changes. Run unit tests for any new functions added to the stores, mocking keyboard events with Vitest. Check README for accurate documentation of shortcuts.",
+        "status": "pending",
+        "dependencies": [
+          "4",
+          "5",
+          "6",
+          "11"
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Add PNG Export Functionality",
+        "description": "Implement PNG export feature for the canvas using Konva's toDataURL() method, adding an Export button to the toolbar and supporting configurable viewport options like width and height.",
+        "details": "To add PNG export functionality, integrate Konva's toDataURL() method in the Canvas component from Task 5. First, update the toolbar component from Task 6 to include a new 'Export' button positioned alongside the existing Select and Rectangle tools. When the Export button is clicked, trigger a function that calls stage.toDataURL({ mimeType: 'image/png', width: configurableWidth, height: configurableHeight }) to generate a PNG data URL of the current canvas viewport. Support configurable viewport options by adding state variables (e.g., via useState) for export width and height, with default values matching the canvas size (5000x5000px from Task 5), and provide UI controls like input fields or dropdowns in a modal or expanded toolbar section for users to set custom dimensions before export. Ensure the export captures the entire visible area or a specified region, considering panning offset. Handle the data URL by creating a download link (e.g., using a temporary <a> element with download attribute) to save the PNG file locally. Consider performance for large canvases by limiting max export size or adding loading indicators. Update the shapeStore if needed to persist export settings, but keep it lightweight. Ensure compatibility with existing interactions like selection and movement from Task 6.",
+        "testStrategy": "Perform manual tests by opening the application, creating and arranging shapes on the canvas, then clicking the Export button. Verify that a PNG file is downloaded with the correct filename (e.g., 'canvas-export.png'). Open the exported image in an image viewer to confirm it accurately represents the canvas content, including shapes, positions, and any grid or background from Task 5. Test configurable options by setting custom width/height (e.g., 1000x1000px) via UI controls and exporting, then checking the image dimensions match. Test edge cases like exporting an empty canvas, after panning, or with multi-selected shapes from Task 11 if available. Use browser developer tools to monitor for errors in console during export. For automated verification, consider adding a unit test in Vitest (from Task 10) to mock the toDataURL call and verify the download trigger.",
+        "status": "pending",
+        "dependencies": [
+          "5",
+          "6"
+        ],
+        "priority": "low",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "version": "1.0.0",
+      "lastModified": "2025-10-16T15:34:00.087Z",
+      "taskCount": 15,
+      "completedCount": 10,
+      "tags": [
+        "master"
+      ],
+      "created": "2025-10-16T15:37:35.414Z",
+      "description": "Tasks for master context",
+      "updated": "2025-10-16T18:12:00.961Z"
+    }
+  }
+}

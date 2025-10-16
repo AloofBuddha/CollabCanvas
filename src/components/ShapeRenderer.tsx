@@ -25,6 +25,7 @@ interface ShapeRendererProps {
   isLockedByOther: boolean
   isManipulating: boolean
   isHoveringManipulationZone: boolean // True when hovering over resize/rotate handles
+  isInMultiSelect: boolean // True when shape is part of a multi-selection
   stageScale: number
   remoteUserColor?: string // Color of the remote user who locked this shape
   onMouseDown: (e: Konva.KonvaEventObject<MouseEvent>, shapeId: string, isLockedByOther: boolean, shape: Shape) => void
@@ -46,6 +47,7 @@ export default function ShapeRenderer({
   isLockedByOther,
   isManipulating,
   isHoveringManipulationZone,
+  isInMultiSelect,
   stageScale,
   remoteUserColor,
   onMouseDown,
@@ -307,8 +309,8 @@ export default function ShapeRenderer({
   return (
     <Fragment key={shape.id}>
       {renderShape()}
-      {/* Show dimension label for selected shape */}
-      {isSelected && isLockedByMe && !isManipulating && (
+      {/* Show dimension label for selected shape (but not for multi-select) */}
+      {isSelected && isLockedByMe && !isManipulating && !isInMultiSelect && (
         <ShapeDimensionLabel 
           key={`${shape.id}-label`}
           shape={shape} 

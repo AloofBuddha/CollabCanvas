@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { Stage, Layer } from 'react-konva'
+import { Stage, Layer, Rect } from 'react-konva'
 import Konva from 'konva'
 import useShapeStore from '../stores/useShapeStore'
 import useUserStore from '../stores/useUserStore'
@@ -7,6 +7,7 @@ import useCursorStore from '../stores/useCursorStore'
 import RemoteCursor from './RemoteCursor'
 import ShapeRenderer, { NewShapeRenderer } from './ShapeRenderer'
 import DetailPane from './DetailPane'
+import MultiSelectBox from './MultiSelectBox'
 import { useCanvasPanning } from '../hooks/useCanvasPanning'
 import { useShapeCreation } from '../hooks/useShapeCreation'
 import { useShapeDragging } from '../hooks/useShapeDragging'
@@ -33,6 +34,8 @@ interface CanvasProps {
   onShapeUpdate?: (shape: Shape) => void // For drag/manipulation end -> Firestore persistence
   onShapeLock?: (shapeId: string) => void
   onShapeUnlock?: (shapeId: string) => void
+  onBatchShapeLock?: (shapeIds: string[]) => void
+  onBatchShapeUnlock?: (shapeIds: string[]) => void
 }
 
 export default function Canvas({
@@ -44,12 +47,24 @@ export default function Canvas({
   onShapeUpdate,
   onShapeLock,
   onShapeUnlock,
+  onBatchShapeLock,
+  onBatchShapeUnlock,
 }: CanvasProps) {
   const stageRef = useRef<Konva.Stage>(null)
   const [stageScale, setStageScale] = useState(1)
   const [currentCursor, setCurrentCursor] = useState<string>('default')
   const justFinishedManipulation = useRef(false)
   const isAltPressed = useRef(false)
+  
+  // Apply cursor to Konva container when it changes
+  useEffect(() => {
+    if (stageRef.current) {
+      const container = stageRef.current.container()
+      if (container) {
+        container.style.cursor = currentCursor
+      }
+    }
+  }, [currentCursor])
   
   const { shapes, updateShape } = useShapeStore()
   const { userId } = useUserStore()
@@ -86,18 +101,35 @@ export default function Canvas({
   })
   
   const {
+    selectedShapeIds,
     selectedShapeId,
     isDragging,
+    isSelecting,
+    selectionBox,
     handleShapeClick,
     handleStageClick,
     handleDragStart: handleSelectionDragStart,
     handleDragEnd: handleSelectionDragEnd,
     selectShape,
+    startSelection,
+    updateSelection,
+    finishSelection,
   } = useShapeSelection({
-    onDelete: onShapeDeleted,
+    onDelete: (shapeIds: string[]) => {
+      // Delete all selected shapes
+      shapeIds.forEach(id => onShapeDeleted?.(id))
+    },
     onDeselect: (shapeId) => {
-      // Unlock the shape when deselected with Escape
+      // Unlock the shape when deselected
       onShapeUnlock?.(shapeId)
+    },
+    onDeselectAll: () => {
+      // Unlock all selected shapes using batch operation if multiple
+      if (selectedShapeIds.size > 1 && onBatchShapeUnlock) {
+        onBatchShapeUnlock(Array.from(selectedShapeIds))
+      } else {
+        selectedShapeIds.forEach(id => onShapeUnlock?.(id))
+      }
     },
     onToolChange: (newTool) => {
       // Switch to select tool when Escape is pressed
@@ -108,9 +140,11 @@ export default function Canvas({
   
   // Handle shape creation and auto-select
   const handleShapeCreatedLocal = (shape: Shape) => {
-    // If there's a currently selected shape, unlock it first
-    if (selectedShapeId) {
-      onShapeUnlock?.(selectedShapeId)
+    // If there are currently selected shapes, unlock them first
+    if (selectedShapeIds.size > 1 && onBatchShapeUnlock) {
+      onBatchShapeUnlock(Array.from(selectedShapeIds))
+    } else if (selectedShapeIds.size > 0) {
+      selectedShapeIds.forEach(id => onShapeUnlock?.(id))
     }
     
     // Create shape with lock already set to avoid flicker from separate lock write
@@ -176,7 +210,7 @@ export default function Canvas({
     stageScale,
   })
 
-  // Handle mouse down - start creating rectangle or panning
+  // Handle mouse down - start creating shape, panning, or drag-to-select
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const evt = e.evt
 
@@ -187,7 +221,7 @@ export default function Canvas({
       return
     }
     
-    // Check if clicking in a rotation zone of selected shape (prevents deselection)
+    // Check if clicking in a manipulation zone of selected shape (prevents deselection)
     if (selectedShapeId && tool === 'select' && evt.button === 0) {
       const stage = stageRef.current
       const pos = stage ? getPointerPosition(stage) : null
@@ -210,10 +244,22 @@ export default function Canvas({
     // Left mouse button with shape creation tools - start creating
     if ((tool === 'rectangle' || tool === 'circle' || tool === 'line' || tool === 'text') && evt.button === 0) {
       startCreating(e)
+      return
+    }
+    
+    // Left mouse button with select tool on stage (not on shape) - start drag-to-select
+    if (tool === 'select' && evt.button === 0 && e.target === e.target.getStage()) {
+      const stage = stageRef.current
+      if (stage) {
+        const pos = getPointerPosition(stage)
+        if (pos) {
+          startSelection(pos.x, pos.y)
+        }
+      }
     }
   }
 
-  // Handle mouse move - update rectangle size while drawing, track cursor, and handle manipulation
+  // Handle mouse move - update shape size, track cursor, drag-to-select, and handle manipulation
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
     // Track cursor position
     handleCursorMove(e)
@@ -221,6 +267,18 @@ export default function Canvas({
     // Update shape being created
     if (isDrawing) {
       updateSize(e)
+      return
+    }
+    
+    // Update drag-to-select box
+    if (isSelecting) {
+      const stage = stageRef.current
+      if (stage) {
+        const pos = getPointerPosition(stage)
+        if (pos) {
+          updateSelection(pos.x, pos.y)
+        }
+      }
       return
     }
     
@@ -246,7 +304,7 @@ export default function Canvas({
     }
     
     // Check for manipulation zones on selected shape (for rotation zones outside shape)
-    if (shape && tool === 'select') {
+    if (shape && tool === 'select' && selectedShapeIds.size === 1) {
       handleManipulationStageMouseMove(shape, pos.x, pos.y)
       setCurrentCursor(manipulationCursor)
       return
@@ -256,7 +314,7 @@ export default function Canvas({
     setCurrentCursor(getCursorStyle(isPanning, isDrawing, tool))
   }
 
-  // Handle mouse up - finish creating rectangle, panning, or manipulation
+  // Handle mouse up - finish creating, panning, manipulation, or drag-to-select
   const handleMouseUp = () => {
     // Check if we're ending any operation that should prevent deselection
     const wasOperating = isPanning || isDrawing || isManipulating || isDragging
@@ -271,13 +329,27 @@ export default function Canvas({
       }, 100)
     }
     
+    // Finish drag-to-select
+    if (isSelecting) {
+      const shapesMap = new Map(Object.entries(shapes).map(([id, shape]) => [id, shape]))
+      const newlySelectedIds = finishSelection(shapesMap)
+      
+      // Lock all newly selected shapes using batch operation (prevents race conditions)
+      if (newlySelectedIds.size > 1 && onBatchShapeLock) {
+        onBatchShapeLock(Array.from(newlySelectedIds))
+      } else if (newlySelectedIds.size === 1) {
+        newlySelectedIds.forEach(id => onShapeLock?.(id))
+      }
+      return
+    }
+    
     // Stop panning
     if (isPanning) {
       setIsPanning(false)
       setCurrentCursor(getCursorStyle(false, isDrawing, tool)) // Reset cursor immediately
     }
 
-    // Finish creating rectangle
+    // Finish creating shape
     if (isDrawing) {
       finishCreating()
     }
@@ -288,7 +360,6 @@ export default function Canvas({
     }
   }
 
-  // Handle double-click on text shapes to enter edit mode
   // Handle shape mouse down (for panning, selection, and manipulation)
   const handleShapeMouseDown = (e: Konva.KonvaEventObject<MouseEvent>, shapeId: string, isLockedByOther: boolean, shape: Shape) => {
     const evt = e.evt
@@ -306,8 +377,15 @@ export default function Canvas({
       return
     }
     
-    // If this shape is already selected, check for manipulation zones
-    if (selectedShapeId === shapeId && tool === 'select') {
+    // If this shape is in the current multi-selection, don't change selection
+    // UNLESS shift is pressed (which means we want to toggle it off)
+    if (selectedShapeIds.has(shapeId) && selectedShapeIds.size > 1 && tool === 'select' && !evt.shiftKey) {
+      evt.stopPropagation() // Prevent stage click from deselecting
+      return
+    }
+    
+    // If this shape is the only selected shape, check for manipulation zones
+    if (selectedShapeId === shapeId && selectedShapeIds.size === 1 && tool === 'select') {
       evt.stopPropagation() // Prevent stage click from deselecting
       
       const stage = stageRef.current
@@ -330,23 +408,88 @@ export default function Canvas({
       return
     }
     
-    // If switching selection, unlock the old shape first
-    if (selectedShapeId && selectedShapeId !== shapeId) {
-      onShapeUnlock?.(selectedShapeId)
-    }
-    
-    // Handle selection and lock the new shape
-    handleShapeClick(e, shapeId)
-    if (tool === 'select' && evt.button === 0) {
-      onShapeLock?.(shapeId)
+    // Handle shift+click multi-select differently
+    if (evt.shiftKey) {
+      // Shift+click: toggle shape in/out of selection
+      if (selectedShapeIds.has(shapeId)) {
+        // Removing from selection: unlock this shape
+        onShapeUnlock?.(shapeId)
+      } else {
+        // Adding to selection: lock this shape
+        if (tool === 'select' && evt.button === 0) {
+          onShapeLock?.(shapeId)
+        }
+      }
+      handleShapeClick(e, shapeId)
+    } else {
+      // Regular click: replace selection
+      // If switching selection, unlock the old shapes first
+      if (selectedShapeIds.size > 0 && !selectedShapeIds.has(shapeId)) {
+        if (selectedShapeIds.size > 1 && onBatchShapeUnlock) {
+          onBatchShapeUnlock(Array.from(selectedShapeIds))
+        } else {
+          selectedShapeIds.forEach(id => onShapeUnlock?.(id))
+        }
+      }
+      
+      // Handle selection and lock the new shape
+      handleShapeClick(e, shapeId)
+      if (tool === 'select' && evt.button === 0) {
+        onShapeLock?.(shapeId)
+      }
     }
   }
 
-  // Combined drag handlers
+  // Multi-select box drag handlers
+  const handleMultiSelectDragStart = () => {
+    handleSelectionDragStart()
+  }
+
+  const handleMultiSelectDragMove = (deltaX: number, deltaY: number) => {
+    // Move all selected shapes by the delta
+    selectedShapeIds.forEach(id => {
+      const shape = shapes[id]
+      if (shape) {
+        // For lines, we need to move both (x,y) and (x2,y2) to maintain dimensions
+        if (shape.type === 'line') {
+          updateShape(id, {
+            x: shape.x + deltaX,
+            y: shape.y + deltaY,
+            x2: shape.x2 + deltaX,
+            y2: shape.y2 + deltaY,
+          })
+        } else {
+          updateShape(id, {
+            x: shape.x + deltaX,
+            y: shape.y + deltaY,
+          })
+        }
+      }
+    })
+  }
+
+  const handleMultiSelectDragEnd = () => {
+    handleSelectionDragEnd()
+    
+    // Persist all moved shapes to Firestore
+    selectedShapeIds.forEach(id => {
+      const updatedShape = shapes[id]
+      if (updatedShape) {
+        onShapeUpdate?.(updatedShape)
+      }
+    })
+  }
+
+  // Combined drag handlers - only used for single shape drag now
   const handleCombinedDragStart = (e: Konva.KonvaEventObject<DragEvent>, shape: Shape) => {
     handleSelectionDragStart()
     handleDragStart(e, shape)
     // Note: Shape should already be locked from mouse down, don't re-lock
+  }
+
+  const handleCombinedDragMove = (e: Konva.KonvaEventObject<DragEvent>, shape: Shape) => {
+    // Single shape drag
+    handleDragMove(e, shape)
   }
 
   const handleCombinedDragEnd = (shape: Shape) => {
@@ -355,29 +498,34 @@ export default function Canvas({
     // Note: Keep shape locked after drag - only unlock on deselect
   }
   
-  // Handle stage click - unlock any selected shape
+  // Handle stage click - unlock any selected shapes
   const handleStageClickWithUnlock = (e: Konva.KonvaEventObject<MouseEvent>) => {
     // Don't deselect if we're currently in an operation or just finished one
     const isOperating = justFinishedManipulation.current ||
                        isPanning ||
                        isDrawing ||
                        isManipulating ||
-                       isDragging
+                       isDragging ||
+                       isSelecting
 
     if (isOperating) {
       return
     }
     
-    // Get the currently selected shape before deselecting
-    const currentSelectedId = selectedShapeId
+    // Get the currently selected shapes before deselecting
+    const currentSelectedIds = new Set(selectedShapeIds)
     
     // Deselect first (updates local state)
     handleStageClick(e)
     
     // Only unlock if we clicked the stage background (not a shape)
     // This prevents unlocking when clicking an already-selected shape
-    if (currentSelectedId && e.target === e.target.getStage()) {
-      onShapeUnlock?.(currentSelectedId)
+    if (currentSelectedIds.size > 0 && e.target === e.target.getStage()) {
+      if (currentSelectedIds.size > 1 && onBatchShapeUnlock) {
+        onBatchShapeUnlock(Array.from(currentSelectedIds))
+      } else {
+        currentSelectedIds.forEach(id => onShapeUnlock?.(id))
+      }
     }
   }
   
@@ -441,7 +589,7 @@ export default function Canvas({
         <Layer>
           {/* Render all existing shapes */}
           {Object.values(shapes).map((shape) => {
-            const isSelected = selectedShapeId === shape.id
+            const isSelected = selectedShapeIds.has(shape.id)
             const isLockedByMe = shape.lockedBy === userId
             const isLockedByOther = !!(shape.lockedBy && shape.lockedBy !== userId)
             
@@ -450,23 +598,29 @@ export default function Canvas({
               ? getUserColorFromId(shape.lockedBy) 
               : undefined
 
+            // Disable manipulation UI and dragging for multi-select (will use MultiSelectBox instead)
+            const showManipulationUI = isSelected && selectedShapeIds.size === 1
+            const isInMultiSelect = selectedShapeIds.size > 1 && isSelected
+
             // Render shape using ShapeRenderer
             return (
               <ShapeRenderer
                 key={shape.id}
                 shape={shape}
-                isSelected={isSelected}
+                // Show selection for single select, also show for multi-select for visual consistency
+                isSelected={isSelected && isLockedByMe}
                 isLockedByMe={isLockedByMe}
-                isLockedByOther={isLockedByOther}
+                isLockedByOther={isLockedByOther && !isInMultiSelect} // Hide border for multi-select, show for others' locks
                 isManipulating={isManipulating}
-                isHoveringManipulationZone={isSelected && hoveredZone !== null && hoveredZone !== 'center'}
+                isHoveringManipulationZone={showManipulationUI && hoveredZone !== null && hoveredZone !== 'center'}
+                isInMultiSelect={isInMultiSelect}
                 stageScale={stageScale}
                 remoteUserColor={remoteUserColor}
                 onMouseDown={handleShapeMouseDown}
                 onMouseMove={handleManipulationMouseMove}
                 onMouseLeave={handleShapeMouseLeave}
                 onDragStart={handleCombinedDragStart}
-                onDragMove={handleDragMove}
+                onDragMove={handleCombinedDragMove}
                 onDragEnd={handleCombinedDragEnd}
               />
             )
@@ -474,6 +628,33 @@ export default function Canvas({
 
           {/* Render shape being created */}
           {newShape && <NewShapeRenderer shape={newShape} />}
+          
+          {/* Render drag-to-select box */}
+          {isSelecting && selectionBox && (
+            <Rect
+              x={selectionBox.x}
+              y={selectionBox.y}
+              width={selectionBox.width}
+              height={selectionBox.height}
+              fill="rgba(0, 122, 255, 0.1)"
+              stroke="rgba(0, 122, 255, 0.6)"
+              strokeWidth={2 / stageScale}
+              dash={[4 / stageScale, 4 / stageScale]}
+              listening={false}
+            />
+          )}
+
+          {/* Render multi-select bounding box */}
+          {selectedShapeIds.size > 1 && (
+            <MultiSelectBox
+              shapes={Array.from(selectedShapeIds).map(id => shapes[id]).filter(Boolean)}
+              stageScale={stageScale}
+              userId={userId}
+              onDragStart={handleMultiSelectDragStart}
+              onDragMove={handleMultiSelectDragMove}
+              onDragEnd={handleMultiSelectDragEnd}
+            />
+          )}
 
           {/* Render remote cursors inside the canvas layer */}
           {Object.values(remoteCursors).map((cursor) => (
@@ -486,8 +667,8 @@ export default function Canvas({
         </Layer>
       </Stage>
       
-      {/* Detail Pane - show when any shape is selected */}
-      {selectedShapeId && shapes[selectedShapeId] && (
+      {/* Detail Pane - show only when a single shape is selected */}
+      {selectedShapeId && selectedShapeIds.size === 1 && shapes[selectedShapeId] && (
         <DetailPane
           shape={shapes[selectedShapeId]}
           onClose={handleCloseDetailPane}

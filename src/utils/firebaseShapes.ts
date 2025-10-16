@@ -14,6 +14,7 @@ import {
   deleteDoc,
   onSnapshot,
   updateDoc,
+  writeBatch,
   Unsubscribe,
 } from 'firebase/firestore'
 import { ref, set, onValue, remove, get } from 'firebase/database'
@@ -52,6 +53,42 @@ export async function updateShapeFields(
 ): Promise<void> {
   const shapeRef = doc(db, SHAPES_COLLECTION, shapeId)
   await updateDoc(shapeRef, updates)
+}
+
+/**
+ * Update specific fields for multiple shapes in a single batch operation
+ * This is much more efficient and prevents race conditions when updating many shapes at once
+ */
+export async function batchUpdateShapeFields(
+  updates: Array<{ shapeId: string; fields: Partial<Shape> }>
+): Promise<void> {
+  const batch = writeBatch(db)
+  
+  updates.forEach(({ shapeId, fields }) => {
+    const shapeRef = doc(db, SHAPES_COLLECTION, shapeId)
+    // Use set with merge instead of update to avoid errors if doc doesn't exist
+    batch.set(shapeRef, fields, { merge: true })
+  })
+  
+  try {
+    await batch.commit()
+    
+    // ALSO update RTDB for real-time sync (Firestore snapshots aren't triggering reliably)
+    const rtdbPromises = updates.map(async ({ shapeId, fields }) => {
+      const rtdbShapeRef = ref(rtdb, `shapes/${shapeId}`)
+      const rtdbSnapshot = await get(rtdbShapeRef)
+      if (rtdbSnapshot.exists()) {
+        await set(rtdbShapeRef, {
+          ...rtdbSnapshot.val(),
+          ...fields,
+        })
+      }
+    })
+    await Promise.all(rtdbPromises)
+  } catch (error) {
+    console.error('Failed to batch update shapes:', error)
+    throw error
+  }
 }
 
 /**
