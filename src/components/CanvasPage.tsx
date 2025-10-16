@@ -37,7 +37,7 @@ type Tool = 'select' | 'rectangle' | 'circle' | 'line' | 'text'
  */
 export default function CanvasPage() {
   const { userId, displayName, color } = useUserStore()
-  const { lockShape, unlockShape } = useShapeStore()
+  const { lockShape, unlockShape, addShape, removeShape } = useShapeStore()
   const [selectedTool, setSelectedTool] = useState<Tool>('select')
   const [onlineUsers, setOnlineUsers] = useState<User[]>([])
   const [isPresenceReady, setIsPresenceReady] = useState(false)
@@ -87,9 +87,19 @@ export default function CanvasPage() {
 
     // Listen to remote cursors
     const unsubscribeCursors = listenToRemoteCursors(userId, (cursors) => {
-      // Clear all first
-      clearRemoteCursors()
-      // Then set all remote cursors
+      // Get current remote cursors to determine what changed
+      const currentCursors = useCursorStore.getState().remoteCursors
+      const incomingUserIds = new Set(Object.keys(cursors))
+      const currentUserIds = new Set(Object.keys(currentCursors))
+      
+      // Remove cursors that no longer exist (user disconnected)
+      currentUserIds.forEach((cursorUserId) => {
+        if (!incomingUserIds.has(cursorUserId)) {
+          useCursorStore.getState().removeRemoteCursor(cursorUserId)
+        }
+      })
+      
+      // Add or update cursors that exist
       Object.entries(cursors).forEach(([cursorUserId, cursor]) => {
         setRemoteCursor(cursorUserId, cursor)
       })
@@ -166,6 +176,9 @@ export default function CanvasPage() {
 
   // Handle shape creation - save to both Firestore (persistence) and RTDB (real-time)
   const handleShapeCreated = useCallback(async (shape: Shape) => {
+    // Optimistically add to local store immediately
+    addShape(shape)
+    
     try {
       // Write to both databases
       await Promise.all([
@@ -174,8 +187,10 @@ export default function CanvasPage() {
       ])
     } catch (error) {
       console.error('Failed to save shape:', error)
+      // On error, remove from local store
+      removeShape(shape.id)
     }
-  }, [])
+  }, [addShape, removeShape])
 
   // Handle shape deletion - remove from both Firestore and RTDB
   const handleShapeDeleted = useCallback(async (shapeId: string) => {
@@ -190,11 +205,14 @@ export default function CanvasPage() {
     }
   }, [])
 
-  // Handle drag/manipulation end - persist final state to Firestore
+  // Handle shape updates - persist to both databases
   const handleShapeUpdate = useCallback(async (shape: Shape) => {
     try {
-      // Persist to Firestore (RTDB already updated during drag/manipulation)
-      await saveShape(shape)
+      // Update both databases to ensure consistency
+      await Promise.all([
+        saveShape(shape),          // Firestore for persistence
+        syncShapeToRTDB(shape),    // RTDB for real-time sync
+      ])
     } catch (error) {
       console.error('Failed to update shape:', error)
     }

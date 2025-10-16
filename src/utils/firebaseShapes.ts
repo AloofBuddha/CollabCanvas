@@ -22,11 +22,25 @@ import { Shape } from '../types'
 const SHAPES_COLLECTION = 'shapes'
 
 /**
+ * Remove undefined values from an object (Firebase doesn't accept undefined)
+ */
+function sanitizeForFirebase(obj: Record<string, unknown>): Record<string, unknown> {
+  const cleaned: Record<string, unknown> = {}
+  for (const key in obj) {
+    if (obj[key] !== undefined) {
+      cleaned[key] = obj[key]
+    }
+  }
+  return cleaned
+}
+
+/**
  * Add or update a shape in Firestore
  */
 export async function saveShape(shape: Shape): Promise<void> {
   const shapeRef = doc(db, SHAPES_COLLECTION, shape.id)
-  await setDoc(shapeRef, shape)
+  const sanitizedShape = sanitizeForFirebase(shape as unknown as Record<string, unknown>)
+  await setDoc(shapeRef, sanitizedShape)
 }
 
 /**
@@ -74,6 +88,8 @@ export function listenToShapes(
           radiusY: data.radiusY || 0,
           rotation: data.rotation || 0,
           color: data.color || '#000000',
+          stroke: data.stroke,
+          strokeWidth: data.strokeWidth,
           createdBy: data.createdBy || '',
           lockedBy: data.lockedBy || null,
         }
@@ -91,6 +107,25 @@ export function listenToShapes(
           createdBy: data.createdBy || '',
           lockedBy: data.lockedBy || null,
         }
+      } else if (data.type === 'text') {
+        shapes[doc.id] = {
+          id: doc.id,
+          type: 'text',
+          x: data.x || 0,
+          y: data.y || 0,
+          width: data.width || 100,
+          height: data.height || 50,
+          text: data.text || '',
+          fontSize: data.fontSize || 16,
+          fontFamily: data.fontFamily || 'Arial',
+          textColor: data.textColor || '#000000',
+          align: data.align,
+          verticalAlign: data.verticalAlign,
+          rotation: data.rotation || 0,
+          color: data.color || '#D1D5DB',
+          createdBy: data.createdBy || '',
+          lockedBy: data.lockedBy || null,
+        }
       } else if (data.type === 'rectangle') {
         shapes[doc.id] = {
           id: doc.id,
@@ -101,6 +136,8 @@ export function listenToShapes(
           height: data.height || 0,
           rotation: data.rotation || 0,
           color: data.color || '#000000',
+          stroke: data.stroke,
+          strokeWidth: data.strokeWidth,
           createdBy: data.createdBy || '',
           lockedBy: data.lockedBy || null,
         }
@@ -203,7 +240,8 @@ export async function unlockAllShapes(shapes: Record<string, Shape>): Promise<vo
  */
 export async function syncShapeToRTDB(shape: Shape): Promise<void> {
   const shapeRef = ref(rtdb, `shapes/${shape.id}`)
-  await set(shapeRef, shape)
+  const sanitizedShape = sanitizeForFirebase(shape as unknown as Record<string, unknown>)
+  await set(shapeRef, sanitizedShape)
 }
 
 /**
@@ -245,6 +283,8 @@ export function listenToRTDBShapes(
           radiusY: shapeData.radiusY || 0,
           rotation: shapeData.rotation || 0,
           color: shapeData.color || '#000000',
+          stroke: shapeData.stroke,
+          strokeWidth: shapeData.strokeWidth,
           createdBy: shapeData.createdBy || '',
           lockedBy: shapeData.lockedBy || null,
         }
@@ -262,6 +302,25 @@ export function listenToRTDBShapes(
           createdBy: shapeData.createdBy || '',
           lockedBy: shapeData.lockedBy || null,
         }
+      } else if (shapeData.type === 'text') {
+        shapes[shapeId] = {
+          id: shapeId,
+          type: 'text',
+          x: shapeData.x || 0,
+          y: shapeData.y || 0,
+          width: shapeData.width || 100,
+          height: shapeData.height || 50,
+          text: shapeData.text || '',
+          fontSize: shapeData.fontSize || 16,
+          fontFamily: shapeData.fontFamily || 'Arial',
+          textColor: shapeData.textColor || '#000000',
+          align: shapeData.align,
+          verticalAlign: shapeData.verticalAlign,
+          rotation: shapeData.rotation || 0,
+          color: shapeData.color || '#D1D5DB',
+          createdBy: shapeData.createdBy || '',
+          lockedBy: shapeData.lockedBy || null,
+        }
       } else if (shapeData.type === 'rectangle') {
         shapes[shapeId] = {
           id: shapeId,
@@ -272,6 +331,8 @@ export function listenToRTDBShapes(
           height: shapeData.height || 0,
           rotation: shapeData.rotation || 0,
           color: shapeData.color || '#000000',
+          stroke: shapeData.stroke,
+          strokeWidth: shapeData.strokeWidth,
           createdBy: shapeData.createdBy || '',
           lockedBy: shapeData.lockedBy || null,
         }

@@ -9,18 +9,46 @@ import Konva from 'konva'
 
 interface UseShapeSelectionProps {
   onDelete?: (shapeId: string) => void
+  onDeselect?: (shapeId: string) => void
+  onToolChange?: (tool: 'select') => void
   tool: 'select' | 'rectangle' | 'circle' | 'line' | 'text'
 }
 
-export function useShapeSelection({ onDelete, tool }: UseShapeSelectionProps) {
+export function useShapeSelection({ onDelete, onDeselect, onToolChange, tool }: UseShapeSelectionProps) {
   const [selectedShapeId, setSelectedShapeId] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
 
-  // Handle keyboard events for deletion
+  // Handle keyboard events for deletion and deselection
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Delete or Backspace key
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedShapeId && tool === 'select') {
+      // Check if user is currently editing in an input field
+      const activeElement = document.activeElement
+      const isEditingText = activeElement && (
+        activeElement.tagName === 'INPUT' ||
+        activeElement.tagName === 'TEXTAREA' ||
+        activeElement.tagName === 'SELECT'
+      )
+
+      // Escape key - deselect shape first, then switch to select tool
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        
+        // Priority 1: If a shape is selected, deselect it
+        if (selectedShapeId) {
+          onDeselect?.(selectedShapeId)
+          setSelectedShapeId(null)
+          return
+        }
+        
+        // Priority 2: If not in select mode, switch to select tool
+        if (tool !== 'select') {
+          onToolChange?.('select')
+          return
+        }
+      }
+
+      // Delete or Backspace key - only if not editing text
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedShapeId && tool === 'select' && !isEditingText) {
         e.preventDefault()
         onDelete?.(selectedShapeId)
         setSelectedShapeId(null)
@@ -29,7 +57,7 @@ export function useShapeSelection({ onDelete, tool }: UseShapeSelectionProps) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedShapeId, onDelete, tool])
+  }, [selectedShapeId, onDelete, onDeselect, onToolChange, tool])
 
   const handleShapeClick = (e: Konva.KonvaEventObject<MouseEvent>, shapeId: string) => {
     const evt = e.evt

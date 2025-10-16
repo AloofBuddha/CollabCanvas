@@ -2,7 +2,7 @@
 
 ## Current Rubric Grade Analysis
 
-**Overall Grade**: **48/100 (F)** | **Target**: 70-75/100 (C/C+) | **Stretch**: 80+/100 (B)
+**Overall Grade**: **53/100 (F)** ⬆️ **+5** | **Target**: 70-75/100 (C/C+) | **Stretch**: 80+/100 (B)
 
 ### Detailed Breakdown by Section
 
@@ -11,13 +11,13 @@
 - Conflict Resolution: 7/9 (Good - locking works, but prevents rather than resolves)
 - Persistence & Reconnection: 5/9 (Satisfactory - no offline queue, no connection UI)
 
-**Section 2: Canvas Features & Performance (13/20)**
-- Canvas Functionality: 7/8 (Good - 3 shape types: rectangle, circle, line; no text yet, no multi-select)
-- Performance & Scalability: 6/12 (Satisfactory - only tested with 20 shapes, 2-3 users)
+**Section 2: Canvas Features & Performance (16/20)** ⬆️ **+3**
+- Canvas Functionality: 8/8 (Excellent - 4 shape types with text, full manipulation, good UX)
+- Performance & Scalability: 8/12 (Good - efficient debouncing, zoom-independent UI, tested with 30+ shapes)
 
-**Section 3: Advanced Figma-Inspired Features (3/15)**
-- Poor tier: Only alt+drag duplication (~1 Tier 1 feature)
-- Need: 2-3 Tier 1 OR 1 Tier 2 for satisfactory
+**Section 3: Advanced Figma-Inspired Features (5/15)** ⬆️ **+2**
+- Satisfactory tier: ~2 Tier 1 features (alt+drag duplication, color picker with DetailPane)
+- Need: 1 more Tier 1 OR 1 Tier 2 for good tier
 
 **Section 4: AI Canvas Agent (0/25)** ⚠️ CRITICAL GAP
 - Not implemented
@@ -115,7 +115,25 @@
 - ✅ Delete with Delete key
 - ✅ Dimension labels showing length in pixels (positioned below lower endpoint)
 - ✅ Auto-switch to select tool after creation
-- ✅ Stroke width support (default: 4px)
+- ✅ Stroke width support (default: 4px, editable in DetailPane)
+
+**Text Shapes**
+- ✅ Click-drag creation with text tool (set box dimensions)
+- ✅ Selection with click (colored border for locked text)
+- ✅ Drag to move (full rectangle-like interaction)
+- ✅ Resize from corners and edges (width and height independently)
+- ✅ Rotate from corner zones
+- ✅ Alt+drag to duplicate
+- ✅ Delete with Delete key
+- ✅ Dimension labels below selected shapes (width × height)
+- ✅ Auto-switch to select tool after creation
+- ✅ Font size control (12-64px via DetailPane)
+- ✅ Font family control (5 fonts via DetailPane)
+- ✅ Text color control (hex/named colors via DetailPane)
+- ✅ Horizontal alignment (left, center, right)
+- ✅ Vertical alignment (top, middle, bottom)
+- ✅ Fill color support (background behind text, default: transparent)
+- ✅ Text content editing via DetailPane
 
 **Real-Time Collaboration**
 - ✅ Shape sync via Firestore (all users see updates ~200ms)
@@ -129,13 +147,24 @@
 
 **UI Components**
 - ✅ Bottom-center toolbar (Figma-style)
-- ✅ Tool selector (select, rectangle)
+- ✅ Tool selector (select, rectangle, circle, line, text)
 - ✅ Header with online user avatars (initials)
 - ✅ Avatar overflow indicator (shows "+N" when >10 users)
+- ✅ DetailPane (Figma-style right sidebar, opens when shape selected)
+  - Common controls: fill color, position (x, y), rotation
+  - Shape-specific controls: dimensions, border, stroke, text properties
+  - Debounced updates (500ms delay, immediate UI feedback)
+  - Color pickers (native HTML + text input, supports hex/named colors)
+  - X button to close and deselect
+  - Persists changes on unmount
+- ✅ ESC key navigation (deselect shape → deselect tool)
 - ✅ Responsive layout with Tailwind CSS
 
 **Visual Feedback & Polish**
-- ✅ Inverse scaling (cursors/labels stay constant size during zoom)
+- ✅ Inverse scaling (cursors/labels/borders stay constant size during zoom)
+- ✅ Zoom-independent selection borders (gentler scaling curve, 4px min)
+- ✅ Proper border spacing (selection border outside shape border, no overlap)
+- ✅ Dimension labels clear both shape and selection borders
 - ✅ Colored borders match user colors
 - ✅ Dimension labels remain horizontal (no rotation)
 - ✅ Dynamic cursors for manipulation zones
@@ -149,14 +178,13 @@
 - ✅ Real-time listeners for Firestore and RTDB
 
 **Testing**
-- ✅ 213 unit tests passing (Vitest)
-  - 152 tests for core stores and utilities
-  - 35 tests for manipulation logic (includes line endpoint detection)
-  - 6 tests for duplication logic
-  - 20 tests for shape/cursor/user logic
-- ✅ 30 integration tests (Firebase connectivity, multi-user locking)
+- ✅ 243 total tests passing (Vitest)
+  - 213 unit tests (stores, utilities, manipulation, selection, dragging)
+  - 30 integration tests (Firebase connectivity, multi-user locking, conflict scenarios)
 - ✅ Anonymous auth for safe testing
 - ✅ Test coverage for all critical paths
+- ✅ Comprehensive manipulation tests (35 tests covering resize, rotate, line endpoints)
+- ✅ Multi-user locking tests (10 tests for conflict scenarios)
 - ⚠️ Line-specific unit tests deferred (8-12 tests pending)
 
 **Deployment**
@@ -202,25 +230,35 @@
 - [x] **BONUS**: Defensive programming improvements
 - **Rubric Impact**: Section 2 +1-2 pts
 
-**PR #13: Text Shape**
-- [ ] Text component with Konva Text
-- [ ] HTML overlay for editing (absolute positioned input)
-- [ ] Double-click to edit, Escape to exit
-- [ ] Font size, family, color properties
-- [ ] Resize to adjust width (text wraps)
-- [ ] Update Firestore types (text, fontSize, fontFamily, textColor)
-- [ ] 10-15 unit tests
+**PR #13: Text Shape** ✅ COMPLETE
+- [x] Text component with Konva Text
+- [x] Click-drag creation (set box dimensions)
+- [x] Full rectangle-like manipulation (drag, resize, rotate)
+- [x] Font size, family, color properties
+- [x] Horizontal and vertical alignment
+- [x] Width and height resize (independent control)
+- [x] Update Firestore types (text, fontSize, fontFamily, textColor, width, height, align, verticalAlign)
+- [x] Fill color support (background)
+- [ ] 10-15 unit tests - DEFERRED
 - **Rubric Impact**: Section 2 +2-3 pts (critical for AI "create login form")
 
-**PR #14: Color Picker**
-- [ ] Custom simple picker (8-10 presets + recent 5 colors)
-- [ ] Show when shape selected (toolbar or floating)
-- [ ] Update fill color (rectangles, circles)
-- [ ] Update stroke color (lines)
-- [ ] Update text color (text shapes)
-- [ ] Real-time Firestore sync
-- [ ] 5-8 unit tests
-- **Rubric Impact**: Section 3 Tier 1 +2 pts
+**PR #14: DetailPane & Enhanced Properties** ✅ COMPLETE
+- [x] Figma-style DetailPane (right sidebar)
+- [x] Native color pickers (hex + named color support)
+- [x] Debounced input updates (500ms delay, immediate UI feedback)
+- [x] Fill color control (all shapes)
+- [x] Border color and width (rectangles, circles)
+- [x] Stroke width (lines)
+- [x] Text properties (content, font, color, alignment)
+- [x] Position and rotation controls (all shapes)
+- [x] Dimension controls (width/height, radii, endpoints)
+- [x] ESC key navigation (deselect shape → deselect tool)
+- [x] Zoom-independent selection borders
+- [x] Proper border spacing (no overlap/gap)
+- [x] Real-time Firestore + RTDB sync
+- [x] Firebase undefined values sanitization
+- [ ] 5-8 unit tests - DEFERRED
+- **Rubric Impact**: Section 2 +2-3 pts, Section 3 Tier 1 +2 pts
 
 **Day 2: Multi-Select + Shortcuts (PRs #15-16)**
 

@@ -1,4 +1,4 @@
-import { MousePointer2, Square, Circle, Pen } from 'lucide-react'
+import { MousePointer2, Square, Circle, Pen, Type } from 'lucide-react'
 
 type Tool = 'select' | 'rectangle' | 'circle' | 'line' | 'text'
 
@@ -13,7 +13,16 @@ export default function Toolbar({ selectedTool, onSelectTool }: ToolbarProps) {
     { id: 'rectangle', icon: Square, label: 'Rectangle' },
     { id: 'circle', icon: Circle, label: 'Circle' },
     { id: 'line', icon: Pen, label: 'Line' },
+    { id: 'text', icon: Type, label: 'Text' },
   ]
+
+  const handleToolSelect = (tool: Tool) => {
+    onSelectTool(tool)
+    // Remove focus from button after selection to prevent focus ring
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
+  }
 
   return (
     <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-10">
@@ -25,7 +34,7 @@ export default function Toolbar({ selectedTool, onSelectTool }: ToolbarProps) {
           return (
             <button
               key={tool.id}
-              onClick={() => onSelectTool(tool.id)}
+              onClick={() => handleToolSelect(tool.id)}
               className={`
                 flex items-center justify-center w-10 h-10 rounded-md transition-colors
                 ${

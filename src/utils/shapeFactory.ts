@@ -204,27 +204,32 @@ const shapeTypeRegistry: Record<string, ShapeTypeConfig> = {
       type: 'text',
       x,
       y,
+      width: 0,
+      height: 0,
       text: 'Text',
       fontSize: 16,
       fontFamily: 'Arial',
       textColor: '#000000',
-      color: '#D1D5DB',
+      color: 'transparent',
+      align: 'left' as const,
+      verticalAlign: 'top' as const,
       createdBy: userId,
     }),
-    updateCreationProps: (shape, mouseX) => {
+    updateCreationProps: (shape, mouseX, mouseY) => {
       return {
-        width: Math.max(50, mouseX - shape.x), // Minimum width for text
+        width: mouseX - shape.x,
+        height: mouseY - shape.y,
       }
     },
     getDimensions: (shape) => {
       const text = shape as TextShape
-      return { width: text.width || 100, height: text.fontSize * 1.2 }
+      return { width: text.width, height: text.height }
     },
     getCenter: (shape) => {
       const text = shape as TextShape
       return { 
-        x: text.x + (text.width || 100) / 2, 
-        y: text.y + (text.fontSize * 1.2) / 2 
+        x: text.x + text.width / 2, 
+        y: text.y + text.height / 2 
       }
     },
     getBounds: (shape) => {
@@ -232,23 +237,26 @@ const shapeTypeRegistry: Record<string, ShapeTypeConfig> = {
       return { 
         x: text.x, 
         y: text.y, 
-        width: text.width || 100, 
-        height: text.fontSize * 1.2 
+        width: text.width, 
+        height: text.height 
       }
     },
     formatDimensions: (shape) => {
       const text = shape as TextShape
-      return `${Math.round(text.width || 100)} × ${Math.round(text.fontSize * 1.2)}`
+      return `${Math.round(text.width)} × ${Math.round(text.height)}`
     },
     hasMinimumSize: (shape, minSize) => {
       const text = shape as TextShape
-      return (text.width || 100) > minSize
+      return Math.abs(text.width) > minSize && Math.abs(text.height) > minSize
     },
     normalize: (shape) => {
       const text = shape as TextShape
       return {
         ...text,
-        width: Math.max(50, text.width || 100), // Ensure minimum width
+        x: text.width < 0 ? text.x + text.width : text.x,
+        y: text.height < 0 ? text.y + text.height : text.y,
+        width: Math.abs(text.width),
+        height: Math.abs(text.height),
       } as TextShape
     },
   },

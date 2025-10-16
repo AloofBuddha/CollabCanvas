@@ -22,6 +22,8 @@ export interface RectangleShape extends BaseShape {
   type: 'rectangle'
   width: number
   height: number
+  stroke?: string
+  strokeWidth?: number
 }
 
 // Circle shape
@@ -29,6 +31,8 @@ export interface CircleShape extends BaseShape {
   type: 'circle'
   radiusX: number
   radiusY: number
+  stroke?: string
+  strokeWidth?: number
 }
 
 // Line shape
@@ -46,7 +50,10 @@ export interface TextShape extends BaseShape {
   fontSize: number
   fontFamily: string
   textColor: string
-  width?: number // Optional width for text wrapping
+  width: number // Width of text box
+  height: number // Height of text box
+  align?: 'left' | 'center' | 'right'
+  verticalAlign?: 'top' | 'middle' | 'bottom'
 }
 
 // Discriminated union of all shape types

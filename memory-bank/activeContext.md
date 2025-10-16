@@ -2,12 +2,12 @@
 
 ## Current Status
 
-**Phase**: Final Sprint - Rubric-Focused Enhancement (4 Days Remaining)  
-**Version**: v1.2 → v2.0 (Major Upgrade)  
-**Last Completed**: PR #12 - Line Shape ✅ COMPLETE  
+**Phase**: Final Sprint - Rubric-Focused Enhancement (3.5 Days Remaining)  
+**Version**: v2.0 (Major Canvas Enhancement Complete)  
+**Last Completed**: PR #14 - DetailPane & Enhanced Shape Properties ✅ COMPLETE  
 **Live Production**: https://collab-canvas-ben-cohen.vercel.app/
 
-**Current Grade**: **48/100 (F)** | **Target**: **70-75/100 (C/C+)** | **Stretch**: **80+/100 (B)**
+**Current Grade**: **53/100 (F)** ⬆️ **+5** | **Target**: **70-75/100 (C/C+)** | **Stretch**: **80+/100 (B)**
 
 ## 🚨 Critical Priority Shift 🚨
 
@@ -18,41 +18,40 @@ The project is being evaluated against a comprehensive rubric. Based on analysis
 
 **Revised Strategy**: Build feature-rich canvas FIRST (shapes, colors, multi-select), THEN implement AI agent with meaningful commands.
 
-## Recent Changes (PR #12 - Just Completed) ✅
+## Recent Changes (PR #13-14 - Just Completed) ✅
 
-### Line Shape Feature
-- **New Shape Type**: Added line tool to toolbar with Minus icon
-- **Two-Endpoint Architecture**: Lines defined by `(x, y)` and `(x2, y2)` properties
-- **Full Feature Parity**: Lines support core shape features:
-  - Click-and-drag creation with visual feedback
-  - Endpoint manipulation (drag start/end points independently)
-  - Drag to move entire line with proper center-based positioning
-  - Dimension labels (length in pixels, positioned below lower endpoint)
-  - Multi-user real-time sync (Firestore + RTDB)
-  - Locking system and visual feedback (colored borders)
-  - Visual endpoint handles when selected (blue circles)
+### Text Shape Feature (PR #13)
+- **New Shape Type**: Added text tool to toolbar with Type icon
+- **Rectangle-Like Manipulation**: Text shapes behave like rectangles (drag, resize, rotate)
+- **Click-drag Creation**: Set box dimensions during drag, automatically add default "Text" content
+- **Full Property Control**: Font size (12-64px), font family (5 fonts), text color
+- **Text Alignment**: Horizontal (left, center, right) and vertical (top, middle, bottom)
+- **Fill Color Support**: Background fill (default: transparent) behind text
+- **Type System**: `TextShape` interface with `text`, `width`, `height`, `fontSize`, `fontFamily`, `textColor`, `align`, `verticalAlign`
+- **Firebase Sync**: All text properties sync to Firestore and RTDB
 
-### Technical Implementation
-- **Type System**: `LineShape` interface with `x`, `y`, `x2`, `y2`, `strokeWidth` properties
-- **DRY Refactoring**: Created centralized `shapeFactory.ts` for polymorphic shape operations
-- **Unified Rendering**: New `ShapeRenderer.tsx` component handles all shape types
-- **Group-Based Rendering**: Lines use Konva `Group` for proper drag/rotation behavior
-- **Manipulation Zones**: New `start-point` and `end-point` zones for endpoint dragging
-- **Firebase Sync**: Both Firestore and RTDB handle line properties with explicit type checks
-- **Defensive Programming**: Replaced implicit `else` defaults with explicit type checking and error logging
+### DetailPane & Enhanced Properties (PR #14)
+- **Figma-Style UI**: Right sidebar opens when shape selected, closes on X or ESC
+- **Debounced Updates**: 500ms delay for shape updates, but input UI updates immediately
+- **Color System**: Native HTML color pickers + text inputs, supports hex and named colors (blue, transparent, etc.)
+- **Universal Controls**: Fill color, position (x, y), rotation available for all shapes
+- **Shape-Specific Controls**:
+  - Rectangles: width, height, border color, border width
+  - Circles: radiusX, radiusY, border color, border width
+  - Lines: x2, y2, stroke width (no rotation control)
+  - Text: content, font size, font family, text color, horizontal align, vertical align
+- **Keyboard Navigation**: ESC key deselects shape, second ESC deselects tool
+- **Input Safety**: Backspace/Delete in inputs doesn't delete the shape
+- **Cleanup Logic**: Flushes pending debounced updates on unmount
 
-### Code Quality Improvements
-- **Constants Extraction**: Created `src/constants.ts` for UI colors (selection, handles, new shapes)
-- **Zustand Pattern**: Refactored `CanvasPage.tsx` to use cleaner `getState()` destructuring pattern
-- **ESLint Compliance**: Fixed all `any` type errors with proper type assertions
-- **User Color System**: Deterministic hash-based user colors (20 distinct colors) for consistent remote user borders
-
-### Bug Fixes
-- **Line Dragging**: Fixed flicker, wrong drag origin, and border desync by using Konva Groups
-- **Dimension Labels**: Lines now consistently show labels below the lower endpoint
-- **Resize/Drag Conflict**: Fixed issue where drag would override resize by checking `isHoveringManipulationZone`
-- **Sign Out/In Color**: Fixed race condition where user colors would reset to black after sign out/in
-- **Double Unlock**: Fixed race condition causing double `unlockShape` calls with deferred Firestore sync
+### Visual Polish & Bug Fixes
+- **Zoom-Independent Borders**: Selection borders use gentler scaling curve (`Math.pow(stageScale, -0.6)`) with 4px minimum
+- **Perfect Border Spacing**: Selection border appears directly outside shape border with no overlap or gap
+- **Dimension Label Clearance**: Labels positioned below both shape border and selection border
+- **Text Hitboxes**: Fixed janky dragging, missing resize cursors, and incorrect hitbox by treating text like rectangles
+- **Toolbar Focus**: Removed focus outline after tool selection with `blur()`
+- **Firebase Sanitization**: Added `sanitizeForFirebase` to remove `undefined` values before syncing
+- **Linting**: All ESLint errors fixed, unused imports removed
 
 ## Previous Changes (PR #9 - Completed)
 
@@ -224,57 +223,81 @@ Validate conflict resolution, persistence, reconnection, and performance with 10
 
 ## Next Session Priorities (In Order)
 
-### 1. **PR #13: Text Shape with Inline Editing** (Start immediately)
-   - Implement HTML overlay for text editing
-   - Click-to-create workflow
-   - Double-click to edit existing text
-   - Sync text content and properties to Firestore
-   - Respect locking mechanism during editing
-   - 10-15 unit tests
-
-### 2. **PR #14: Color Picker** (End of Day 1)
-   - Simple custom picker (presets + recent colors)
-   - Show when shape selected
-   - Update all shape types to support color changes
-   - 5-8 unit tests
-
-### 3. **PR #15: Multi-Select** (Early Day 2)
-   - Shift+click to add to selection
-   - Multi-drag, multi-delete
-   - Update locking for multiple shapes
+### 1. **PR #15: Multi-Select with Shift+Click** ⏳ NEXT (Start immediately)
+   - Track array of `selectedShapeIds` in store (replace single `selectedShapeId`)
+   - Shift+click to add/remove shapes from selection
+   - Visual feedback: all selected shapes show blue border
+   - Multi-drag: maintain relative positions during drag
+   - Multi-delete: Delete key removes all selected shapes
+   - Locking: lock all selected shapes on selection
+   - Prevent multi-select if any shape locked by another user
+   - Show selection count indicator in UI ("3 shapes selected")
    - 15-20 unit tests
 
-### 4. **PR #16: Keyboard Shortcuts** (Day 2)
-   - Arrow keys for nudging shapes
-   - Delete/Backspace for deletion
-   - Ctrl+A for select all
-   - 8-12 unit tests
+### 2. **PR #16: Additional Keyboard Shortcuts** (Early Day 2)
+   - Arrow keys: Nudge selected shape(s) 1px
+   - Shift+Arrow: Nudge 10px
+   - Cmd/Ctrl+D: Duplicate selected shape(s)
+   - Cmd/Ctrl+A: Select all shapes
+   - Document shortcuts in README or help panel
+   - 8-10 unit tests
+
+### 3. **PR #17: AI Canvas Agent** 🤖 (Days 2-3) - CRITICAL 25 POINTS
+   - Set up AI provider (OpenAI GPT-4 or Claude)
+   - Implement 8+ natural language commands
+   - Commands should leverage all 4 shape types and properties
+   - Target 80%+ command accuracy
+   - Target <3s response time
+   - AI Development Log (required for pass)
+
+### 4. **PR #18: Testing & Performance Validation** (Day 3)
+   - Conflict resolution scenarios (2+ users editing same shape)
+   - Performance testing (100-300+ shapes, 60 FPS target)
+   - Reconnection testing (offline → online recovery)
+   - Multi-user stress testing (5+ concurrent users)
+
+### 5. **Required Deliverables** (Day 4)
+   - Complete AI Development Log
+   - Record demo video (avoid -10 penalty)
+   - Final polish and deployment
 
 ## Context for Next Session
 
-**Current Rubric Score**: 44/100 (F)  
+**Current Rubric Score**: **53/100 (F)** ⬆️ **+5 from 48**  
 **Critical Gap**: AI Agent (0/25 points)  
-**Strategy**: Build rich canvas features first, then AI agent can create "login forms" and "navigation bars"
+**Canvas Foundation**: ✅ COMPLETE - 4 shape types, DetailPane, color controls  
+**Strategy**: Now implement Multi-Select, then AI Agent with rich command possibilities
 
-**Key Implementation Pattern to Follow**:
-1. Copy `Rectangle.tsx` as starting template
-2. Modify shape-specific rendering (Konva.Circle vs Konva.Rect)
-3. Adapt manipulation zones (circles: radii, lines: endpoints, text: width)
-4. Update Firestore type union in `types/shape.ts`
-5. Add to Canvas component's shape renderer
-6. Add tool button to Toolbar
-7. Write unit tests for creation, manipulation, sync
+**Major Accomplishments This Session**:
+1. ✅ Text shapes with full manipulation and alignment controls
+2. ✅ Figma-style DetailPane with debounced updates
+3. ✅ Color system (fill, border, stroke, text color) with named color support
+4. ✅ Zoom-independent selection borders with perfect spacing
+5. ✅ ESC key navigation (deselect shape → deselect tool)
+6. ✅ Firebase sanitization (no more undefined values errors)
+7. ✅ 243 tests passing (213 unit + 30 integration)
 
-**Files to Focus On**:
-- `src/components/Rectangle.tsx` - Reference implementation
-- `src/types/shape.ts` - Add new shape type unions
-- `src/components/Canvas.tsx` - Add shape rendering logic
-- `src/components/Toolbar.tsx` - Add new tool buttons
-- `src/stores/useShapeStore.ts` - Should work without changes (polymorphic)
+**Key Files Modified**:
+- `src/components/DetailPane.tsx` - NEW: Figma-style properties panel
+- `src/components/ShapeRenderer.tsx` - Border spacing, text alignment
+- `src/types/index.ts` - Added `align`, `verticalAlign`, `stroke`, `strokeWidth`
+- `src/utils/firebaseShapes.ts` - Added `sanitizeForFirebase` helper
+- `src/utils/shapeManipulation.ts` - Text shapes behave like rectangles
+- `src/utils/shapeFactory.ts` - Default alignment values for text
 
-**Helpful Context**:
-- Manipulation zones: body (move), corners (resize diagonal), edges (resize axis), rotation zones (30px outside)
-- Locking: Set `lockedBy` on mouseDown, clear on mouseUp or deselect
-- Firestore sync: Optimistic local update, background Firestore write
-- All shapes use same base fields: `id`, `type`, `lockedBy`, `createdBy`, `createdAt`
+**Implementation Patterns Established**:
+- **Debouncing**: Use local state + `debouncedUpdate` + refs for cleanup
+- **Type Safety**: Use discriminated unions, explicit type checks, no implicit defaults
+- **Firebase**: Always sanitize objects before syncing (remove undefined)
+- **Visual Polish**: Inverse scaling, border spacing calculations, dimension clearance
+- **Keyboard UX**: Check `document.activeElement` to prevent input conflicts
+
+**Next Task: Multi-Select Implementation Strategy**:
+1. Replace `selectedShapeId: string | null` with `selectedShapeIds: string[]` in store
+2. Update selection logic: Shift+click toggles shape in array
+3. Update visual feedback: all shapes in array show blue border
+4. Update dragging: calculate center of selection, maintain relative offsets
+5. Update locking: lock all shapes in array on selection
+6. Add UI indicator: "3 shapes selected" below toolbar
+7. Update keyboard handlers: Delete removes all, arrows nudge all
 

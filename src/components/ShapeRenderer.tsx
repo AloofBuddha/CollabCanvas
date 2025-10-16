@@ -33,6 +33,7 @@ interface ShapeRendererProps {
   onDragStart: (e: Konva.KonvaEventObject<DragEvent>, shape: Shape) => void
   onDragMove: (e: Konva.KonvaEventObject<DragEvent>, shape: Shape) => void
   onDragEnd: (shape: Shape) => void
+  onDoubleClick?: (shapeId: string, shape: Shape) => void
 }
 
 const SHAPE_OPACITY = 0.8
@@ -53,6 +54,7 @@ export default function ShapeRenderer({
   onDragStart,
   onDragMove,
   onDragEnd,
+  onDoubleClick,
 }: ShapeRendererProps) {
   // Disable drag when hovering over manipulation zones (resize/rotate handles)
   // or when already manipulating
@@ -60,48 +62,109 @@ export default function ShapeRenderer({
   const showBorder = (isSelected && isLockedByMe && !isManipulating) || isLockedByOther
   const borderColor = isLockedByMe ? SELECTION_COLOR_LOCAL : (remoteUserColor || SELECTION_COLOR_REMOTE_FALLBACK)
 
-  const commonProps = {
-    rotation: shape.rotation || 0,
-    fill: shape.color,
-    opacity: SHAPE_OPACITY,
-    draggable: canDrag,
-    onMouseDown: (e: Konva.KonvaEventObject<MouseEvent>) => onMouseDown(e, shape.id, isLockedByOther, shape),
-    onMouseMove: (e: Konva.KonvaEventObject<MouseEvent>) => onMouseMove(e, shape, isSelected),
-    onMouseLeave,
-    onDragStart: (e: Konva.KonvaEventObject<DragEvent>) => onDragStart(e, shape),
-    onDragMove: (e: Konva.KonvaEventObject<DragEvent>) => onDragMove(e, shape),
-    onDragEnd: () => onDragEnd(shape),
-    stroke: showBorder ? borderColor : undefined,
-    strokeWidth: showBorder ? 2 : 0,
-  }
+  // Scaled border width - gentler curve than pure inverse, with minimum threshold
+  // This makes borders smaller when zoomed out and larger when zoomed in
+  const inverseBorderWidth = Math.max(2, 4 * Math.pow(stageScale, -0.6))
 
   const renderShape = () => {
     switch (shape.type) {
       case 'rectangle': {
         const rect = shape as RectangleShape
+        const shapeStrokeWidth = rect.strokeWidth || 0
+        // Selection border should appear directly outside the shape's own border (no gap)
+        // Both strokes are centered on their paths:
+        // - Shape border extends shapeStrokeWidth/2 outward
+        // - Selection border extends inverseBorderWidth/2 inward from its path
+        // So we need: shapeStrokeWidth/2 + inverseBorderWidth/2
+        const selectionPadding = shapeStrokeWidth / 2 + inverseBorderWidth / 2
+        const selectionWidth = rect.width + selectionPadding * 2
+        const selectionHeight = rect.height + selectionPadding * 2
+        
         return (
-          <Rect
+          <Group
             x={rect.x + rect.width / 2}
             y={rect.y + rect.height / 2}
-            width={rect.width}
-            height={rect.height}
-            offsetX={rect.width / 2}
-            offsetY={rect.height / 2}
-            {...commonProps}
-          />
+            rotation={shape.rotation || 0}
+            draggable={canDrag}
+            onMouseDown={(e: Konva.KonvaEventObject<MouseEvent>) => onMouseDown(e, shape.id, isLockedByOther, shape)}
+            onMouseMove={(e: Konva.KonvaEventObject<MouseEvent>) => onMouseMove(e, shape, isSelected)}
+            onMouseLeave={onMouseLeave}
+            onDragStart={(e: Konva.KonvaEventObject<DragEvent>) => onDragStart(e, shape)}
+            onDragMove={(e: Konva.KonvaEventObject<DragEvent>) => onDragMove(e, shape)}
+            onDragEnd={() => onDragEnd(shape)}
+          >
+            <Rect
+              x={0}
+              y={0}
+              width={rect.width}
+              height={rect.height}
+              offsetX={rect.width / 2}
+              offsetY={rect.height / 2}
+              fill={rect.color}
+              opacity={SHAPE_OPACITY}
+              stroke={rect.stroke}
+              strokeWidth={shapeStrokeWidth}
+            />
+            {showBorder && (
+              <Rect
+                x={0}
+                y={0}
+                width={selectionWidth}
+                height={selectionHeight}
+                offsetX={selectionWidth / 2}
+                offsetY={selectionHeight / 2}
+                stroke={borderColor}
+                strokeWidth={inverseBorderWidth}
+                fill="transparent"
+              />
+            )}
+          </Group>
         )
       }
       
       case 'circle': {
         const circle = shape as CircleShape
+        const shapeStrokeWidth = circle.strokeWidth || 0
+        // Selection border should appear directly outside the shape's own border (no gap)
+        // Both strokes are centered on their paths:
+        // - Shape border extends shapeStrokeWidth/2 outward
+        // - Selection border extends inverseBorderWidth/2 inward from its path
+        // So we need: shapeStrokeWidth/2 + inverseBorderWidth/2
+        const selectionPadding = shapeStrokeWidth / 2 + inverseBorderWidth / 2
+        const selectionRadiusX = circle.radiusX + selectionPadding
+        const selectionRadiusY = circle.radiusY + selectionPadding
+        
         return (
-          <Ellipse
+          <Group
             x={circle.x + circle.radiusX}
             y={circle.y + circle.radiusY}
-            radiusX={circle.radiusX}
-            radiusY={circle.radiusY}
-            {...commonProps}
-          />
+            rotation={shape.rotation || 0}
+            draggable={canDrag}
+            onMouseDown={(e: Konva.KonvaEventObject<MouseEvent>) => onMouseDown(e, shape.id, isLockedByOther, shape)}
+            onMouseMove={(e: Konva.KonvaEventObject<MouseEvent>) => onMouseMove(e, shape, isSelected)}
+            onMouseLeave={onMouseLeave}
+            onDragStart={(e: Konva.KonvaEventObject<DragEvent>) => onDragStart(e, shape)}
+            onDragMove={(e: Konva.KonvaEventObject<DragEvent>) => onDragMove(e, shape)}
+            onDragEnd={() => onDragEnd(shape)}
+          >
+            <Ellipse
+              radiusX={circle.radiusX}
+              radiusY={circle.radiusY}
+              fill={circle.color}
+              opacity={SHAPE_OPACITY}
+              stroke={circle.stroke}
+              strokeWidth={shapeStrokeWidth}
+            />
+            {showBorder && (
+              <Ellipse
+                radiusX={selectionRadiusX}
+                radiusY={selectionRadiusY}
+                stroke={borderColor}
+                strokeWidth={inverseBorderWidth}
+                fill="transparent"
+              />
+            )}
+          </Group>
         )
       }
       
@@ -136,7 +199,7 @@ export default function ShapeRenderer({
               <Line
                 points={points}
                 stroke={borderColor}
-                strokeWidth={line.strokeWidth + 4}
+                strokeWidth={line.strokeWidth + (4 / stageScale)}
                 opacity={0.5}
                 listening={false}
               />
@@ -177,16 +240,12 @@ export default function ShapeRenderer({
       
       case 'text': {
         const text = shape as TextShape
+        
         return (
-          <KonvaText
-            x={text.x}
-            y={text.y}
-            text={text.text}
-            fontSize={text.fontSize}
-            fontFamily={text.fontFamily}
-            fill={text.textColor}
-            width={text.width}
-            opacity={SHAPE_OPACITY}
+          <Group
+            x={text.x + text.width / 2}
+            y={text.y + text.height / 2}
+            rotation={shape.rotation || 0}
             draggable={canDrag}
             onMouseDown={(e: Konva.KonvaEventObject<MouseEvent>) => onMouseDown(e, shape.id, isLockedByOther, shape)}
             onMouseMove={(e: Konva.KonvaEventObject<MouseEvent>) => onMouseMove(e, shape, isSelected)}
@@ -194,9 +253,49 @@ export default function ShapeRenderer({
             onDragStart={(e: Konva.KonvaEventObject<DragEvent>) => onDragStart(e, shape)}
             onDragMove={(e: Konva.KonvaEventObject<DragEvent>) => onDragMove(e, shape)}
             onDragEnd={() => onDragEnd(shape)}
-            stroke={showBorder ? borderColor : undefined}
-            strokeWidth={showBorder ? 2 : 0}
-          />
+            onDblClick={() => onDoubleClick?.(shape.id, shape)}
+          >
+            {/* Background rect (uses fill color) */}
+            <Rect
+              x={0}
+              y={0}
+              width={text.width}
+              height={text.height}
+              offsetX={text.width / 2}
+              offsetY={text.height / 2}
+              fill={text.color}
+              opacity={SHAPE_OPACITY}
+            />
+            {/* Selection border */}
+            {showBorder && (
+              <Rect
+                x={0}
+                y={0}
+                width={text.width}
+                height={text.height}
+                offsetX={text.width / 2}
+                offsetY={text.height / 2}
+                stroke={borderColor}
+                strokeWidth={inverseBorderWidth}
+                fill="transparent"
+              />
+            )}
+            {/* Text content */}
+            <KonvaText
+              x={0}
+              y={0}
+              offsetX={text.width / 2}
+              offsetY={text.height / 2}
+              text={text.text}
+              fontSize={text.fontSize}
+              fontFamily={text.fontFamily}
+              fill={text.textColor}
+              width={text.width}
+              height={text.height}
+              align={text.align || 'left'}
+              verticalAlign={text.verticalAlign || 'top'}
+            />
+          </Group>
         )
       }
       
@@ -276,17 +375,31 @@ export function NewShapeRenderer({
     
     case 'text': {
       const text = shape as TextShape
+      
       return (
-        <KonvaText
-          x={text.x}
-          y={text.y}
-          text={text.text}
-          fontSize={text.fontSize}
-          fontFamily={text.fontFamily}
-          fill={text.textColor}
-          width={text.width}
-          opacity={NEW_SHAPE_OPACITY}
-        />
+        <Group>
+          {/* Background box */}
+          <Rect
+            x={text.x}
+            y={text.y}
+            width={text.width}
+            height={text.height}
+            fill={NEW_SHAPE_COLOR}
+            opacity={NEW_SHAPE_OPACITY}
+          />
+          {/* Text content */}
+          <KonvaText
+            x={text.x}
+            y={text.y}
+            text={text.text}
+            fontSize={text.fontSize}
+            fontFamily={text.fontFamily}
+            fill={text.textColor}
+            width={text.width}
+            height={text.height}
+            opacity={0.8}
+          />
+        </Group>
       )
     }
     

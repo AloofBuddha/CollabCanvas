@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { Stage, Layer } from 'react-konva'
 import Konva from 'konva'
 import useShapeStore from '../stores/useShapeStore'
@@ -6,6 +6,7 @@ import useUserStore from '../stores/useUserStore'
 import useCursorStore from '../stores/useCursorStore'
 import RemoteCursor from './RemoteCursor'
 import ShapeRenderer, { NewShapeRenderer } from './ShapeRenderer'
+import DetailPane from './DetailPane'
 import { useCanvasPanning } from '../hooks/useCanvasPanning'
 import { useShapeCreation } from '../hooks/useShapeCreation'
 import { useShapeDragging } from '../hooks/useShapeDragging'
@@ -94,6 +95,14 @@ export default function Canvas({
     selectShape,
   } = useShapeSelection({
     onDelete: onShapeDeleted,
+    onDeselect: (shapeId) => {
+      // Unlock the shape when deselected with Escape
+      onShapeUnlock?.(shapeId)
+    },
+    onToolChange: (newTool) => {
+      // Switch to select tool when Escape is pressed
+      onToolChange?.(newTool)
+    },
     tool,
   })
   
@@ -104,9 +113,11 @@ export default function Canvas({
       onShapeUnlock?.(selectedShapeId)
     }
     
-    onShapeCreated?.(shape)
+    // Create shape with lock already set to avoid flicker from separate lock write
+    const lockedShape = { ...shape, lockedBy: userId }
+    onShapeCreated?.(lockedShape)
     selectShape(shape.id)
-    onShapeLock?.(shape.id) // Lock the newly created shape
+    // No need to call onShapeLock separately - shape is already locked
   }
   
   const {
@@ -277,6 +288,7 @@ export default function Canvas({
     }
   }
 
+  // Handle double-click on text shapes to enter edit mode
   // Handle shape mouse down (for panning, selection, and manipulation)
   const handleShapeMouseDown = (e: Konva.KonvaEventObject<MouseEvent>, shapeId: string, isLockedByOther: boolean, shape: Shape) => {
     const evt = e.evt
@@ -369,6 +381,46 @@ export default function Canvas({
     }
   }
   
+  // Use refs to avoid recreating the callback
+  const shapesRef = useRef(shapes)
+  const onShapeUpdateRef = useRef(onShapeUpdate)
+  const updateShapeRef = useRef(updateShape)
+  
+  useEffect(() => {
+    shapesRef.current = shapes
+    onShapeUpdateRef.current = onShapeUpdate
+    updateShapeRef.current = updateShape
+  })
+
+  // Detail pane handler - stable reference for proper debouncing
+  const handleDetailPaneUpdate = useCallback((updates: Partial<Shape>) => {
+    if (!selectedShapeId) return
+    
+    const currentShape = shapesRef.current[selectedShapeId]
+    if (!currentShape) return
+    
+    // Merge updates with current shape
+    const updatedShape = { ...currentShape, ...updates } as Shape
+    
+    // Update local store
+    updateShapeRef.current(selectedShapeId, updates)
+    
+    // Sync to Firebase with the fully updated shape
+    onShapeUpdateRef.current?.(updatedShape)
+  }, [selectedShapeId])
+  
+  const handleCloseDetailPane = () => {
+    const currentSelectedId = selectedShapeId
+    
+    // Deselect the shape
+    selectShape('')
+    
+    // Unlock the shape if we had it selected
+    if (currentSelectedId) {
+      onShapeUnlock?.(currentSelectedId)
+    }
+  }
+  
 
   return (
     <div
@@ -433,6 +485,15 @@ export default function Canvas({
           ))}
         </Layer>
       </Stage>
+      
+      {/* Detail Pane - show when any shape is selected */}
+      {selectedShapeId && shapes[selectedShapeId] && (
+        <DetailPane
+          shape={shapes[selectedShapeId]}
+          onClose={handleCloseDetailPane}
+          onUpdateShape={handleDetailPaneUpdate}
+        />
+      )}
     </div>
   )
 }

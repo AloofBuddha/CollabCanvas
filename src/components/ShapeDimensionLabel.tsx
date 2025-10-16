@@ -6,7 +6,7 @@
  */
 
 import { Text } from 'react-konva'
-import { Shape, LineShape } from '../types'
+import { Shape, LineShape, RectangleShape, CircleShape } from '../types'
 import { getShapeDimensions, formatShapeDimensions } from '../utils/shapeFactory'
 
 // Display constants
@@ -20,6 +20,13 @@ interface ShapeDimensionLabelProps {
 }
 
 export default function ShapeDimensionLabel({ shape, stageScale }: ShapeDimensionLabelProps) {
+  // Calculate inverse border width (same logic as ShapeRenderer)
+  const inverseBorderWidth = Math.max(2, 4 * Math.pow(stageScale, -0.6))
+  
+  // Get shape's stroke width
+  const shapeStrokeWidth = (shape.type === 'rectangle' || shape.type === 'circle') 
+    ? ((shape as RectangleShape | CircleShape).strokeWidth || 0) 
+    : 0
   const { x, y, rotation = 0 } = shape
   
   let labelX: number
@@ -77,10 +84,15 @@ export default function ShapeDimensionLabel({ shape, stageScale }: ShapeDimensio
   const fontSize = LABEL_FONT_SIZE / stageScale
   const padding = LABEL_PADDING / stageScale
   
+  // Calculate additional offset to clear both borders
+  // Shape border extends shapeStrokeWidth/2 outward
+  // Selection border extends inverseBorderWidth/2 outward from its path
+  const borderClearance = shapeStrokeWidth / 2 + inverseBorderWidth / 2 + inverseBorderWidth / 2
+  
   return (
     <Text
       x={labelX}
-      y={labelY + padding}
+      y={labelY + borderClearance + padding}
       text={text}
       fontSize={fontSize}
       fontFamily="Inter, system-ui, sans-serif"

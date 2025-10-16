@@ -36,3 +36,20 @@ coverage
 # Vitest
 .vitest
 
+
+dev-debug.log
+# Dependency directories
+node_modules/
+# Environment variables
+.vscode
+# OS specific
+
+# Task files
+# tasks.json
+# tasks/ 
+
+# Cursor files
+.cursor/
+
+# taskmaster files
+.taskmaster/

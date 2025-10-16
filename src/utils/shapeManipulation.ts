@@ -321,6 +321,9 @@ export function calculateResize(
     return { x: newX, y: newY, width: newWidth, height: newHeight }
   } else if (originalShape.type === 'circle') {
     return { x: newX, y: newY, radiusX: newWidth / 2, radiusY: newHeight / 2 }
+  } else if (originalShape.type === 'text') {
+    // Text shapes work like rectangles now
+    return { x: newX, y: newY, width: newWidth, height: newHeight }
   }
   
   return {}
@@ -383,8 +386,10 @@ export function getShapeWidth(shape: Shape): number {
     return shape.radiusX * 2
   } else if (shape.type === 'line') {
     return Math.abs(shape.x2 - shape.x)
+  } else if (shape.type === 'text') {
+    return shape.width
   }
-  console.error(`[shapeManipulation] getShapeWidth: Unknown shape type "${shape.type}"`)
+  console.error(`[shapeManipulation] getShapeWidth: Unknown shape type "${(shape as { type: string }).type}"`)
   return 0
 }
 
@@ -398,8 +403,10 @@ export function getShapeHeight(shape: Shape): number {
     return shape.radiusY * 2
   } else if (shape.type === 'line') {
     return Math.abs(shape.y2 - shape.y)
+  } else if (shape.type === 'text') {
+    return shape.height
   }
-  console.error(`[shapeManipulation] getShapeHeight: Unknown shape type "${shape.type}"`)
+  console.error(`[shapeManipulation] getShapeHeight: Unknown shape type "${(shape as { type: string }).type}"`)
   return 0
 }
 
