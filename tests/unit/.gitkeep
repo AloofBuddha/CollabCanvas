@@ -1,4 +1,0 @@
-# Unit tests will be implemented across multiple PRs:
-# PR #2: userStore.test.ts, cursorStore.test.ts, shapeStore.test.ts
-# PR #9: Additional comprehensive tests
-
