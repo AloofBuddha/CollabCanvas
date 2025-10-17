@@ -12,15 +12,6 @@ import { CanvasContext } from '../../src/types/aiAgent'
 // Create a mock invoke function that we can control
 const mockInvoke = vi.fn()
 
-// Mock the intent classifier
-vi.mock('../../src/services/aiIntentClassifier', () => ({
-  classifyIntent: vi.fn().mockResolvedValue({
-    intent: 'create',
-    confidence: 1.0,
-    reasoning: 'Test intent'
-  })
-}))
-
 // Mock LangChain modules
 vi.mock('@langchain/openai', () => ({
   ChatOpenAI: vi.fn().mockImplementation(() => ({

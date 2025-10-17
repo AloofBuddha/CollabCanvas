@@ -208,10 +208,9 @@ describe('useAIAgent Hook', () => {
     })
 
     expect(parseCommand).toHaveBeenCalledTimes(2)
-    // With the new implementation, onShapesCreated is called once per command
-    expect(mockOnShapesCreated).toHaveBeenCalledTimes(2)
-    expect(mockOnShapesCreated).toHaveBeenNthCalledWith(1, [mockShapes[0]])
-    expect(mockOnShapesCreated).toHaveBeenNthCalledWith(2, [mockShapes[1]])
+    // With the new implementation, onShapesCreated is called once with all shapes
+    expect(mockOnShapesCreated).toHaveBeenCalledTimes(1)
+    expect(mockOnShapesCreated).toHaveBeenCalledWith([mockShapes[0], mockShapes[1]])
   })
 
   it('should handle errors gracefully', async () => {

@@ -7,7 +7,6 @@
 import { ChatOpenAI } from '@langchain/openai'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { AICommandResponseSchema, CanvasContext, AICommandResponse } from '../types/aiAgent'
-import { classifyIntent } from './aiIntentClassifier'
 
 // Initialize OpenAI model
 const getModel = () => {
@@ -252,21 +251,14 @@ POSITIONING STRATEGY:
 - Only respond with the JSON command(s), no additional text`
 
 /**
- * Execute a natural language command using two-stage approach
- * Stage 1: Classify intent
- * Stage 2: Execute with specialized prompt
+ * Execute a natural language command and return structured operations
+ * Uses OpenAI to parse natural language into canvas operations (create/update/delete shapes)
  */
 export async function executeCommand(
   userCommand: string,
   context: CanvasContext
 ): Promise<AICommandResponse> {
   try {
-    // STAGE 1: Classify the intent
-    const intent = await classifyIntent(userCommand)
-    
-    // STAGE 2: Execute based on intent with specialized prompt
-    // For now, we only have one unified prompt, but this structure allows us to easily
-    // split into separate prompts per intent in the future
     const model = getModel()
     
     // Build context string for the AI
@@ -279,8 +271,6 @@ export async function executeCommand(
       : 'None'
     
     const contextStr = `
-Intent: ${intent.intent} (confidence: ${intent.confidence})
-
 Canvas: ${context.canvasDimensions.width}x${context.canvasDimensions.height}
 Viewport: x=${context.viewport.x}, y=${context.viewport.y}, zoom=${context.viewport.scale}
 
@@ -290,8 +280,6 @@ ${shapesInfo}
 Selected shapes: ${selectedInfo}
     `.trim()
 
-    // Select the appropriate system prompt based on intent
-    // TODO: Split SYSTEM_PROMPT into separate prompts per intent for better reliability
     const systemPrompt = SYSTEM_PROMPT
 
     // Call OpenAI with system prompt and user command

@@ -41,13 +41,16 @@ export function useAIAgent({ userId, onShapesCreated, onShapesUpdated, onShapesD
       // Response can be a single command or an array of commands
       const commands = Array.isArray(response) ? response : [response]
 
+      // Collect all shapes to create (for a single toast at the end)
+      const allShapesToCreate: Shape[] = []
+
       // Process each command based on its action type
       for (const cmd of commands) {
         switch (cmd.action) {
           case 'createShape': {
             // Parse and create shapes
             const shapes = parseCommand(cmd, userId)
-            onShapesCreated(shapes)
+            allShapesToCreate.push(...shapes)
             break
           }
           case 'updateShape': {
@@ -65,6 +68,11 @@ export function useAIAgent({ userId, onShapesCreated, onShapesUpdated, onShapesD
             console.error('Unknown command action:', _exhaustiveCheck)
           }
         }
+      }
+
+      // Call onShapesCreated once with all shapes (triggers single toast)
+      if (allShapesToCreate.length > 0) {
+        onShapesCreated(allShapesToCreate)
       }
 
       // Clear input on success
