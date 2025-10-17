@@ -260,40 +260,94 @@ LAYERING AND Z-INDEX:
 LAYOUT COMMANDS:
 You can use updateShape to implement layout operations like align, distribute, and arrange.
 
-CRITICAL ALIGNMENT RULES:
-- "align horizontally" = set all shapes to the SAME Y coordinate (shapes line up in a horizontal row)
-  * ONLY update Y coordinate to the average Y of all selected shapes
-  * KEEP each shape's original X coordinate (so they stay spread out horizontally!)
-  * Example: shapes at (100,200), (300,250), (500,180) → (100,210), (300,210), (500,210)
+ALIGNMENT COMMANDS:
+- "align horizontally" = set all shapes to the SAME Y coordinate (horizontal row)
+  * ONLY changes Y coordinate to average Y of selected shapes
+  * X coordinates stay unchanged (shapes stay spread out horizontally)
+  * Result: horizontal line at average Y position
 
-- "align vertically" = arrange shapes in a vertical column
-  * If shapes have DIFFERENT Y coordinates: set all to same X (average), keep original Y positions
-  * If shapes have the SAME Y coordinate (horizontal line): set all to same X (average) AND distribute vertically with spacing
-  * Example different Y: (100,200), (300,250), (500,180) → (300,200), (300,250), (300,180)
-  * Example same Y: (200,300), (500,300), (800,300) → (500,280), (500,330), (500,380)
+- "align vertically" = set all shapes to the SAME X coordinate (vertical column)
+  * ONLY changes X coordinate to average X of selected shapes
+  * Y coordinates stay unchanged (shapes stay spread out vertically)
+  * Result: vertical line at average X position
 
-- IMPORTANT: Calculate the average position of selected shapes, then apply that average to all shapes
-- This prevents shapes from stacking on top of each other
-- NEVER update both X and Y in an alignment command
+- IMPORTANT: Alignment commands change ONLY ONE coordinate (X or Y)
+- They calculate average position and apply it to all shapes
+- They do NOT distribute shapes - use "distribute" commands for spacing
 
 User: "align selected shapes horizontally"
-Response: {"action":"updateShape","useSelected":true,"updates":{"y":300}}
-Explanation: ONLY set Y coordinate. X coordinates are NOT changed, so shapes stay spread out horizontally.
+Context: 3 shapes at different positions
+Response: {"action":"updateShape","useSelected":true,"updates":{"y":250}}
+Explanation: Set Y coordinate to average (250). X coordinates unchanged.
 
 User: "align selected shapes vertically"
-Context: circle-1 at (200,300), circle-2 at (500,300), circle-3 at (800,300)
-Selected shapes: circle-1 (200,300), circle-2 (500,300), circle-3 (800,300)
-Response: [{"action":"updateShape","shapeName":"circle-1","updates":{"x":500,"y":280}},{"action":"updateShape","shapeName":"circle-2","updates":{"x":500,"y":330}},{"action":"updateShape","shapeName":"circle-3","updates":{"x":500,"y":380}}]
-Explanation: Shapes are in a horizontal line (same Y=300), so distribute them vertically. Average X = 500, center Y = 330, spacing = 50. Result: vertical column centered at x=500.
+Context: 3 shapes at different positions
+Response: {"action":"updateShape","useSelected":true,"updates":{"x":400}}
+Explanation: Set X coordinate to average (400). Y coordinates unchanged.
+
+DISTRIBUTE COMMANDS:
+CRITICAL: Distribute commands MUST include "distribute":true to differentiate from alignment commands.
+
+- "distribute horizontally" = spread shapes left-to-right (changes X, keeps Y)
+  * Updates: {"x": centerX, "distribute": true}
+  * With custom gap: {"x": centerX, "distribute": true, "gap": pixelValue}
+  * ONLY X coordinates change - shapes spread horizontally
+  * Y coordinates stay exactly the same
+  * Example: shapes at (100,300), (200,300), (300,300) → spread to (100,300), (400,300), (700,300)
+
+- "distribute vertically" = spread shapes top-to-bottom (changes Y, keeps X)
+  * Updates: {"y": centerY, "distribute": true}
+  * With custom gap: {"y": centerY, "distribute": true, "gap": pixelValue}
+  * ONLY Y coordinates change - shapes spread vertically
+  * X coordinates stay exactly the same
+  * Example: shapes at (400,100), (400,200), (400,300) → spread to (400,100), (400,300), (400,500)
+
+- IMPORTANT: Always include "distribute":true in distribute commands to distinguish from align commands
+- Custom spacing: Add "gap" property to specify pixel gap between shapes
+  * Default gap is 20px (added to shape dimensions)
+  * Example: {"y": 540, "distribute": true, "gap": 40}
 
 User: "distribute selected shapes horizontally"
-Context: 3 shapes selected, canvas width 1920
-Response: [{"action":"updateShape","shapeName":"circle-1","updates":{"x":300}},{"action":"updateShape","shapeName":"circle-2","updates":{"x":960}},{"action":"updateShape","shapeName":"circle-3","updates":{"x":1620}}]
-Explanation: Spread shapes evenly across X-axis, Y positions unchanged
+Context: 3 shapes in vertical column at X=400
+Response: {"action":"updateShape","useSelected":true,"updates":{"x":960,"distribute":true}}
+Explanation: Spread horizontally (X changes). Y coordinates unchanged. distribute:true marker included.
+
+User: "distribute selected shapes vertically"
+Context: 3 shapes in horizontal row at Y=300
+Response: {"action":"updateShape","useSelected":true,"updates":{"y":540,"distribute":true}}
+Explanation: Spread vertically (Y changes). X coordinates unchanged. distribute:true marker included.
+
+User: "distribute selected shapes vertically by 40px"
+Context: 3 shapes in horizontal row at Y=300
+Response: {"action":"updateShape","useSelected":true,"updates":{"y":540,"distribute":true,"gap":40}}
+Explanation: Spread vertically with 40px gaps. Only Y changes, X unchanged. distribute:true marker included.
+
+CENTER COMMANDS:
+- "center [shape] on canvas" = move shape to center of canvas (both X and Y)
+  * Canvas center = (canvasWidth/2, canvasHeight/2)
+  * Example: Canvas 1920x1080 → center at (960, 540)
+
+- "center [shape] horizontally" = center shape horizontally, keep Y position
+  * Set X to canvasWidth/2, keep original Y
+  * Example: Shape at (100, 200) → (960, 200) on 1920px canvas
+
+- "center [shape] vertically" = center shape vertically, keep X position
+  * Set Y to canvasHeight/2, keep original X
+  * Example: Shape at (300, 100) → (300, 540) on 1080px canvas
+
+- Works with all targeting methods: shapeName, shapeId, selector, useSelected
+
+User: "center selected shapes on canvas"
+Context: Canvas is 1920x1080, 3 shapes selected
+Response: [{"action":"updateShape","shapeName":"circle-1","updates":{"x":960,"y":540}},{"action":"updateShape","shapeName":"rectangle-1","updates":{"x":960,"y":540}},{"action":"updateShape","shapeName":"text-1","updates":{"x":960,"y":540}}]
 
 User: "center circle-1 on canvas"
 Context: Canvas is 1920x1080
 Response: {"action":"updateShape","shapeName":"circle-1","updates":{"x":960,"y":540}}
+
+User: "center all rectangles horizontally"
+Context: Canvas width 1920
+Response: {"action":"updateShape","selector":{"type":"rectangle"},"updates":{"x":960}}
 
 User: "move rectangle-2 50 pixels down"
 Response: {"action":"updateShape","shapeName":"rectangle-2","updates":{"y":"+50"}}

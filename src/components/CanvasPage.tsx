@@ -93,12 +93,17 @@ export default function CanvasPage() {
         return
       }
 
-      // Special handling for alignment commands - calculate proper positions
-      if (command.updates && Object.keys(command.updates).length === 1) {
-        const updateKey = Object.keys(command.updates)[0] as keyof typeof command.updates
-        const updateValue = command.updates[updateKey]
+      // Special handling for alignment and distribute commands
+      // Check if updates contain x or y coordinate changes
+      const hasXUpdate = 'x' in command.updates && typeof command.updates.x === 'number'
+      const hasYUpdate = 'y' in command.updates && typeof command.updates.y === 'number'
+      
+      if (command.updates && (hasXUpdate || hasYUpdate)) {
+        // Determine which coordinate is being updated (prefer x if both exist)
+        const updateKey = hasXUpdate ? 'x' : 'y'
+        const updateValue = command.updates[updateKey] as number
 
-        // Check if this looks like an alignment command (single coordinate update to a number)
+        // Check if this looks like an alignment or distribute command
         if ((updateKey === 'x' || updateKey === 'y') && typeof updateValue === 'number' && !isNaN(updateValue)) {
           // Helpers to approximate shape dimensions for spacing calculations
           const getApproxWidth = (s: Shape): number => {
@@ -144,61 +149,82 @@ export default function CanvasPage() {
             }
             return 100
           }
-          // For vertical alignment (setting same X), if all shapes have same Y, distribute vertically
-          if (updateKey === 'x') {
-            const allYValues = shapesToUpdate.map(s => s.y)
-            const uniqueYValues = new Set(allYValues)
-
-            // If all shapes have the same Y (horizontal line), distribute them vertically
-            if (uniqueYValues.size === 1) {
-              const centerY = allYValues[0] // They all have the same Y
-              const maxH = Math.max(...shapesToUpdate.map(getApproxHeight))
-              const spacing = maxH + 20 // 20px gap
-              const totalHeight = (shapesToUpdate.length - 1) * spacing
-              const startY = centerY - totalHeight / 2
-
-              // Create individual update commands for each shape
-              for (let i = 0; i < shapesToUpdate.length; i++) {
-                const shape = shapesToUpdate[i]
-                const newY = startY + (i * spacing)
-                const updatedShape = { ...shape, x: updateValue, y: newY }
-                await handleShapeUpdate(updatedShape)
-              }
-
-              toast.success(`Vertically aligned ${shapesToUpdate.length} shape${shapesToUpdate.length > 1 ? 's' : ''}`)
-              return
-            }
-          }
-
-          // For horizontal alignment (setting same Y), if all shapes have same X, distribute horizontally
-          if (updateKey === 'y') {
-            const allXValues = shapesToUpdate.map(s => s.x)
-            const uniqueXValues = new Set(allXValues)
-
-            // If all shapes have the same X (vertical line), distribute them horizontally
-            if (uniqueXValues.size === 1) {
-              const centerX = allXValues[0] // They all have the same X
+          // Check if this is a distribute command (has 'distribute' marker or 'gap' property)
+          const isDistribute = command.updates.distribute === true || command.updates.gap !== undefined
+          
+          if (isDistribute && (updateKey === 'x' || updateKey === 'y')) {
+            // DISTRIBUTE COMMAND: spread shapes along specified axis AND align on perpendicular axis
+            const customGap = command.updates.gap as number | undefined
+            
+            if (updateKey === 'x') {
+              // Horizontal distribution: 
+              // 1. Align vertically (set all Y to same value)
+              // 2. Spread horizontally with gaps
               const maxW = Math.max(...shapesToUpdate.map(getApproxWidth))
-              const spacing = maxW + 20 // 20px gap
+              const gap = customGap !== undefined ? customGap : 20 // Use custom gap or default 20px
+              const spacing = maxW + gap
               const totalWidth = (shapesToUpdate.length - 1) * spacing
-              const startX = centerX - totalWidth / 2
+              const startX = updateValue - totalWidth / 2
+              
+              // Calculate average Y for alignment
+              const avgY = shapesToUpdate.reduce((sum, s) => sum + s.y, 0) / shapesToUpdate.length
 
               // Create individual update commands for each shape
               for (let i = 0; i < shapesToUpdate.length; i++) {
                 const shape = shapesToUpdate[i]
                 const newX = startX + (i * spacing)
-                const updatedShape = { ...shape, x: newX, y: updateValue }
+                const updatedShape = { ...shape, x: newX, y: avgY } // Set X for distribution, Y for alignment
                 await handleShapeUpdate(updatedShape)
               }
 
-              toast.success(`Horizontally aligned ${shapesToUpdate.length} shape${shapesToUpdate.length > 1 ? 's' : ''}`)
+              const gapMsg = customGap !== undefined ? ` with ${customGap}px gaps` : ''
+              toast.success(`Horizontally distributed ${shapesToUpdate.length} shape${shapesToUpdate.length > 1 ? 's' : ''}${gapMsg}`)
               return
             }
+
+            if (updateKey === 'y') {
+              // Vertical distribution:
+              // 1. Align horizontally (set all X to same value)
+              // 2. Spread vertically with gaps
+              const maxH = Math.max(...shapesToUpdate.map(getApproxHeight))
+              const gap = customGap !== undefined ? customGap : 20 // Use custom gap or default 20px
+              const spacing = maxH + gap
+              const totalHeight = (shapesToUpdate.length - 1) * spacing
+              const startY = updateValue - totalHeight / 2
+              
+              // Calculate average X for alignment
+              const avgX = shapesToUpdate.reduce((sum, s) => sum + s.x, 0) / shapesToUpdate.length
+
+              // Create individual update commands for each shape
+              for (let i = 0; i < shapesToUpdate.length; i++) {
+                const shape = shapesToUpdate[i]
+                const newY = startY + (i * spacing)
+                const updatedShape = { ...shape, x: avgX, y: newY } // Set X for alignment, Y for distribution
+                await handleShapeUpdate(updatedShape)
+              }
+
+              const gapMsg = customGap !== undefined ? ` with ${customGap}px gaps` : ''
+              toast.success(`Vertically distributed ${shapesToUpdate.length} shape${shapesToUpdate.length > 1 ? 's' : ''}${gapMsg}`)
+              return
+            }
+          }
+
+          // ALIGNMENT COMMAND: set all shapes to same coordinate
+          if (!isDistribute && (updateKey === 'x' || updateKey === 'y')) {
+            // Simple alignment - just set all shapes to the same coordinate
+            for (const shape of shapesToUpdate) {
+              const updatedShape = { ...shape, [updateKey]: updateValue }
+              await handleShapeUpdate(updatedShape)
+            }
+            
+            const alignmentType = updateKey === 'x' ? 'vertically' : 'horizontally'
+            toast.success(`${alignmentType.charAt(0).toUpperCase() + alignmentType.slice(1)} aligned ${shapesToUpdate.length} shape${shapesToUpdate.length > 1 ? 's' : ''}`)
+            return
           }
         }
       }
 
-      // Default update logic for non-alignment commands
+      // Default update logic for all update commands (including center commands)
       for (const shape of shapesToUpdate) {
         // Process relative updates (e.g., "+50" means add 50 to current value)
         const processedUpdates: Record<string, unknown> = {}

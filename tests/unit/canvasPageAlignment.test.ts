@@ -275,6 +275,263 @@ describe('Canvas Page Alignment Functionality', () => {
     })
   })
 
+  describe('Distribute Commands', () => {
+    it('should distribute shapes horizontally (spread along X-axis)', async () => {
+      const { executeCommand } = await import('../../src/services/aiAgent')
+
+      // Mock AI response for horizontal distribution
+      const mockResponse = {
+        action: 'updateShape' as const,
+        useSelected: true,
+        updates: { x: 500 }
+      }
+
+      vi.mocked(executeCommand).mockResolvedValue(mockResponse)
+
+      const { result } = renderHook(() =>
+        useAIAgent({
+          userId: mockUserId,
+          onShapesCreated: mockOnShapesCreated,
+          onShapesUpdated: mockOnShapesUpdated,
+          onShapesDeleted: mockOnShapesDeleted,
+          onError: mockOnError
+        })
+      )
+
+      await act(async () => {
+        await result.current.execute('distribute selected shapes horizontally', mockContext)
+      })
+
+      expect(mockOnShapesUpdated).toHaveBeenCalledWith(mockResponse)
+    })
+
+    it('should distribute shapes vertically (spread along Y-axis)', async () => {
+      const { executeCommand } = await import('../../src/services/aiAgent')
+
+      const mockResponse = {
+        action: 'updateShape' as const,
+        useSelected: true,
+        updates: { y: 300 }
+      }
+
+      vi.mocked(executeCommand).mockResolvedValue(mockResponse)
+
+      const { result } = renderHook(() =>
+        useAIAgent({
+          userId: mockUserId,
+          onShapesCreated: mockOnShapesCreated,
+          onShapesUpdated: mockOnShapesUpdated,
+          onShapesDeleted: mockOnShapesDeleted,
+          onError: mockOnError
+        })
+      )
+
+      await act(async () => {
+        await result.current.execute('distribute selected shapes vertically', mockContext)
+      })
+
+      expect(mockOnShapesUpdated).toHaveBeenCalledWith(mockResponse)
+    })
+
+    it('should distribute shapes by name', async () => {
+      const { executeCommand } = await import('../../src/services/aiAgent')
+
+      const mockResponse = {
+        action: 'updateShape' as const,
+        shapeName: 'rectangle-1',
+        updates: { x: 400 }
+      }
+
+      vi.mocked(executeCommand).mockResolvedValue(mockResponse)
+
+      const { result } = renderHook(() =>
+        useAIAgent({
+          userId: mockUserId,
+          onShapesCreated: mockOnShapesCreated,
+          onShapesUpdated: mockOnShapesUpdated,
+          onShapesDeleted: mockOnShapesDeleted,
+          onError: mockOnError
+        })
+      )
+
+      await act(async () => {
+        await result.current.execute('distribute rectangle-1 horizontally', mockContext)
+      })
+
+      expect(mockOnShapesUpdated).toHaveBeenCalledWith(mockResponse)
+    })
+
+    it('should distribute shapes by selector', async () => {
+      const { executeCommand } = await import('../../src/services/aiAgent')
+
+      const mockResponse = {
+        action: 'updateShape' as const,
+        selector: { type: 'circle' as const },
+        updates: { y: 250 }
+      }
+
+      vi.mocked(executeCommand).mockResolvedValue(mockResponse)
+
+      const { result } = renderHook(() =>
+        useAIAgent({
+          userId: mockUserId,
+          onShapesCreated: mockOnShapesCreated,
+          onShapesUpdated: mockOnShapesUpdated,
+          onShapesDeleted: mockOnShapesDeleted,
+          onError: mockOnError
+        })
+      )
+
+      await act(async () => {
+        await result.current.execute('distribute all circles vertically', mockContext)
+      })
+
+      expect(mockOnShapesUpdated).toHaveBeenCalledWith(mockResponse)
+    })
+  })
+
+  describe('Center Commands', () => {
+    it('should center shapes on canvas (both X and Y)', async () => {
+      const { executeCommand } = await import('../../src/services/aiAgent')
+
+      const mockResponse = {
+        action: 'updateShape' as const,
+        useSelected: true,
+        updates: { x: 960, y: 540 } // Center of 1920x1080 canvas
+      }
+
+      vi.mocked(executeCommand).mockResolvedValue(mockResponse)
+
+      const { result } = renderHook(() =>
+        useAIAgent({
+          userId: mockUserId,
+          onShapesCreated: mockOnShapesCreated,
+          onShapesUpdated: mockOnShapesUpdated,
+          onShapesDeleted: mockOnShapesDeleted,
+          onError: mockOnError
+        })
+      )
+
+      await act(async () => {
+        await result.current.execute('center selected shapes on canvas', mockContext)
+      })
+
+      expect(mockOnShapesUpdated).toHaveBeenCalledWith(mockResponse)
+    })
+
+    it('should center shape horizontally (X only)', async () => {
+      const { executeCommand } = await import('../../src/services/aiAgent')
+
+      const mockResponse = {
+        action: 'updateShape' as const,
+        shapeName: 'circle-1',
+        updates: { x: 960 } // Center X of 1920px canvas, keep Y
+      }
+
+      vi.mocked(executeCommand).mockResolvedValue(mockResponse)
+
+      const { result } = renderHook(() =>
+        useAIAgent({
+          userId: mockUserId,
+          onShapesCreated: mockOnShapesCreated,
+          onShapesUpdated: mockOnShapesUpdated,
+          onShapesDeleted: mockOnShapesDeleted,
+          onError: mockOnError
+        })
+      )
+
+      await act(async () => {
+        await result.current.execute('center circle-1 horizontally', mockContext)
+      })
+
+      expect(mockOnShapesUpdated).toHaveBeenCalledWith(mockResponse)
+    })
+
+    it('should center shape vertically (Y only)', async () => {
+      const { executeCommand } = await import('../../src/services/aiAgent')
+
+      const mockResponse = {
+        action: 'updateShape' as const,
+        shapeName: 'rectangle-1',
+        updates: { y: 540 } // Center Y of 1080px canvas, keep X
+      }
+
+      vi.mocked(executeCommand).mockResolvedValue(mockResponse)
+
+      const { result } = renderHook(() =>
+        useAIAgent({
+          userId: mockUserId,
+          onShapesCreated: mockOnShapesCreated,
+          onShapesUpdated: mockOnShapesUpdated,
+          onShapesDeleted: mockOnShapesDeleted,
+          onError: mockOnError
+        })
+      )
+
+      await act(async () => {
+        await result.current.execute('center rectangle-1 vertically', mockContext)
+      })
+
+      expect(mockOnShapesUpdated).toHaveBeenCalledWith(mockResponse)
+    })
+
+    it('should center shapes by selector horizontally', async () => {
+      const { executeCommand } = await import('../../src/services/aiAgent')
+
+      const mockResponse = {
+        action: 'updateShape' as const,
+        selector: { type: 'text' as const },
+        updates: { x: 960 }
+      }
+
+      vi.mocked(executeCommand).mockResolvedValue(mockResponse)
+
+      const { result } = renderHook(() =>
+        useAIAgent({
+          userId: mockUserId,
+          onShapesCreated: mockOnShapesCreated,
+          onShapesUpdated: mockOnShapesUpdated,
+          onShapesDeleted: mockOnShapesDeleted,
+          onError: mockOnError
+        })
+      )
+
+      await act(async () => {
+        await result.current.execute('center all text horizontally', mockContext)
+      })
+
+      expect(mockOnShapesUpdated).toHaveBeenCalledWith(mockResponse)
+    })
+
+    it('should center single shape on canvas', async () => {
+      const { executeCommand } = await import('../../src/services/aiAgent')
+
+      const mockResponse = {
+        action: 'updateShape' as const,
+        shapeId: 'shape-123',
+        updates: { x: 960, y: 540 }
+      }
+
+      vi.mocked(executeCommand).mockResolvedValue(mockResponse)
+
+      const { result } = renderHook(() =>
+        useAIAgent({
+          userId: mockUserId,
+          onShapesCreated: mockOnShapesCreated,
+          onShapesUpdated: mockOnShapesUpdated,
+          onShapesDeleted: mockOnShapesDeleted,
+          onError: mockOnError
+        })
+      )
+
+      await act(async () => {
+        await result.current.execute('center shape-123 on canvas', mockContext)
+      })
+
+      expect(mockOnShapesUpdated).toHaveBeenCalledWith(mockResponse)
+    })
+  })
+
   describe('Error Handling', () => {
     it('should handle alignment when no shapes are selected', async () => {
       const { executeCommand } = await import('../../src/services/aiAgent')
@@ -318,6 +575,50 @@ describe('Canvas Page Alignment Functionality', () => {
       })
 
       expect(mockOnError).toHaveBeenCalledWith('Invalid alignment command')
+    })
+
+    it('should handle distribute when no shapes are selected', async () => {
+      const { executeCommand } = await import('../../src/services/aiAgent')
+
+      vi.mocked(executeCommand).mockRejectedValue(new Error('No shapes found to distribute'))
+
+      const { result } = renderHook(() =>
+        useAIAgent({
+          userId: mockUserId,
+          onShapesCreated: mockOnShapesCreated,
+          onShapesUpdated: mockOnShapesUpdated,
+          onShapesDeleted: mockOnShapesDeleted,
+          onError: mockOnError
+        })
+      )
+
+      await act(async () => {
+        await result.current.execute('distribute selected shapes horizontally', mockContext)
+      })
+
+      expect(mockOnError).toHaveBeenCalledWith('No shapes found to distribute')
+    })
+
+    it('should handle invalid distribute commands gracefully', async () => {
+      const { executeCommand } = await import('../../src/services/aiAgent')
+
+      vi.mocked(executeCommand).mockRejectedValue(new Error('Invalid distribute command'))
+
+      const { result } = renderHook(() =>
+        useAIAgent({
+          userId: mockUserId,
+          onShapesCreated: mockOnShapesCreated,
+          onShapesUpdated: mockOnShapesUpdated,
+          onShapesDeleted: mockOnShapesDeleted,
+          onError: mockOnError
+        })
+      )
+
+      await act(async () => {
+        await result.current.execute('distribute shapes randomly', mockContext)
+      })
+
+      expect(mockOnError).toHaveBeenCalledWith('Invalid distribute command')
     })
   })
 })

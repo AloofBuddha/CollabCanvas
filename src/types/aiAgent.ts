@@ -79,6 +79,9 @@ export const UpdateShapeCommandSchema = z.object({
     textColor: z.string().optional(),
     align: z.enum(['left', 'center', 'right']).optional(),
     verticalAlign: z.enum(['top', 'middle', 'bottom']).optional(),
+    // Layout command markers
+    distribute: z.boolean().optional(), // Marker to distinguish distribute from align commands
+    gap: z.number().optional(), // Custom spacing for distribute commands (in pixels)
   })
 })
 
