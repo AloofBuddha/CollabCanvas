@@ -285,6 +285,166 @@ describe('AI Agent Service', () => {
     })
   })
 
+  describe('Update Shape Commands', () => {
+    it('should parse updateShape command with shape name', async () => {
+      const mockResponse = {
+        action: 'updateShape',
+        shapeName: 'circle-1',
+        updates: { color: '#FF0000', x: 150 }
+      }
+
+      mockInvoke.mockResolvedValue({
+        content: JSON.stringify(mockResponse)
+      })
+
+      const result = await executeCommand('make circle-1 red and move it to 150, 200', mockContext)
+
+      expect(result).toEqual(mockResponse)
+    })
+
+    it('should parse updateShape command with shape ID', async () => {
+      const mockResponse = {
+        action: 'updateShape',
+        shapeId: 'shape-123',
+        updates: { rotation: 45, opacity: 0.8 }
+      }
+
+      mockInvoke.mockResolvedValue({
+        content: JSON.stringify(mockResponse)
+      })
+
+      const result = await executeCommand('rotate shape-123 by 45 degrees', mockContext)
+
+      expect(result).toEqual(mockResponse)
+    })
+
+    it('should parse updateShape command with selector', async () => {
+      const mockResponse = {
+        action: 'updateShape',
+        selector: { type: 'rectangle' },
+        updates: { stroke: '#000000', strokeWidth: 2 }
+      }
+
+      mockInvoke.mockResolvedValue({
+        content: JSON.stringify(mockResponse)
+      })
+
+      const result = await executeCommand('add black outline to all rectangles', mockContext)
+
+      expect(result).toEqual(mockResponse)
+    })
+
+    it('should parse updateShape command with useSelected', async () => {
+      const mockResponse = {
+        action: 'updateShape',
+        useSelected: true,
+        updates: { color: '#00FF00' }
+      }
+
+      mockInvoke.mockResolvedValue({
+        content: JSON.stringify(mockResponse)
+      })
+
+      const result = await executeCommand('make selected shapes green', mockContext)
+
+      expect(result).toEqual(mockResponse)
+    })
+
+    it('should parse alignment commands as updateShape with single coordinate', async () => {
+      const mockResponse = {
+        action: 'updateShape',
+        useSelected: true,
+        updates: { x: 500 } // Horizontal alignment
+      }
+
+      mockInvoke.mockResolvedValue({
+        content: JSON.stringify(mockResponse)
+      })
+
+      const result = await executeCommand('align selected shapes horizontally', mockContext)
+
+      expect(result).toEqual(mockResponse)
+    })
+
+    it('should parse vertical alignment commands', async () => {
+      const mockResponse = {
+        action: 'updateShape',
+        useSelected: true,
+        updates: { y: 300 } // Vertical alignment
+      }
+
+      mockInvoke.mockResolvedValue({
+        content: JSON.stringify(mockResponse)
+      })
+
+      const result = await executeCommand('align selected shapes vertically', mockContext)
+
+      expect(result).toEqual(mockResponse)
+    })
+  })
+
+  describe('Delete Shape Commands', () => {
+    it('should parse deleteShape command with shape name', async () => {
+      const mockResponse = {
+        action: 'deleteShape',
+        shapeName: 'circle-1'
+      }
+
+      mockInvoke.mockResolvedValue({
+        content: JSON.stringify(mockResponse)
+      })
+
+      const result = await executeCommand('delete circle-1', mockContext)
+
+      expect(result).toEqual(mockResponse)
+    })
+
+    it('should parse deleteShape command with shape ID', async () => {
+      const mockResponse = {
+        action: 'deleteShape',
+        shapeId: 'shape-123'
+      }
+
+      mockInvoke.mockResolvedValue({
+        content: JSON.stringify(mockResponse)
+      })
+
+      const result = await executeCommand('remove shape-123', mockContext)
+
+      expect(result).toEqual(mockResponse)
+    })
+
+    it('should parse deleteShape command with selector', async () => {
+      const mockResponse = {
+        action: 'deleteShape',
+        selector: { type: 'text' }
+      }
+
+      mockInvoke.mockResolvedValue({
+        content: JSON.stringify(mockResponse)
+      })
+
+      const result = await executeCommand('delete all text elements', mockContext)
+
+      expect(result).toEqual(mockResponse)
+    })
+
+    it('should parse deleteShape command with useSelected', async () => {
+      const mockResponse = {
+        action: 'deleteShape',
+        useSelected: true
+      }
+
+      mockInvoke.mockResolvedValue({
+        content: JSON.stringify(mockResponse)
+      })
+
+      const result = await executeCommand('delete selected shapes', mockContext)
+
+      expect(result).toEqual(mockResponse)
+    })
+  })
+
   describe('Code Block Handling', () => {
     it('should handle ```json code blocks', async () => {
       const mockResponse = {
