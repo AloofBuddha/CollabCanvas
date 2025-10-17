@@ -7,10 +7,11 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Shape, TextShape } from '../types'
-import { X } from 'lucide-react'
+import { X, ChevronsUp, ChevronsDown, ChevronUp, ChevronDown } from 'lucide-react'
 
 interface DetailPaneProps {
   shape: Shape
+  allShapes: Record<string, Shape>
   onClose: () => void
   onUpdateShape: (updates: Partial<Shape>) => void
 }
@@ -33,6 +34,7 @@ function colorToHex(color: string): string {
 
 export default function DetailPane({
   shape,
+  allShapes,
   onClose,
   onUpdateShape,
 }: DetailPaneProps) {
@@ -262,6 +264,86 @@ export default function DetailPane({
     if (!isNaN(opacity) && opacity >= 0 && opacity <= 100) {
       setLocalOpacity(opacity)
       debouncedUpdate({ opacity: opacity / 100 }) // Convert to 0-1 for storage
+    }
+  }
+
+  const handleBringToFront = () => {
+    // Set zIndex to current timestamp to bring to front
+    onUpdateShape({ zIndex: Date.now() })
+  }
+
+  const handleSendToBack = () => {
+    // Set zIndex to 0 to send to back
+    onUpdateShape({ zIndex: 0 })
+  }
+
+  const handleBringForward = () => {
+    // Get all UNIQUE zIndex values, sorted (excluding current shape to avoid duplicates)
+    const allZIndices = [...new Set(Object.values(allShapes).map(s => s.zIndex ?? 0))].sort((a, b) => a - b)
+    
+    const currentZ = shape.zIndex ?? 0
+    
+    // Find the index of the next higher zIndex
+    const currentIndex = allZIndices.findIndex(z => z >= currentZ)
+    const nextHigherZ = currentIndex < allZIndices.length - 1 ? allZIndices[currentIndex + 1] : undefined
+    
+    if (nextHigherZ === undefined) {
+      // Already at the top, use current timestamp
+      onUpdateShape({ zIndex: Date.now() })
+    } else {
+      // Find what's above the next higher (to place between them)
+      const indexAfterNext = currentIndex + 2
+      const zAfterNext = indexAfterNext < allZIndices.length ? allZIndices[indexAfterNext] : undefined
+      
+      let finalZ: number
+      if (zAfterNext === undefined) {
+        // Next higher is at the top, so place above it
+        finalZ = nextHigherZ + 1
+      } else {
+        // Place between next higher and the one after it
+        finalZ = Math.floor((nextHigherZ + zAfterNext) / 2)
+        // If too close, just use next higher + 1
+        if (finalZ <= nextHigherZ) {
+          finalZ = nextHigherZ + 1
+        }
+      }
+      
+      onUpdateShape({ zIndex: finalZ })
+    }
+  }
+
+  const handleSendBackward = () => {
+    // Get all UNIQUE zIndex values, sorted
+    const allZIndices = [...new Set(Object.values(allShapes).map(s => s.zIndex ?? 0))].sort((a, b) => a - b)
+    
+    const currentZ = shape.zIndex ?? 0
+    
+    // Find the index of the next lower zIndex
+    const currentIndex = allZIndices.findIndex(z => z >= currentZ)
+    const nextLowerZ = currentIndex > 0 ? allZIndices[currentIndex - 1] : undefined
+    
+    if (nextLowerZ === undefined) {
+      // Already at the bottom, keep at 0
+      onUpdateShape({ zIndex: 0 })
+    } else {
+      // Find what's below the next lower (to place between them)
+      const indexBeforeLower = currentIndex - 2
+      const zBeforeLower = indexBeforeLower >= 0 ? allZIndices[indexBeforeLower] : undefined
+      
+      let finalZ: number
+      if (zBeforeLower === undefined) {
+        // Next lower is at the bottom, so place below it (or at 0)
+        finalZ = Math.max(0, nextLowerZ - 1)
+      } else {
+        // Place between the one before next lower and next lower
+        finalZ = Math.floor((zBeforeLower + nextLowerZ) / 2)
+        // If too close, just use next lower - 1
+        if (finalZ >= nextLowerZ) {
+          finalZ = Math.max(0, nextLowerZ - 1)
+        }
+      }
+      
+      onUpdateShape({ zIndex: finalZ })
     }
   }
 
@@ -745,6 +827,47 @@ export default function DetailPane({
           step="1"
           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
         />
+      </div>
+
+      {/* Layering Controls - applicable to all shapes */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Layer Order
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={handleBringToFront}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            title="Bring to Front (⌘])"
+          >
+            <ChevronsUp className="w-4 h-4" />
+            <span>To Front</span>
+          </button>
+          <button
+            onClick={handleSendToBack}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            title="Send to Back (⌘[)"
+          >
+            <ChevronsDown className="w-4 h-4" />
+            <span>To Back</span>
+          </button>
+          <button
+            onClick={handleBringForward}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            title="Bring Forward"
+          >
+            <ChevronUp className="w-4 h-4" />
+            <span>Forward</span>
+          </button>
+          <button
+            onClick={handleSendBackward}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            title="Send Backward"
+          >
+            <ChevronDown className="w-4 h-4" />
+            <span>Backward</span>
+          </button>
+        </div>
       </div>
     </div>
   )

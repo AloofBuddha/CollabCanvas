@@ -13,6 +13,7 @@ interface BaseShape {
   y: number
   rotation?: number // Rotation in degrees (default 0)
   opacity?: number // Opacity 0-1 (default 1.0, fully opaque)
+  zIndex?: number // Layering order (higher = on top, default based on creation timestamp)
   color: string
   createdBy: string
   lockedBy?: string | null // userId of user who has locked this shape

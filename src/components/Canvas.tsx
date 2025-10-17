@@ -595,8 +595,10 @@ export default function Canvas({
         draggable={false}
       >
         <Layer>
-          {/* Render all existing shapes */}
-          {Object.values(shapes).map((shape) => {
+          {/* Render all existing shapes (sorted by zIndex for layering) */}
+          {Object.values(shapes)
+            .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0)) // Lower zIndex renders first (behind)
+            .map((shape) => {
             const isSelected = selectedShapeIds.has(shape.id)
             const isLockedByMe = shape.lockedBy === userId
             const isLockedByOther = !!(shape.lockedBy && shape.lockedBy !== userId)
@@ -679,6 +681,7 @@ export default function Canvas({
       {selectedShapeId && selectedShapeIds.size === 1 && shapes[selectedShapeId] && (
         <DetailPane
           shape={shapes[selectedShapeId]}
+          allShapes={shapes}
           onClose={handleCloseDetailPane}
           onUpdateShape={handleDetailPaneUpdate}
         />

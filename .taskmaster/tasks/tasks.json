@@ -192,7 +192,7 @@
               1
             ],
             "details": "Extend the command parser to handle creation commands such as 'create [shape] [color] at [x,y]', starting with the test command and adding more one by one. Map API responses to shapeStore actions for atomic creation, syncing changes to Firestore via existing mechanisms from Task 7. Ensure operations are user-specific using Task 2 auth, render on Konva canvas from Task 5, and provide full context to AI.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Manual test: Enter creation commands one by one, verify shapes appear on canvas and sync to Firestore within 3 seconds. Check for multi-user support by having another user see changes in real-time. Test each command individually before proceeding."
           },
           {
@@ -317,7 +317,7 @@
               1
             ],
             "details": "Add a 'zIndex' field (number) to all shape types, with a default strategy based on creation timestamp (newer shapes get higher zIndex). Before rendering in the Canvas component, sort the shapes array by zIndex (higher values on top). Add four buttons in the DetailPane: 'Bring to Front' (set zIndex to max+1), 'Send to Back' (set to min-1), 'Bring Forward' (increment zIndex), 'Send Backward' (decrement zIndex). Ensure these changes sync via Firebase and handle multi-select scenarios by applying to all selected shapes. Manage z-index via array sorting before render to avoid Konva's z-index limitations.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Create multiple shapes, use layering buttons in DetailPane, verify stacking order visually on canvas; check Firebase sync by reloading and confirming zIndex persists; test multi-select layering operations."
           },
           {
@@ -344,7 +344,7 @@
       ],
       "created": "2025-10-16T15:37:35.414Z",
       "description": "Tasks for master context",
-      "updated": "2025-10-17T02:36:26.246Z"
+      "updated": "2025-10-17T15:28:50.274Z"
     }
   }
 }

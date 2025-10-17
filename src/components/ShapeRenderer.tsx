@@ -357,12 +357,15 @@ export function NewShapeRenderer({
     
     case 'circle': {
       const circle = shape as CircleShape
+      // Ensure radii are always positive during creation
+      const radiusX = Math.abs(circle.radiusX)
+      const radiusY = Math.abs(circle.radiusY)
       return (
         <Ellipse
           x={circle.x + circle.radiusX}
           y={circle.y + circle.radiusY}
-          radiusX={circle.radiusX}
-          radiusY={circle.radiusY}
+          radiusX={radiusX}
+          radiusY={radiusY}
           {...commonProps}
         />
       )

@@ -44,6 +44,7 @@ const shapeTypeRegistry: Record<string, ShapeTypeConfig> = {
       height: 0,
       color: '#D1D5DB',
       opacity: 1.0,
+      zIndex: Date.now(), // Use timestamp for unique, increasing z-index
       createdBy: userId,
     }),
     updateCreationProps: (shape, mouseX, mouseY) => ({
@@ -92,6 +93,7 @@ const shapeTypeRegistry: Record<string, ShapeTypeConfig> = {
       radiusY: 0,
       color: '#D1D5DB',
       opacity: 1.0,
+      zIndex: Date.now(),
       createdBy: userId,
     }),
     updateCreationProps: (shape, mouseX, mouseY) => {
@@ -152,6 +154,7 @@ const shapeTypeRegistry: Record<string, ShapeTypeConfig> = {
       strokeWidth: 4,
       color: '#D1D5DB',
       opacity: 1.0,
+      zIndex: Date.now(),
       createdBy: userId,
     }),
     updateCreationProps: (_shape, mouseX, mouseY) => ({
@@ -215,6 +218,7 @@ const shapeTypeRegistry: Record<string, ShapeTypeConfig> = {
       textColor: '#000000',
       color: 'transparent',
       opacity: 1.0,
+      zIndex: Date.now(),
       align: 'left' as const,
       verticalAlign: 'top' as const,
       createdBy: userId,

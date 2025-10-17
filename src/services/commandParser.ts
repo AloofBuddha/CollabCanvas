@@ -35,6 +35,7 @@ function createShapeFromCommand(command: CreateShapeCommand, userId: string): Sh
     createdBy: userId,
     rotation: shape.rotation || 0,
     opacity: shape.opacity ?? 1.0, // Default to fully opaque
+    zIndex: Date.now(), // Use timestamp for layering
   }
 
   switch (shape.type) {
