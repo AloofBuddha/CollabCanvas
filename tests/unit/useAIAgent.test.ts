@@ -208,7 +208,10 @@ describe('useAIAgent Hook', () => {
     })
 
     expect(parseCommand).toHaveBeenCalledTimes(2)
-    expect(mockOnShapesCreated).toHaveBeenCalledWith(mockShapes)
+    // With the new implementation, onShapesCreated is called once per command
+    expect(mockOnShapesCreated).toHaveBeenCalledTimes(2)
+    expect(mockOnShapesCreated).toHaveBeenNthCalledWith(1, [mockShapes[0]])
+    expect(mockOnShapesCreated).toHaveBeenNthCalledWith(2, [mockShapes[1]])
   })
 
   it('should handle errors gracefully', async () => {
@@ -267,6 +270,79 @@ describe('useAIAgent Hook', () => {
     })
 
     expect(executeCommand).not.toHaveBeenCalled()
+    expect(mockOnShapesCreated).not.toHaveBeenCalled()
+  })
+
+  it('should handle updateShape command', async () => {
+    const { executeCommand } = await import('../../src/services/aiAgent')
+    const mockOnShapesUpdated = vi.fn()
+
+    const mockUpdateCommand = {
+      action: 'updateShape' as const,
+      shapeName: 'circle-1',
+      updates: { color: '#FF0000' }
+    }
+
+    vi.mocked(executeCommand).mockResolvedValue(mockUpdateCommand)
+
+    const { result } = renderHook(() =>
+      useAIAgent({
+        userId: mockUserId,
+        onShapesCreated: mockOnShapesCreated,
+        onShapesUpdated: mockOnShapesUpdated,
+        onShapesDeleted: vi.fn(),
+        onError: mockOnError
+      })
+    )
+
+    const mockContext = {
+      canvasDimensions: { width: 1920, height: 1080 },
+      viewport: { x: 0, y: 0, scale: 1 },
+      shapes: [],
+      selectedShapeIds: []
+    }
+
+    await act(async () => {
+      await result.current.execute('make circle-1 red', mockContext)
+    })
+
+    expect(mockOnShapesUpdated).toHaveBeenCalledWith(mockUpdateCommand)
+    expect(mockOnShapesCreated).not.toHaveBeenCalled()
+  })
+
+  it('should handle deleteShape command', async () => {
+    const { executeCommand } = await import('../../src/services/aiAgent')
+    const mockOnShapesDeleted = vi.fn()
+
+    const mockDeleteCommand = {
+      action: 'deleteShape' as const,
+      shapeName: 'circle-1'
+    }
+
+    vi.mocked(executeCommand).mockResolvedValue(mockDeleteCommand)
+
+    const { result } = renderHook(() =>
+      useAIAgent({
+        userId: mockUserId,
+        onShapesCreated: mockOnShapesCreated,
+        onShapesUpdated: vi.fn(),
+        onShapesDeleted: mockOnShapesDeleted,
+        onError: mockOnError
+      })
+    )
+
+    const mockContext = {
+      canvasDimensions: { width: 1920, height: 1080 },
+      viewport: { x: 0, y: 0, scale: 1 },
+      shapes: [],
+      selectedShapeIds: []
+    }
+
+    await act(async () => {
+      await result.current.execute('delete circle-1', mockContext)
+    })
+
+    expect(mockOnShapesDeleted).toHaveBeenCalledWith(mockDeleteCommand)
     expect(mockOnShapesCreated).not.toHaveBeenCalled()
   })
 

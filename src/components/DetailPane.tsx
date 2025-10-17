@@ -123,7 +123,7 @@ export default function DetailPane({
       setLocalOpacity(Math.round((shape.opacity ?? 1.0) * 100))
     }
     setLocalFillColor(shape.color)
-  }, [shape, localOpacity])
+  }, [shape, localOpacity, localName])
 
   // Debounced update function
   const debouncedUpdate = useCallback((updates: Partial<Shape>, delay: number = 500) => {

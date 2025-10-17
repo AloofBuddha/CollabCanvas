@@ -23,10 +23,11 @@ function generateShapeId(): string {
 export function parseCommand(command: Command, userId: string): Shape[] {
   console.log('🔧 parseCommand called with action:', command.action)
   switch (command.action) {
-    case 'createShape':
+    case 'createShape': {
       const shape = createShapeFromCommand(command, userId)
       console.log('🎨 Created shape from command:', shape)
       return [shape]
+    }
     case 'updateShape':
       // Will be handled by useAIAgent hook directly with shape store
       return []
