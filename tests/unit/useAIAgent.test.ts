@@ -33,6 +33,8 @@ describe('useAIAgent Hook', () => {
       useAIAgent({
         userId: mockUserId,
         onShapesCreated: mockOnShapesCreated,
+        onShapesUpdated: vi.fn(),
+        onShapesDeleted: vi.fn(),
         onError: mockOnError
       })
     )
@@ -47,6 +49,8 @@ describe('useAIAgent Hook', () => {
       useAIAgent({
         userId: mockUserId,
         onShapesCreated: mockOnShapesCreated,
+        onShapesUpdated: vi.fn(),
+        onShapesDeleted: vi.fn(),
         onError: mockOnError
       })
     )
@@ -71,6 +75,8 @@ describe('useAIAgent Hook', () => {
       useAIAgent({
         userId: mockUserId,
         onShapesCreated: mockOnShapesCreated,
+        onShapesUpdated: vi.fn(),
+        onShapesDeleted: vi.fn(),
         onError: mockOnError
       })
     )
@@ -117,6 +123,8 @@ describe('useAIAgent Hook', () => {
       useAIAgent({
         userId: mockUserId,
         onShapesCreated: mockOnShapesCreated,
+        onShapesUpdated: vi.fn(),
+        onShapesDeleted: vi.fn(),
         onError: mockOnError
       })
     )
@@ -182,6 +190,8 @@ describe('useAIAgent Hook', () => {
       useAIAgent({
         userId: mockUserId,
         onShapesCreated: mockOnShapesCreated,
+        onShapesUpdated: vi.fn(),
+        onShapesDeleted: vi.fn(),
         onError: mockOnError
       })
     )
@@ -210,6 +220,8 @@ describe('useAIAgent Hook', () => {
       useAIAgent({
         userId: mockUserId,
         onShapesCreated: mockOnShapesCreated,
+        onShapesUpdated: vi.fn(),
+        onShapesDeleted: vi.fn(),
         onError: mockOnError
       })
     )
@@ -237,6 +249,8 @@ describe('useAIAgent Hook', () => {
       useAIAgent({
         userId: mockUserId,
         onShapesCreated: mockOnShapesCreated,
+        onShapesUpdated: vi.fn(),
+        onShapesDeleted: vi.fn(),
         onError: mockOnError
       })
     )
@@ -261,6 +275,8 @@ describe('useAIAgent Hook', () => {
       useAIAgent({
         userId: mockUserId,
         onShapesCreated: mockOnShapesCreated,
+        onShapesUpdated: vi.fn(),
+        onShapesDeleted: vi.fn(),
         onError: mockOnError
       })
     )
@@ -309,6 +325,8 @@ describe('useAIAgent Hook', () => {
       useAIAgent({
         userId: mockUserId,
         onShapesCreated: mockOnShapesCreated,
+        onShapesUpdated: vi.fn(),
+        onShapesDeleted: vi.fn(),
         onError: mockOnError
       })
     )

@@ -39,6 +39,8 @@ export default function DetailPane({
   onUpdateShape,
 }: DetailPaneProps) {
   // Local state for all editable fields
+  const [localName, setLocalName] = useState(shape.name || '')
+  const [nameError, setNameError] = useState<string | null>(null)
   const [localText, setLocalText] = useState(
     shape.type === 'text' ? shape.text : ''
   )
@@ -86,6 +88,10 @@ export default function DetailPane({
 
   // Update local state when shape changes externally
   useEffect(() => {
+    // Only update local name if no pending debounce AND the value actually changed
+    if (!debounceTimerRef.current && (shape.name || '') !== localName) {
+      setLocalName(shape.name || '')
+    }
     if (shape.type === 'text') {
       setLocalText(shape.text)
       setLocalFontSize(shape.fontSize)
@@ -131,12 +137,12 @@ export default function DetailPane({
   }, [onUpdateShape])
 
   // Use refs to access latest values in cleanup (avoid triggering cleanup on every change)
-  const localStateRef = useRef({ localText, localX, localY, localRotation, localOpacity, localWidth, localHeight, localRadiusX, localRadiusY, localX2, localY2, localStrokeWidth, localFontSize, localFillColor, localTextColor, localStroke, localBorderWidth })
+  const localStateRef = useRef({ localName, localText, localX, localY, localRotation, localOpacity, localWidth, localHeight, localRadiusX, localRadiusY, localX2, localY2, localStrokeWidth, localFontSize, localFillColor, localTextColor, localStroke, localBorderWidth })
   const shapeRef = useRef(shape)
   const onUpdateShapeRef = useRef(onUpdateShape)
   
   useEffect(() => {
-    localStateRef.current = { localText, localX, localY, localRotation, localOpacity, localWidth, localHeight, localRadiusX, localRadiusY, localX2, localY2, localStrokeWidth, localFontSize, localFillColor, localTextColor, localStroke, localBorderWidth }
+    localStateRef.current = { localName, localText, localX, localY, localRotation, localOpacity, localWidth, localHeight, localRadiusX, localRadiusY, localX2, localY2, localStrokeWidth, localFontSize, localFillColor, localTextColor, localStroke, localBorderWidth }
     shapeRef.current = shape
     onUpdateShapeRef.current = onUpdateShape
   })
@@ -148,9 +154,10 @@ export default function DetailPane({
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current)
         // Force immediate update with current local state from ref
-        const { localText, localX, localY, localRotation, localOpacity, localWidth, localHeight, localRadiusX, localRadiusY, localX2, localY2, localStrokeWidth, localFontSize, localFillColor, localTextColor, localStroke, localBorderWidth } = localStateRef.current
+        const { localName, localText, localX, localY, localRotation, localOpacity, localWidth, localHeight, localRadiusX, localRadiusY, localX2, localY2, localStrokeWidth, localFontSize, localFillColor, localTextColor, localStroke, localBorderWidth } = localStateRef.current
         const currentShape = shapeRef.current
         const updates: Record<string, unknown> = {}
+        if (localName !== (currentShape.name || '')) updates.name = localName
         if (localX !== Math.round(currentShape.x)) updates.x = localX
         if (localY !== Math.round(currentShape.y)) updates.y = localY
         if (currentShape.type !== 'line' && localRotation !== Math.round(currentShape.rotation || 0)) {
@@ -194,6 +201,34 @@ export default function DetailPane({
       }
     }
   }, []) // Empty deps - only run on mount/unmount
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value // Don't trim here - let user type naturally
+    setLocalName(newName)
+    
+    const trimmedName = newName.trim()
+    
+    // Clear error if name is empty
+    if (!trimmedName) {
+      setNameError(null)
+      debouncedUpdate({ name: trimmedName })
+      return
+    }
+    
+    // Check for uniqueness (excluding current shape)
+    const isDuplicate = Object.values(allShapes).some(
+      s => s.id !== shape.id && s.name === trimmedName
+    )
+    
+    if (isDuplicate) {
+      setNameError('This name is already taken')
+      return
+    }
+    
+    // Valid unique name
+    setNameError(null)
+    debouncedUpdate({ name: trimmedName })
+  }
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value
@@ -748,6 +783,28 @@ export default function DetailPane({
 
   const renderCommonControls = () => (
     <div className="space-y-4">
+      {/* Shape Name */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Name
+        </label>
+        <input
+          type="text"
+          value={localName}
+          onChange={handleNameChange}
+          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+            nameError ? 'border-red-500' : 'border-gray-300'
+          }`}
+          placeholder={`${shape.type}-${shape.id.split('-')[1]?.substring(0, 4)}`}
+        />
+        {nameError && (
+          <p className="text-xs text-red-600 mt-1">{nameError}</p>
+        )}
+        <p className="text-xs text-gray-500 mt-1">
+          Used for AI commands (e.g., "move {localName || shape.type + '-1'} to...")
+        </p>
+      </div>
+
       {/* Fill Color */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">

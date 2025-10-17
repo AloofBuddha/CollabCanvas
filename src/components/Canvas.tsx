@@ -57,6 +57,7 @@ export default function Canvas({
   const [stageScale, setStageScale] = useState(1)
   const [currentCursor, setCurrentCursor] = useState<string>('default')
   const [hoveredLockedShapeId, setHoveredLockedShapeId] = useState<string | null>(null)
+  const [hoveredShapeId, setHoveredShapeId] = useState<string | null>(null) // For showing name labels
   const justFinishedManipulation = useRef(false)
   const isAltPressed = useRef(false)
   
@@ -639,11 +640,18 @@ export default function Canvas({
                 onMouseLeave={() => {
                   handleShapeMouseLeave()
                   setHoveredLockedShapeId(null)
+                  setHoveredShapeId(null)
                 }}
                 onDragStart={handleCombinedDragStart}
                 onDragMove={handleCombinedDragMove}
                 onDragEnd={handleCombinedDragEnd}
-                onMouseEnter={() => isLockedByOther ? setHoveredLockedShapeId(shape.id) : null}
+                onMouseEnter={() => {
+                  if (isLockedByOther) {
+                    setHoveredLockedShapeId(shape.id)
+                  } else {
+                    setHoveredShapeId(shape.id)
+                  }
+                }}
               />
             )
           })}
@@ -727,6 +735,55 @@ export default function Canvas({
                   fill="white"
                   fontFamily="system-ui, -apple-system, sans-serif"
                   fontStyle="500"
+                />
+              </Group>
+            )
+          })()}
+
+          {/* Render name label for hovered non-locked shapes */}
+          {hoveredShapeId && (() => {
+            const hoveredShape = shapes[hoveredShapeId]
+            if (!hoveredShape || !hoveredShape.name || hoveredShape.lockedBy) return null
+            
+            // Get shape bounds to position label
+            const bounds = hoveredShape.type === 'rectangle' 
+              ? { x: hoveredShape.x, y: hoveredShape.y }
+              : hoveredShape.type === 'circle'
+              ? { x: hoveredShape.x, y: hoveredShape.y }
+              : hoveredShape.type === 'line'
+              ? { x: hoveredShape.x, y: hoveredShape.y }
+              : { x: hoveredShape.x, y: hoveredShape.y }
+            
+            const inverseScale = 1 / stageScale
+            const labelText = hoveredShape.name
+            const labelWidth = labelText.length * 6.5 + 10
+            
+            return (
+              <Group
+                x={bounds.x}
+                y={bounds.y - 25 / stageScale} // Position above shape (slightly lower than locked tooltip)
+                scaleX={inverseScale}
+                scaleY={inverseScale}
+                listening={false}
+              >
+                <Rect
+                  x={0}
+                  y={0}
+                  width={labelWidth}
+                  height={18}
+                  fill="rgba(0, 0, 0, 0.7)"
+                  cornerRadius={3}
+                  shadowColor="black"
+                  shadowBlur={2}
+                  shadowOpacity={0.2}
+                />
+                <Text
+                  x={5}
+                  y={3}
+                  text={labelText}
+                  fontSize={11}
+                  fill="white"
+                  fontFamily="system-ui, -apple-system, sans-serif"
                 />
               </Group>
             )

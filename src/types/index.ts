@@ -9,6 +9,7 @@
 // Base shape properties shared by all shapes
 interface BaseShape {
   id: string
+  name?: string // Optional human-readable name for AI commands (e.g., "circle-1", "my-rectangle")
   x: number
   y: number
   rotation?: number // Rotation in degrees (default 0)

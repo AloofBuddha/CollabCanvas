@@ -118,6 +118,7 @@ export function listenToShapes(
       if (data.type === 'circle') {
         shapes[doc.id] = {
           id: doc.id,
+          name: data.name,
           type: 'circle',
           x: data.x || 0,
           y: data.y || 0,
@@ -135,6 +136,7 @@ export function listenToShapes(
       } else if (data.type === 'line') {
         shapes[doc.id] = {
           id: doc.id,
+          name: data.name,
           type: 'line',
           x: data.x || 0,
           y: data.y || 0,
@@ -151,6 +153,7 @@ export function listenToShapes(
       } else if (data.type === 'text') {
         shapes[doc.id] = {
           id: doc.id,
+          name: data.name,
           type: 'text',
           x: data.x || 0,
           y: data.y || 0,
@@ -172,6 +175,7 @@ export function listenToShapes(
       } else if (data.type === 'rectangle') {
         shapes[doc.id] = {
           id: doc.id,
+          name: data.name,
           type: 'rectangle',
           x: data.x || 0,
           y: data.y || 0,
@@ -321,6 +325,7 @@ export function listenToRTDBShapes(
       if (shapeData.type === 'circle') {
         shapes[shapeId] = {
           id: shapeId,
+          name: shapeData.name,
           type: 'circle',
           x: shapeData.x || 0,
           y: shapeData.y || 0,
@@ -338,6 +343,7 @@ export function listenToRTDBShapes(
       } else if (shapeData.type === 'line') {
         shapes[shapeId] = {
           id: shapeId,
+          name: shapeData.name,
           type: 'line',
           x: shapeData.x || 0,
           y: shapeData.y || 0,
@@ -354,6 +360,7 @@ export function listenToRTDBShapes(
       } else if (shapeData.type === 'text') {
         shapes[shapeId] = {
           id: shapeId,
+          name: shapeData.name,
           type: 'text',
           x: shapeData.x || 0,
           y: shapeData.y || 0,
@@ -375,6 +382,7 @@ export function listenToRTDBShapes(
       } else if (shapeData.type === 'rectangle') {
         shapes[shapeId] = {
           id: shapeId,
+          name: shapeData.name,
           type: 'rectangle',
           x: shapeData.x || 0,
           y: shapeData.y || 0,

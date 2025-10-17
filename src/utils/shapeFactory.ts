@@ -9,6 +9,28 @@ import { Shape, RectangleShape, CircleShape, LineShape, TextShape } from '../typ
 import { generateUniqueShapeId } from './canvasUtils'
 
 // ============================================================================
+// Shape Name Generation
+// ============================================================================
+
+// Counters for auto-generating shape names
+const shapeCounters: Record<string, number> = {
+  rectangle: 0,
+  circle: 0,
+  line: 0,
+  text: 0,
+}
+
+/**
+ * Generate a unique name for a shape
+ * @param type The shape type
+ * @returns A unique name like "rectangle-1", "circle-2", etc.
+ */
+export function generateShapeName(type: string): string {
+  shapeCounters[type] = (shapeCounters[type] || 0) + 1
+  return `${type}-${shapeCounters[type]}`
+}
+
+// ============================================================================
 // Shape Type Registry
 // ============================================================================
 
@@ -38,6 +60,7 @@ const shapeTypeRegistry: Record<string, ShapeTypeConfig> = {
     displayName: 'Rectangle',
     getDefaultProps: (x, y, userId) => ({
       type: 'rectangle',
+      name: generateShapeName('rectangle'),
       x,
       y,
       width: 0,
@@ -87,6 +110,7 @@ const shapeTypeRegistry: Record<string, ShapeTypeConfig> = {
     displayName: 'Circle',
     getDefaultProps: (x, y, userId) => ({
       type: 'circle',
+      name: generateShapeName('circle'),
       x,
       y,
       radiusX: 0,
@@ -147,6 +171,7 @@ const shapeTypeRegistry: Record<string, ShapeTypeConfig> = {
     displayName: 'Line',
     getDefaultProps: (x, y, userId) => ({
       type: 'line',
+      name: generateShapeName('line'),
       x,
       y,
       x2: x,
@@ -208,6 +233,7 @@ const shapeTypeRegistry: Record<string, ShapeTypeConfig> = {
     displayName: 'Text',
     getDefaultProps: (x, y, userId) => ({
       type: 'text',
+      name: generateShapeName('text'),
       x,
       y,
       width: 0,

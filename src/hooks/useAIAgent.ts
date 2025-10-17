@@ -7,16 +7,18 @@
 import { useState } from 'react'
 import { executeCommand } from '../services/aiAgent'
 import { parseCommand } from '../services/commandParser'
-import { CanvasContext } from '../types/aiAgent'
+import { CanvasContext, UpdateShapeCommand, DeleteShapeCommand } from '../types/aiAgent'
 import { Shape } from '../types'
 
 interface UseAIAgentProps {
   userId: string
   onShapesCreated: (shapes: Shape[]) => void
+  onShapesUpdated: (command: UpdateShapeCommand) => void
+  onShapesDeleted: (command: DeleteShapeCommand) => void
   onError: (message: string) => void
 }
 
-export function useAIAgent({ userId, onShapesCreated, onError }: UseAIAgentProps) {
+export function useAIAgent({ userId, onShapesCreated, onShapesUpdated, onShapesDeleted, onError }: UseAIAgentProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isExecuting, setIsExecuting] = useState(false)
   const [currentCommand, setCurrentCommand] = useState('')
@@ -39,11 +41,31 @@ export function useAIAgent({ userId, onShapesCreated, onError }: UseAIAgentProps
       // Response can be a single command or an array of commands
       const commands = Array.isArray(response) ? response : [response]
 
-      // Parse all commands into shapes
-      const allShapes = commands.flatMap(cmd => parseCommand(cmd, userId))
-
-      // Execute the action
-      onShapesCreated(allShapes)
+      // Process each command based on its action type
+      for (const cmd of commands) {
+        switch (cmd.action) {
+          case 'createShape': {
+            // Parse and create shapes
+            const shapes = parseCommand(cmd, userId)
+            onShapesCreated(shapes)
+            break
+          }
+          case 'updateShape': {
+            // Update existing shapes
+            onShapesUpdated(cmd)
+            break
+          }
+          case 'deleteShape': {
+            // Delete shapes
+            onShapesDeleted(cmd)
+            break
+          }
+          default: {
+            const _exhaustiveCheck: never = cmd
+            console.error('Unknown command action:', _exhaustiveCheck)
+          }
+        }
+      }
 
       // Clear input on success
       setCurrentCommand('')

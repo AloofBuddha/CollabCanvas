@@ -126,8 +126,12 @@ describe('AI Agent Service', () => {
       expect(Array.isArray(result)).toBe(true)
       if (Array.isArray(result)) {
         expect(result).toHaveLength(2)
-        expect(result[0].shape.type).toBe('circle')
-        expect(result[1].shape.type).toBe('circle')
+        if (result[0].action === 'createShape') {
+          expect(result[0].shape.type).toBe('circle')
+        }
+        if (result[1].action === 'createShape') {
+          expect(result[1].shape.type).toBe('circle')
+        }
       }
     })
   })
@@ -219,7 +223,7 @@ describe('AI Agent Service', () => {
 
       const result = await executeCommand('create a rotated rectangle', mockContext)
 
-      if (!Array.isArray(result)) {
+      if (!Array.isArray(result) && result.action === 'createShape') {
         expect(result.shape.rotation).toBe(45)
       }
     })
@@ -246,7 +250,7 @@ describe('AI Agent Service', () => {
 
       const result = await executeCommand('create centered text', mockContext)
 
-      if (!Array.isArray(result)) {
+      if (!Array.isArray(result) && result.action === 'createShape') {
         expect(result.shape.type).toBe('text')
         expect(result.shape.fontSize).toBe(32)
         expect(result.shape.align).toBe('center')
@@ -273,7 +277,7 @@ describe('AI Agent Service', () => {
 
       const result = await executeCommand('create a thick red line', mockContext)
 
-      if (!Array.isArray(result)) {
+      if (!Array.isArray(result) && result.action === 'createShape') {
         expect(result.shape.type).toBe('line')
         expect(result.shape.strokeWidth).toBe(5)
         expect(result.shape.stroke).toBe('#FF0000')

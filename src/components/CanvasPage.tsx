@@ -54,11 +54,106 @@ export default function CanvasPage() {
   const aiAgent = useAIAgent({
     userId: userId || '',
     onShapesCreated: async (newShapes) => {
+      console.log('🎨 onShapesCreated called with:', newShapes.length, 'shapes')
+      console.log('📝 Shapes to create:', newShapes)
+      
       // Lock all shapes being created
       for (const shape of newShapes) {
+        console.log('🔨 Creating shape:', shape.id, shape.type, shape)
         await handleShapeCreated(shape)
       }
-      toast.success('Shapes created successfully!')
+      toast.success(`Created ${newShapes.length} shape${newShapes.length > 1 ? 's' : ''}!`)
+    },
+    onShapesUpdated: async (command) => {
+      console.log('🔄 onShapesUpdated called with command:', command)
+      console.log('📦 Available shapes:', Object.values(shapes).map(s => ({ id: s.id, name: s.name, type: s.type })))
+      
+      // Find shapes to update
+      let shapesToUpdate: Shape[] = []
+      
+      if (command.useSelected) {
+        // Update selected shapes
+        shapesToUpdate = Object.values(shapes).filter(s => s.lockedBy === userId)
+        console.log('🎯 Selected shapes filter:', shapesToUpdate.length)
+      } else if (command.shapeName) {
+        // Update by name
+        console.log('🔍 Looking for shape with name:', command.shapeName)
+        const shape = Object.values(shapes).find(s => s.name === command.shapeName)
+        console.log('✅ Found shape:', shape?.id, shape?.name)
+        if (shape) {
+          shapesToUpdate = [shape]
+        }
+      } else if (command.shapeId) {
+        // Update by ID
+        const shape = shapes[command.shapeId]
+        if (shape) {
+          shapesToUpdate = [shape]
+        }
+      } else if (command.selector) {
+        // Update by selector (e.g., all circles)
+        shapesToUpdate = Object.values(shapes).filter(s => {
+          if (command.selector?.type && s.type !== command.selector.type) return false
+          // Add more selector logic here if needed
+          return true
+        })
+      }
+      
+      console.log('📊 Shapes to update:', shapesToUpdate.length, shapesToUpdate.map(s => s.name))
+      
+      if (shapesToUpdate.length === 0) {
+        toast.error('No shapes found to update')
+        return
+      }
+      
+      // Apply updates to each shape
+      for (const shape of shapesToUpdate) {
+        console.log('🔧 Applying updates to shape:', shape.name, 'updates:', command.updates)
+        const updatedShape = { ...shape, ...command.updates }
+        console.log('💾 Updated shape:', updatedShape)
+        await handleShapeUpdate(updatedShape)
+      }
+      
+      toast.success(`Updated ${shapesToUpdate.length} shape${shapesToUpdate.length > 1 ? 's' : ''}`)
+    },
+    onShapesDeleted: async (command) => {
+      // Find shapes to delete
+      let shapesToDelete: Shape[] = []
+      
+      if (command.useSelected) {
+        // Delete selected shapes
+        shapesToDelete = Object.values(shapes).filter(s => s.lockedBy === userId)
+      } else if (command.shapeName) {
+        // Delete by name
+        const shape = Object.values(shapes).find(s => s.name === command.shapeName)
+        if (shape) {
+          shapesToDelete = [shape]
+        }
+      } else if (command.shapeId) {
+        // Delete by ID
+        const shape = shapes[command.shapeId]
+        if (shape) {
+          shapesToDelete = [shape]
+        }
+      } else if (command.selector) {
+        // Delete by selector (e.g., all circles)
+        shapesToDelete = Object.values(shapes).filter(s => {
+          if (command.selector?.type && s.type !== command.selector.type) return false
+          // Add more selector logic here if needed
+          return true
+        })
+      }
+      
+      if (shapesToDelete.length === 0) {
+        toast.error('No shapes found to delete')
+        return
+      }
+      
+      // Delete each shape
+      for (const shape of shapesToDelete) {
+        await handleShapeDeleted(shape.id)
+      }
+      
+      toast.success(`Deleted ${shapesToDelete.length} shape${shapesToDelete.length > 1 ? 's' : ''}`)
     },
     onError: (message) => {
       toast.error(message)

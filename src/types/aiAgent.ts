@@ -17,10 +17,12 @@ export const CreateShapeCommandSchema = z.object({
   action: z.literal('createShape'),
   shape: z.object({
     type: z.enum(['circle', 'rectangle', 'text', 'line']),
+    name: z.string().optional(), // Optional name for the shape (e.g., "my-circle", "title-text")
     x: z.number(),
     y: z.number(),
     // Common properties
-    fill: z.string().optional(),
+    color: z.string().optional(), // Main fill/stroke color for shapes, background for text
+    fill: z.string().optional(), // Alias for color (for backwards compatibility)
     stroke: z.string().optional(),
     strokeWidth: z.number().optional(),
     rotation: z.number().optional(),
@@ -44,10 +46,64 @@ export const CreateShapeCommandSchema = z.object({
 })
 
 /**
+ * Schema for updating a shape
+ */
+export const UpdateShapeCommandSchema = z.object({
+  action: z.literal('updateShape'),
+  // Target shape identification (one of these must be provided)
+  shapeId: z.string().optional(), // Specific shape ID
+  shapeName: z.string().optional(), // Shape name (e.g., "rectangle-1")
+  selector: z.object({ // Select by properties
+    type: z.enum(['circle', 'rectangle', 'text', 'line']).optional(),
+    color: z.string().optional(),
+  }).optional(),
+  useSelected: z.boolean().optional(), // Use currently selected shapes
+  // Properties to update (all optional)
+  updates: z.object({
+    x: z.number().optional(),
+    y: z.number().optional(),
+    width: z.number().optional(),
+    height: z.number().optional(),
+    radiusX: z.number().optional(),
+    radiusY: z.number().optional(),
+    x2: z.number().optional(),
+    y2: z.number().optional(),
+    color: z.string().optional(),
+    stroke: z.string().optional(),
+    strokeWidth: z.number().optional(),
+    rotation: z.number().optional(),
+    opacity: z.number().min(0).max(1).optional(),
+    text: z.string().optional(),
+    fontSize: z.number().optional(),
+    fontFamily: z.string().optional(),
+    textColor: z.string().optional(),
+    align: z.enum(['left', 'center', 'right']).optional(),
+    verticalAlign: z.enum(['top', 'middle', 'bottom']).optional(),
+  })
+})
+
+/**
+ * Schema for deleting shapes
+ */
+export const DeleteShapeCommandSchema = z.object({
+  action: z.literal('deleteShape'),
+  // Target shape identification (same as updateShape)
+  shapeId: z.string().optional(),
+  shapeName: z.string().optional(),
+  selector: z.object({
+    type: z.enum(['circle', 'rectangle', 'text', 'line']).optional(),
+    color: z.string().optional(),
+  }).optional(),
+  useSelected: z.boolean().optional(),
+})
+
+/**
  * Union of all command schemas
  */
 export const CommandSchema = z.discriminatedUnion('action', [
   CreateShapeCommandSchema,
+  UpdateShapeCommandSchema,
+  DeleteShapeCommandSchema,
 ])
 
 /**
@@ -63,6 +119,8 @@ export const AICommandResponseSchema = z.union([
 // ============================================================================
 
 export type CreateShapeCommand = z.infer<typeof CreateShapeCommandSchema>
+export type UpdateShapeCommand = z.infer<typeof UpdateShapeCommandSchema>
+export type DeleteShapeCommand = z.infer<typeof DeleteShapeCommandSchema>
 export type Command = z.infer<typeof CommandSchema>
 export type AICommandResponse = z.infer<typeof AICommandResponseSchema>
 
@@ -84,6 +142,7 @@ export interface AIAgentState {
 export interface CanvasContext {
   shapes: Array<{
     id: string
+    name?: string // Human-readable name for AI commands
     type: string
     x: number
     y: number
@@ -98,6 +157,8 @@ export interface CanvasContext {
     fill?: string
     stroke?: string
     strokeWidth?: number
+    rotation?: number
+    opacity?: number
   }>
   canvasDimensions: {
     width: number

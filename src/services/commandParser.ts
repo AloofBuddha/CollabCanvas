@@ -7,6 +7,7 @@
 import { Command, CreateShapeCommand } from '../types/aiAgent'
 import { Shape, CircleShape, RectangleShape, TextShape, LineShape } from '../types'
 import { NEW_SHAPE_COLOR } from '../constants'
+import { generateShapeName } from '../utils/shapeFactory'
 
 /**
  * Generate a unique shape ID
@@ -16,12 +17,22 @@ function generateShapeId(): string {
 }
 
 /**
- * Parse and execute a command, returning the shapes to create
+ * Parse and execute a command, returning the shapes to create/update/delete
+ * For now, only createShape returns shapes. update/delete will be handled differently
  */
 export function parseCommand(command: Command, userId: string): Shape[] {
+  console.log('🔧 parseCommand called with action:', command.action)
   switch (command.action) {
     case 'createShape':
-      return [createShapeFromCommand(command, userId)]
+      const shape = createShapeFromCommand(command, userId)
+      console.log('🎨 Created shape from command:', shape)
+      return [shape]
+    case 'updateShape':
+      // Will be handled by useAIAgent hook directly with shape store
+      return []
+    case 'deleteShape':
+      // Will be handled by useAIAgent hook directly with shape store  
+      return []
   }
 }
 
@@ -32,6 +43,7 @@ function createShapeFromCommand(command: CreateShapeCommand, userId: string): Sh
   const { shape } = command
   const baseShape = {
     id: generateShapeId(),
+    name: shape.name || generateShapeName(shape.type), // Use provided name or auto-generate
     createdBy: userId,
     rotation: shape.rotation || 0,
     opacity: shape.opacity ?? 1.0, // Default to fully opaque
@@ -47,7 +59,7 @@ function createShapeFromCommand(command: CreateShapeCommand, userId: string): Sh
         y: shape.y,
         radiusX: shape.radiusX || 50,
         radiusY: shape.radiusY || 50,
-        color: shape.fill || NEW_SHAPE_COLOR,
+        color: shape.color || shape.fill || NEW_SHAPE_COLOR, // Prefer color, fallback to fill
         stroke: shape.stroke,
         strokeWidth: shape.strokeWidth,
       }
@@ -62,7 +74,7 @@ function createShapeFromCommand(command: CreateShapeCommand, userId: string): Sh
         y: shape.y,
         width: shape.width || 100,
         height: shape.height || 100,
-        color: shape.fill || NEW_SHAPE_COLOR,
+        color: shape.color || shape.fill || NEW_SHAPE_COLOR, // Prefer color, fallback to fill
         stroke: shape.stroke,
         strokeWidth: shape.strokeWidth,
       }
@@ -70,6 +82,14 @@ function createShapeFromCommand(command: CreateShapeCommand, userId: string): Sh
     }
 
     case 'text': {
+      console.log('📝 Creating text shape from AI command:', {
+        text: shape.text,
+        textColor: shape.textColor,
+        fill: shape.fill,
+        align: shape.align,
+        verticalAlign: shape.verticalAlign
+      })
+      
       const text: TextShape = {
         ...baseShape,
         type: 'text',
@@ -79,12 +99,21 @@ function createShapeFromCommand(command: CreateShapeCommand, userId: string): Sh
         fontSize: shape.fontSize || 16,
         fontFamily: shape.fontFamily || 'Arial',
         textColor: shape.textColor || '#000000', // Black text by default
-        color: shape.fill === 'transparent' ? 'transparent' : (shape.fill || 'transparent'), // Transparent background by default
+        color: shape.color || shape.fill || 'transparent', // Prefer color, fallback to fill, default transparent
         width: shape.width || 200,
         height: shape.height || 50,
         align: shape.align || 'left',
         verticalAlign: shape.verticalAlign || 'top',
       }
+      
+      console.log('✅ Final text shape:', {
+        text: text.text,
+        textColor: text.textColor,
+        color: text.color,
+        align: text.align,
+        verticalAlign: text.verticalAlign
+      })
+      
       return text
     }
 
@@ -96,7 +125,7 @@ function createShapeFromCommand(command: CreateShapeCommand, userId: string): Sh
         y: shape.y,
         x2: shape.x2 || shape.x + 100,
         y2: shape.y2 || shape.y,
-        color: shape.stroke || NEW_SHAPE_COLOR,
+        color: shape.color || shape.stroke || NEW_SHAPE_COLOR, // Prefer color, fallback to stroke
         strokeWidth: shape.strokeWidth || 2,
       }
       return line
