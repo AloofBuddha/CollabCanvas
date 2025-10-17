@@ -21,11 +21,9 @@ function generateShapeId(): string {
  * For now, only createShape returns shapes. update/delete will be handled differently
  */
 export function parseCommand(command: Command, userId: string): Shape[] {
-  console.log('🔧 parseCommand called with action:', command.action)
   switch (command.action) {
     case 'createShape': {
       const shape = createShapeFromCommand(command, userId)
-      console.log('🎨 Created shape from command:', shape)
       return [shape]
     }
     case 'updateShape':
@@ -82,41 +80,25 @@ function createShapeFromCommand(command: CreateShapeCommand, userId: string): Sh
       return rect
     }
 
-    case 'text': {
-      console.log('📝 Creating text shape from AI command:', {
-        text: shape.text,
-        textColor: shape.textColor,
-        fill: shape.fill,
-        align: shape.align,
-        verticalAlign: shape.verticalAlign
-      })
-      
-      const text: TextShape = {
-        ...baseShape,
-        type: 'text',
-        x: shape.x,
-        y: shape.y,
-        text: shape.text || 'Text',
-        fontSize: shape.fontSize || 16,
-        fontFamily: shape.fontFamily || 'Arial',
-        textColor: shape.textColor || '#000000', // Black text by default
-        color: shape.color || shape.fill || 'transparent', // Prefer color, fallback to fill, default transparent
-        width: shape.width || 200,
-        height: shape.height || 50,
-        align: shape.align || 'left',
-        verticalAlign: shape.verticalAlign || 'top',
+      case 'text': {
+        const text: TextShape = {
+          ...baseShape,
+          type: 'text',
+          x: shape.x,
+          y: shape.y,
+          text: shape.text || 'Text',
+          fontSize: shape.fontSize || 16,
+          fontFamily: shape.fontFamily || 'Arial',
+          textColor: shape.textColor || '#000000', // Black text by default
+          color: shape.color || shape.fill || 'transparent', // Prefer color, fallback to fill, default transparent
+          width: shape.width || 200,
+          height: shape.height || 50,
+          align: shape.align || 'left',
+          verticalAlign: shape.verticalAlign || 'top',
+        }
+        
+        return text
       }
-      
-      console.log('✅ Final text shape:', {
-        text: text.text,
-        textColor: text.textColor,
-        color: text.color,
-        align: text.align,
-        verticalAlign: text.verticalAlign
-      })
-      
-      return text
-    }
 
     case 'line': {
       const line: LineShape = {

@@ -54,32 +54,22 @@ export default function CanvasPage() {
   const aiAgent = useAIAgent({
     userId: userId || '',
     onShapesCreated: async (newShapes) => {
-      console.log('🎨 onShapesCreated called with:', newShapes.length, 'shapes')
-      console.log('📝 Shapes to create:', newShapes)
-      
       // Lock all shapes being created
       for (const shape of newShapes) {
-        console.log('🔨 Creating shape:', shape.id, shape.type, shape)
         await handleShapeCreated(shape)
       }
       toast.success(`Created ${newShapes.length} shape${newShapes.length > 1 ? 's' : ''}!`)
     },
     onShapesUpdated: async (command) => {
-      console.log('🔄 onShapesUpdated called with command:', command)
-      console.log('📦 Available shapes:', Object.values(shapes).map(s => ({ id: s.id, name: s.name, type: s.type })))
-      
       // Find shapes to update
       let shapesToUpdate: Shape[] = []
       
       if (command.useSelected) {
         // Update selected shapes
         shapesToUpdate = Object.values(shapes).filter(s => s.lockedBy === userId)
-        console.log('🎯 Selected shapes filter:', shapesToUpdate.length)
       } else if (command.shapeName) {
         // Update by name
-        console.log('🔍 Looking for shape with name:', command.shapeName)
         const shape = Object.values(shapes).find(s => s.name === command.shapeName)
-        console.log('✅ Found shape:', shape?.id, shape?.name)
         if (shape) {
           shapesToUpdate = [shape]
         }
@@ -98,8 +88,6 @@ export default function CanvasPage() {
         })
       }
       
-      console.log('📊 Shapes to update:', shapesToUpdate.length, shapesToUpdate.map(s => s.name))
-      
       if (shapesToUpdate.length === 0) {
         toast.error('No shapes found to update')
         return
@@ -107,9 +95,7 @@ export default function CanvasPage() {
       
       // Apply updates to each shape
       for (const shape of shapesToUpdate) {
-        console.log('🔧 Applying updates to shape:', shape.name, 'updates:', command.updates)
         const updatedShape = { ...shape, ...command.updates }
-        console.log('💾 Updated shape:', updatedShape)
         await handleShapeUpdate(updatedShape)
       }
       

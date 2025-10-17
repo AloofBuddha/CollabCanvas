@@ -14,7 +14,6 @@ const getModel = () => {
   const apiKey = import.meta.env.VITE_OPENAI_API_KEY
   
   if (!apiKey) {
-    console.error('Available env vars:', Object.keys(import.meta.env))
     throw new Error('VITE_OPENAI_API_KEY is not set. Make sure it exists in .env.local and restart dev server.')
   }
   
@@ -264,7 +263,6 @@ export async function executeCommand(
   try {
     // STAGE 1: Classify the intent
     const intent = await classifyIntent(userCommand)
-    console.log('🎯 Classified intent:', intent.intent, 'confidence:', intent.confidence)
     
     // STAGE 2: Execute based on intent with specialized prompt
     // For now, we only have one unified prompt, but this structure allows us to easily
@@ -314,7 +312,6 @@ Selected shapes: ${selectedInfo}
     }
 
     const parsed = JSON.parse(jsonStr)
-    console.log('🤖 AI raw response:', parsed)
     
     // Check if AI returned an error message
     if (parsed.action === 'error' || parsed.error) {
@@ -323,7 +320,6 @@ Selected shapes: ${selectedInfo}
 
     // Validate against schema (can be single command or array)
     const validated = AICommandResponseSchema.parse(parsed)
-    console.log('✅ AI validated response:', validated)
 
     return validated
   } catch (error) {

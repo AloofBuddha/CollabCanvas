@@ -119,12 +119,9 @@ export async function classifyIntent(userCommand: string): Promise<Intent> {
 
     const parsed = JSON.parse(jsonStr)
     const validated = IntentSchema.parse(parsed)
-
-    console.log('🎯 Intent classified:', validated)
     
     return validated
   } catch (error) {
-    console.error('Intent classification error:', error)
     // Default to 'create' if classification fails
     return {
       intent: 'create',
