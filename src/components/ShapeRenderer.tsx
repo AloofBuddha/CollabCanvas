@@ -34,6 +34,7 @@ interface ShapeRendererProps {
   onDragStart: (e: Konva.KonvaEventObject<DragEvent>, shape: Shape) => void
   onDragMove: (e: Konva.KonvaEventObject<DragEvent>, shape: Shape) => void
   onDragEnd: (shape: Shape) => void
+  onMouseEnter?: () => void
   onDoubleClick?: (shapeId: string, shape: Shape) => void
 }
 
@@ -53,6 +54,7 @@ export default function ShapeRenderer({
   onDragStart,
   onDragMove,
   onDragEnd,
+  onMouseEnter,
   onDoubleClick,
 }: ShapeRendererProps) {
   // Disable drag when hovering over manipulation zones (resize/rotate handles)
@@ -91,6 +93,7 @@ export default function ShapeRenderer({
             onMouseDown={(e: Konva.KonvaEventObject<MouseEvent>) => onMouseDown(e, shape.id, isLockedByOther, shape)}
             onMouseMove={(e: Konva.KonvaEventObject<MouseEvent>) => onMouseMove(e, shape, isSelected)}
             onMouseLeave={onMouseLeave}
+            onMouseEnter={onMouseEnter}
             onDragStart={(e: Konva.KonvaEventObject<DragEvent>) => onDragStart(e, shape)}
             onDragMove={(e: Konva.KonvaEventObject<DragEvent>) => onDragMove(e, shape)}
             onDragEnd={() => onDragEnd(shape)}
@@ -146,6 +149,7 @@ export default function ShapeRenderer({
             onMouseDown={(e: Konva.KonvaEventObject<MouseEvent>) => onMouseDown(e, shape.id, isLockedByOther, shape)}
             onMouseMove={(e: Konva.KonvaEventObject<MouseEvent>) => onMouseMove(e, shape, isSelected)}
             onMouseLeave={onMouseLeave}
+            onMouseEnter={onMouseEnter}
             onDragStart={(e: Konva.KonvaEventObject<DragEvent>) => onDragStart(e, shape)}
             onDragMove={(e: Konva.KonvaEventObject<DragEvent>) => onDragMove(e, shape)}
             onDragEnd={() => onDragEnd(shape)}
@@ -194,6 +198,7 @@ export default function ShapeRenderer({
             onMouseDown={(e: Konva.KonvaEventObject<MouseEvent>) => onMouseDown(e, shape.id, isLockedByOther, shape)}
             onMouseMove={(e: Konva.KonvaEventObject<MouseEvent>) => onMouseMove(e, shape, isSelected)}
             onMouseLeave={onMouseLeave}
+            onMouseEnter={onMouseEnter}
             onDragStart={(e: Konva.KonvaEventObject<DragEvent>) => onDragStart(e, shape)}
             onDragMove={(e: Konva.KonvaEventObject<DragEvent>) => onDragMove(e, shape)}
             onDragEnd={() => onDragEnd(shape)}
@@ -255,6 +260,7 @@ export default function ShapeRenderer({
             onMouseDown={(e: Konva.KonvaEventObject<MouseEvent>) => onMouseDown(e, shape.id, isLockedByOther, shape)}
             onMouseMove={(e: Konva.KonvaEventObject<MouseEvent>) => onMouseMove(e, shape, isSelected)}
             onMouseLeave={onMouseLeave}
+            onMouseEnter={onMouseEnter}
             onDragStart={(e: Konva.KonvaEventObject<DragEvent>) => onDragStart(e, shape)}
             onDragMove={(e: Konva.KonvaEventObject<DragEvent>) => onDragMove(e, shape)}
             onDragEnd={() => onDragEnd(shape)}

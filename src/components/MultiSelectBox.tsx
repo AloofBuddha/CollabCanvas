@@ -128,8 +128,8 @@ function calculateBounds(shapes: Shape[]): { minX: number; minY: number; maxX: n
           shapeMaxY = shape.y + shape.radiusY * 2
           break
         case 'text':
-          shapeMaxX = shape.x + (shape.width || 200)
-          shapeMaxY = shape.y + 50
+          shapeMaxX = shape.x + shape.width
+          shapeMaxY = shape.y + shape.height
           break
       }
 
@@ -164,8 +164,8 @@ function getRotatedCorners(shape: Shape): Array<{ x: number; y: number }> {
       centerY = shape.y + shape.radiusY
       break
     case 'text':
-      width = shape.width || 200
-      height = 50
+      width = shape.width
+      height = shape.height
       centerX = shape.x + width / 2
       centerY = shape.y + height / 2
       break

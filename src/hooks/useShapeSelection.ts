@@ -14,6 +14,7 @@ interface UseShapeSelectionProps {
   onDeselect?: (shapeId: string) => void
   onDeselectAll?: () => void
   onToolChange?: (tool: 'select') => void
+  onMultiSelectBlocked?: () => void // Called when multi-select is blocked by locked shapes
   tool: 'select' | 'rectangle' | 'circle' | 'line' | 'text'
   userId?: string | null // Current user's ID to check for locked shapes
 }
@@ -25,7 +26,7 @@ export interface SelectionBox {
   height: number
 }
 
-export function useShapeSelection({ onDelete, onDeselect, onDeselectAll, onToolChange, tool, userId }: UseShapeSelectionProps) {
+export function useShapeSelection({ onDelete, onDeselect, onDeselectAll, onToolChange, onMultiSelectBlocked, tool, userId }: UseShapeSelectionProps) {
   const [selectedShapeIds, setSelectedShapeIds] = useState<Set<string>>(new Set())
   const [isDragging, setIsDragging] = useState(false)
   const [isSelecting, setIsSelecting] = useState(false)
@@ -180,6 +181,8 @@ export function useShapeSelection({ onDelete, onDeselect, onDeselectAll, onToolC
       setIsSelecting(false)
       setSelectionBox(null)
       selectionStartPos.current = null
+      // Notify that multi-select was blocked
+      onMultiSelectBlocked?.()
       return new Set()
     }
 

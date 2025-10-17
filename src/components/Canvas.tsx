@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { Stage, Layer, Rect } from 'react-konva'
+import { Stage, Layer, Rect, Group, Text } from 'react-konva'
 import Konva from 'konva'
+import toast from 'react-hot-toast'
 import useShapeStore from '../stores/useShapeStore'
 import useUserStore from '../stores/useUserStore'
 import useCursorStore from '../stores/useCursorStore'
@@ -55,6 +56,7 @@ export default function Canvas({
   const stageRef = useRef<Konva.Stage>(null)
   const [stageScale, setStageScale] = useState(1)
   const [currentCursor, setCurrentCursor] = useState<string>('default')
+  const [hoveredLockedShapeId, setHoveredLockedShapeId] = useState<string | null>(null)
   const justFinishedManipulation = useRef(false)
   const isAltPressed = useRef(false)
   
@@ -136,6 +138,12 @@ export default function Canvas({
     onToolChange: (newTool) => {
       // Switch to select tool when Escape is pressed
       onToolChange?.(newTool)
+    },
+    onMultiSelectBlocked: () => {
+      // Show toast when multi-select is blocked by locked shapes
+      toast.error("Can't select shapes other users are currently editing", {
+        duration: 3000,
+      })
     },
     tool,
     userId,
@@ -628,10 +636,14 @@ export default function Canvas({
                 remoteUserColor={remoteUserColor}
                 onMouseDown={handleShapeMouseDown}
                 onMouseMove={handleManipulationMouseMove}
-                onMouseLeave={handleShapeMouseLeave}
+                onMouseLeave={() => {
+                  handleShapeMouseLeave()
+                  setHoveredLockedShapeId(null)
+                }}
                 onDragStart={handleCombinedDragStart}
                 onDragMove={handleCombinedDragMove}
                 onDragEnd={handleCombinedDragEnd}
+                onMouseEnter={() => isLockedByOther ? setHoveredLockedShapeId(shape.id) : null}
               />
             )
           })}
@@ -665,6 +677,60 @@ export default function Canvas({
               onDragEnd={handleMultiSelectDragEnd}
             />
           )}
+
+          {/* Render tooltip for locked shapes */}
+          {hoveredLockedShapeId && (() => {
+            const hoveredShape = shapes[hoveredLockedShapeId]
+            if (!hoveredShape || !hoveredShape.lockedBy || hoveredShape.lockedBy === userId) return null
+            
+            const remoteUser = Object.values(remoteCursors).find((c) => c.userId === hoveredShape.lockedBy)
+            const userName = remoteUser?.name || 'User'
+            const userColor = getUserColorFromId(hoveredShape.lockedBy)
+            
+            // Get shape bounds to position tooltip
+            const bounds = hoveredShape.type === 'rectangle' 
+              ? { x: hoveredShape.x, y: hoveredShape.y }
+              : hoveredShape.type === 'circle'
+              ? { x: hoveredShape.x, y: hoveredShape.y }
+              : hoveredShape.type === 'line'
+              ? { x: hoveredShape.x, y: hoveredShape.y }
+              : { x: hoveredShape.x, y: hoveredShape.y }
+            
+            const inverseScale = 1 / stageScale
+            const tooltipText = `${userName} is editing...`
+            const tooltipWidth = tooltipText.length * 7 + 12
+            
+            return (
+              <Group
+                x={bounds.x}
+                y={bounds.y - 30 / stageScale} // Position above shape
+                scaleX={inverseScale}
+                scaleY={inverseScale}
+                listening={false}
+              >
+                <Rect
+                  x={0}
+                  y={0}
+                  width={tooltipWidth}
+                  height={20}
+                  fill={userColor}
+                  cornerRadius={4}
+                  shadowColor="black"
+                  shadowBlur={4}
+                  shadowOpacity={0.3}
+                />
+                <Text
+                  x={6}
+                  y={4}
+                  text={tooltipText}
+                  fontSize={12}
+                  fill="white"
+                  fontFamily="system-ui, -apple-system, sans-serif"
+                  fontStyle="500"
+                />
+              </Group>
+            )
+          })()}
 
           {/* Render remote cursors inside the canvas layer */}
           {Object.values(remoteCursors).map((cursor) => (
