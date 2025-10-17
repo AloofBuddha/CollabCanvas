@@ -43,6 +43,7 @@ export default function DetailPane({
   const [localX, setLocalX] = useState(Math.round(shape.x))
   const [localY, setLocalY] = useState(Math.round(shape.y))
   const [localRotation, setLocalRotation] = useState(Math.round(shape.rotation || 0))
+  const [localOpacity, setLocalOpacity] = useState(Math.round((shape.opacity ?? 1.0) * 100)) // Store as 0-100 for UI
   const [localWidth, setLocalWidth] = useState(
     shape.type === 'rectangle' ? Math.round(shape.width) : 0
   )
@@ -108,8 +109,13 @@ export default function DetailPane({
     setLocalX(Math.round(shape.x))
     setLocalY(Math.round(shape.y))
     setLocalRotation(Math.round(shape.rotation || 0))
+    
+    // Only update local opacity if no pending debounce (to avoid race conditions)
+    if (!debounceTimerRef.current) {
+      setLocalOpacity(Math.round((shape.opacity ?? 1.0) * 100))
+    }
     setLocalFillColor(shape.color)
-  }, [shape])
+  }, [shape, localOpacity])
 
   // Debounced update function
   const debouncedUpdate = useCallback((updates: Partial<Shape>, delay: number = 500) => {
@@ -117,17 +123,18 @@ export default function DetailPane({
       clearTimeout(debounceTimerRef.current)
     }
     debounceTimerRef.current = setTimeout(() => {
+      debounceTimerRef.current = null // Clear timer BEFORE update to allow sync
       onUpdateShape(updates)
     }, delay)
   }, [onUpdateShape])
 
   // Use refs to access latest values in cleanup (avoid triggering cleanup on every change)
-  const localStateRef = useRef({ localText, localX, localY, localRotation, localWidth, localHeight, localRadiusX, localRadiusY, localX2, localY2, localStrokeWidth, localFontSize, localFillColor, localTextColor, localStroke, localBorderWidth })
+  const localStateRef = useRef({ localText, localX, localY, localRotation, localOpacity, localWidth, localHeight, localRadiusX, localRadiusY, localX2, localY2, localStrokeWidth, localFontSize, localFillColor, localTextColor, localStroke, localBorderWidth })
   const shapeRef = useRef(shape)
   const onUpdateShapeRef = useRef(onUpdateShape)
   
   useEffect(() => {
-    localStateRef.current = { localText, localX, localY, localRotation, localWidth, localHeight, localRadiusX, localRadiusY, localX2, localY2, localStrokeWidth, localFontSize, localFillColor, localTextColor, localStroke, localBorderWidth }
+    localStateRef.current = { localText, localX, localY, localRotation, localOpacity, localWidth, localHeight, localRadiusX, localRadiusY, localX2, localY2, localStrokeWidth, localFontSize, localFillColor, localTextColor, localStroke, localBorderWidth }
     shapeRef.current = shape
     onUpdateShapeRef.current = onUpdateShape
   })
@@ -139,13 +146,16 @@ export default function DetailPane({
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current)
         // Force immediate update with current local state from ref
-        const { localText, localX, localY, localRotation, localWidth, localHeight, localRadiusX, localRadiusY, localX2, localY2, localStrokeWidth, localFontSize, localFillColor, localTextColor, localStroke, localBorderWidth } = localStateRef.current
+        const { localText, localX, localY, localRotation, localOpacity, localWidth, localHeight, localRadiusX, localRadiusY, localX2, localY2, localStrokeWidth, localFontSize, localFillColor, localTextColor, localStroke, localBorderWidth } = localStateRef.current
         const currentShape = shapeRef.current
         const updates: Record<string, unknown> = {}
         if (localX !== Math.round(currentShape.x)) updates.x = localX
         if (localY !== Math.round(currentShape.y)) updates.y = localY
         if (currentShape.type !== 'line' && localRotation !== Math.round(currentShape.rotation || 0)) {
           updates.rotation = localRotation
+        }
+        if (localOpacity !== Math.round((currentShape.opacity ?? 1.0) * 100)) {
+          updates.opacity = localOpacity / 100 // Convert back to 0-1
         }
         
         if (currentShape.type === 'rectangle') {
@@ -244,6 +254,14 @@ export default function DetailPane({
     if (!isNaN(rotation)) {
       setLocalRotation(rotation)
       debouncedUpdate({ rotation })
+    }
+  }
+
+  const handleOpacityChange = (value: string) => {
+    const opacity = parseFloat(value)
+    if (!isNaN(opacity) && opacity >= 0 && opacity <= 100) {
+      setLocalOpacity(opacity)
+      debouncedUpdate({ opacity: opacity / 100 }) // Convert to 0-1 for storage
     }
   }
 
@@ -712,6 +730,22 @@ export default function DetailPane({
           />
         </div>
       )}
+
+      {/* Opacity - applicable to all shapes */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Opacity ({localOpacity}%)
+        </label>
+        <input
+          type="range"
+          value={localOpacity}
+          onChange={(e) => handleOpacityChange(e.target.value)}
+          min="0"
+          max="100"
+          step="1"
+          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+        />
+      </div>
     </div>
   )
 

@@ -34,6 +34,7 @@ function createShapeFromCommand(command: CreateShapeCommand, userId: string): Sh
     id: generateShapeId(),
     createdBy: userId,
     rotation: shape.rotation || 0,
+    opacity: shape.opacity ?? 1.0, // Default to fully opaque
   }
 
   switch (shape.type) {

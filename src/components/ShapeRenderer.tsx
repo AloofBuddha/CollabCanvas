@@ -37,9 +37,6 @@ interface ShapeRendererProps {
   onDoubleClick?: (shapeId: string, shape: Shape) => void
 }
 
-const SHAPE_OPACITY = 0.8
-const NEW_SHAPE_OPACITY = 0.5
-
 export default function ShapeRenderer({
   shape,
   isSelected,
@@ -67,6 +64,9 @@ export default function ShapeRenderer({
   // Scaled border width - gentler curve than pure inverse, with minimum threshold
   // This makes borders smaller when zoomed out and larger when zoomed in
   const inverseBorderWidth = Math.max(2, 4 * Math.pow(stageScale, -0.6))
+
+  // Get shape opacity (default to 1.0 if not set)
+  const shapeOpacity = shape.opacity ?? 1.0
 
   const renderShape = () => {
     switch (shape.type) {
@@ -103,7 +103,7 @@ export default function ShapeRenderer({
               offsetX={rect.width / 2}
               offsetY={rect.height / 2}
               fill={rect.color}
-              opacity={SHAPE_OPACITY}
+              opacity={shapeOpacity}
               stroke={rect.stroke}
               strokeWidth={shapeStrokeWidth}
             />
@@ -117,6 +117,7 @@ export default function ShapeRenderer({
                 offsetY={selectionHeight / 2}
                 stroke={borderColor}
                 strokeWidth={inverseBorderWidth}
+                dash={[8 / stageScale, 4 / stageScale]} // Dashed pattern scales with zoom
                 fill="transparent"
               />
             )}
@@ -153,7 +154,7 @@ export default function ShapeRenderer({
               radiusX={circle.radiusX}
               radiusY={circle.radiusY}
               fill={circle.color}
-              opacity={SHAPE_OPACITY}
+              opacity={shapeOpacity}
               stroke={circle.stroke}
               strokeWidth={shapeStrokeWidth}
             />
@@ -163,6 +164,7 @@ export default function ShapeRenderer({
                 radiusY={selectionRadiusY}
                 stroke={borderColor}
                 strokeWidth={inverseBorderWidth}
+                dash={[8 / stageScale, 4 / stageScale]} // Dashed pattern scales with zoom
                 fill="transparent"
               />
             )}
@@ -202,6 +204,7 @@ export default function ShapeRenderer({
                 points={points}
                 stroke={borderColor}
                 strokeWidth={line.strokeWidth + (4 / stageScale)}
+                dash={[8 / stageScale, 4 / stageScale]} // Dashed pattern scales with zoom
                 opacity={0.5}
                 listening={false}
               />
@@ -211,7 +214,7 @@ export default function ShapeRenderer({
               points={points}
               stroke={line.color}
               strokeWidth={line.strokeWidth}
-              opacity={SHAPE_OPACITY}
+              opacity={shapeOpacity}
             />
             {/* Endpoint handles - only show when selected */}
             {isSelected && isLockedByMe && (
@@ -266,7 +269,7 @@ export default function ShapeRenderer({
               offsetX={text.width / 2}
               offsetY={text.height / 2}
               fill={text.color}
-              opacity={SHAPE_OPACITY}
+              opacity={shapeOpacity}
             />
             {/* Selection border */}
             {showBorder && (
@@ -279,6 +282,7 @@ export default function ShapeRenderer({
                 offsetY={text.height / 2}
                 stroke={borderColor}
                 strokeWidth={inverseBorderWidth}
+                dash={[8 / stageScale, 4 / stageScale]} // Dashed pattern scales with zoom
                 fill="transparent"
               />
             )}
@@ -329,9 +333,12 @@ export function NewShapeRenderer({
 }: {
   shape: Shape
 }) {
+  // Use shape's opacity or default to 0.5 for new shapes being drawn
+  const newShapeOpacity = shape.opacity ?? 0.5
+  
   const commonProps = {
     fill: NEW_SHAPE_COLOR,
-    opacity: NEW_SHAPE_OPACITY,
+    opacity: newShapeOpacity,
   }
 
   switch (shape.type) {
@@ -370,7 +377,7 @@ export function NewShapeRenderer({
           points={[0, 0, line.x2 - line.x, line.y2 - line.y]}
           stroke={NEW_SHAPE_COLOR}
           strokeWidth={2}
-          opacity={NEW_SHAPE_OPACITY}
+          opacity={newShapeOpacity}
         />
       )
     }
@@ -387,7 +394,7 @@ export function NewShapeRenderer({
             width={text.width}
             height={text.height}
             fill={NEW_SHAPE_COLOR}
-            opacity={NEW_SHAPE_OPACITY}
+            opacity={newShapeOpacity}
           />
           {/* Text content */}
           <KonvaText
@@ -399,7 +406,7 @@ export function NewShapeRenderer({
             fill={text.textColor}
             width={text.width}
             height={text.height}
-            opacity={0.8}
+            opacity={newShapeOpacity}
           />
         </Group>
       )

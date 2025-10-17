@@ -138,6 +138,7 @@ export default function Canvas({
       onToolChange?.(newTool)
     },
     tool,
+    userId,
   })
   
   // Handle shape creation and auto-select

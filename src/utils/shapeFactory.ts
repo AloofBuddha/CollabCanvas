@@ -43,6 +43,7 @@ const shapeTypeRegistry: Record<string, ShapeTypeConfig> = {
       width: 0,
       height: 0,
       color: '#D1D5DB',
+      opacity: 1.0,
       createdBy: userId,
     }),
     updateCreationProps: (shape, mouseX, mouseY) => ({
@@ -90,6 +91,7 @@ const shapeTypeRegistry: Record<string, ShapeTypeConfig> = {
       radiusX: 0,
       radiusY: 0,
       color: '#D1D5DB',
+      opacity: 1.0,
       createdBy: userId,
     }),
     updateCreationProps: (shape, mouseX, mouseY) => {
@@ -149,6 +151,7 @@ const shapeTypeRegistry: Record<string, ShapeTypeConfig> = {
       y2: y,
       strokeWidth: 4,
       color: '#D1D5DB',
+      opacity: 1.0,
       createdBy: userId,
     }),
     updateCreationProps: (_shape, mouseX, mouseY) => ({
@@ -211,6 +214,7 @@ const shapeTypeRegistry: Record<string, ShapeTypeConfig> = {
       fontFamily: 'Arial',
       textColor: '#000000',
       color: 'transparent',
+      opacity: 1.0,
       align: 'left' as const,
       verticalAlign: 'top' as const,
       createdBy: userId,

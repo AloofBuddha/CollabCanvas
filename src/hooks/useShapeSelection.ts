@@ -15,6 +15,7 @@ interface UseShapeSelectionProps {
   onDeselectAll?: () => void
   onToolChange?: (tool: 'select') => void
   tool: 'select' | 'rectangle' | 'circle' | 'line' | 'text'
+  userId?: string | null // Current user's ID to check for locked shapes
 }
 
 export interface SelectionBox {
@@ -24,7 +25,7 @@ export interface SelectionBox {
   height: number
 }
 
-export function useShapeSelection({ onDelete, onDeselect, onDeselectAll, onToolChange, tool }: UseShapeSelectionProps) {
+export function useShapeSelection({ onDelete, onDeselect, onDeselectAll, onToolChange, tool, userId }: UseShapeSelectionProps) {
   const [selectedShapeIds, setSelectedShapeIds] = useState<Set<string>>(new Set())
   const [isDragging, setIsDragging] = useState(false)
   const [isSelecting, setIsSelecting] = useState(false)
@@ -158,18 +159,45 @@ export function useShapeSelection({ onDelete, onDeselect, onDeselectAll, onToolC
     if (!selectionBox || !isSelecting) return new Set()
 
     const selected = new Set<string>()
+    let hasLockedShapes = false
 
     // Check which shapes overlap with selection box
     shapes.forEach((shape, id) => {
       if (doesShapeOverlap(shape, selectionBox)) {
-        selected.add(id)
+        // Check if shape is locked by another user
+        // If no userId (not logged in), treat all locked shapes as locked by others
+        if (shape.lockedBy && (!userId || shape.lockedBy !== userId)) {
+          hasLockedShapes = true
+        } else {
+          selected.add(id)
+        }
       }
     })
 
-    // If we selected shapes, deselect previous ones and lock new ones
+    // If any shape in the selection box is locked by another user, abort multi-select
+    if (hasLockedShapes) {
+      // Clear selection box and abort
+      setIsSelecting(false)
+      setSelectionBox(null)
+      selectionStartPos.current = null
+      return new Set()
+    }
+
+    // If we selected shapes, handle transition from old to new selection
     if (selected.size > 0) {
+      // Only deselect shapes that are NOT in the new selection
       if (selectedShapeIds.size > 0) {
-        onDeselectAll?.()
+        const shapesToDeselect: string[] = []
+        selectedShapeIds.forEach(id => {
+          if (!selected.has(id)) {
+            shapesToDeselect.push(id)
+          }
+        })
+        
+        // Unlock only the shapes that are no longer selected
+        if (shapesToDeselect.length > 0) {
+          shapesToDeselect.forEach(id => onDeselect?.(id))
+        }
       }
       setSelectedShapeIds(selected)
     } else {

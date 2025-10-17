@@ -283,6 +283,55 @@
         ],
         "priority": "low",
         "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "Implement Shape Opacity and Z-Index Layering System",
+        "description": "Add support for opacity and z-index based layering to all shapes to enable proper rendering of AI-generated compositions with correct stacking order. This includes updating shape models, Konva rendering, UI controls, and AI command integration.",
+        "details": "This task is divided into three phases. **Phase 1: Opacity Support** - Add an 'opacity' field (number, 0-1, default 1.0) to all shape types in the shapeStore (e.g., rectangles, circles, text). Update the Canvas component's Konva rendering to apply the opacity prop to each shape. For text shapes, ensure opacity applies to the entire group (text + background). In the DetailPane, add an opacity slider (0-100%) that updates the selected shape's opacity and syncs changes via Firebase. **Phase 2: Z-Index Layering** - Add a 'zIndex' field (number) to all shape types, with a default strategy based on creation timestamp (newer shapes get higher zIndex). Before rendering in the Canvas component, sort the shapes array by zIndex (higher values on top). Add four buttons in the DetailPane: 'Bring to Front' (set zIndex to max+1), 'Send to Back' (set to min-1), 'Bring Forward' (increment zIndex), 'Send Backward' (decrement zIndex). Ensure these changes sync via Firebase and handle multi-select scenarios by applying to all selected shapes. **Phase 3: AI Integration** - Extend the AI command schema to include optional 'opacity' and 'zIndex' properties. Update the system prompt for the AI agent with examples of layering commands (e.g., 'create a house with overlapping windows at different z-indexes'). Modify the commandParser in the AI agent to parse and apply these properties when creating or updating shapes. Ensure the AI can generate properly layered compositions, integrating with Task 12's AI agent functionality. Technical considerations: Use Konva's native opacity support; manage z-index via array sorting before render to avoid Konva's z-index limitations; ensure all changes are atomic and sync to Firestore for real-time collaboration; handle edge cases like negative zIndex or opacity out of bounds.",
+        "testStrategy": "Conduct manual and unit tests across all phases. For Phase 1: Create shapes (rectangles, circles, text), adjust opacity via DetailPane slider, verify visual opacity in Konva render (e.g., 50% opacity shows semi-transparent); check Firebase sync by reloading and confirming opacity persists. For Phase 2: Create multiple overlapping shapes, use DetailPane buttons to change z-index order, verify stacking (e.g., 'Bring to Front' places shape on top); test with multi-select (from Task 11) to apply layering to groups; confirm sorting logic by inspecting shapes array order before render. For Phase 3: Use the AI agent (from Task 12) to issue commands like 'create a red square with 50% opacity and z-index 5', verify shape creation with correct properties; test complex commands like 'build a layered house' and check proper z-index stacking. Run unit tests for shapeStore updates (opacity/zIndex fields), Konva rendering props, and commandParser handling. Simulate multi-user scenarios: Have two users adjust opacity/z-index simultaneously, verify last-write-wins resolution and real-time sync. Performance check: With 50+ shapes, ensure rendering FPS remains smooth during layering operations.",
+        "status": "pending",
+        "dependencies": [
+          2,
+          4,
+          5,
+          6,
+          12
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Opacity Support for Shapes",
+            "description": "Add an 'opacity' field to all shape types in the shapeStore, update Konva rendering to apply opacity, and add UI controls in DetailPane for adjusting opacity with Firebase sync.",
+            "dependencies": [],
+            "details": "Add an 'opacity' field (number, 0-1, default 1.0) to all shape types in the shapeStore (e.g., rectangles, circles, text). Update the Canvas component's Konva rendering to apply the opacity prop to each shape. For text shapes, ensure opacity applies to the entire group (text + background). In the DetailPane, add an opacity slider (0-100%) that updates the selected shape's opacity and syncs changes via Firebase. Use Konva's native opacity support and ensure changes are atomic for real-time collaboration.",
+            "status": "done",
+            "testStrategy": "Create shapes (rectangles, circles, text), adjust opacity via DetailPane slider, verify visual opacity in Konva render (e.g., 50% opacity shows semi-transparent); check Firebase sync by reloading and confirming opacity persists."
+          },
+          {
+            "id": 2,
+            "title": "Implement Z-Index Layering for Shapes",
+            "description": "Add a 'zIndex' field to all shape types, sort shapes by zIndex before rendering, and add UI buttons in DetailPane for layering controls with Firebase sync.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add a 'zIndex' field (number) to all shape types, with a default strategy based on creation timestamp (newer shapes get higher zIndex). Before rendering in the Canvas component, sort the shapes array by zIndex (higher values on top). Add four buttons in the DetailPane: 'Bring to Front' (set zIndex to max+1), 'Send to Back' (set to min-1), 'Bring Forward' (increment zIndex), 'Send Backward' (decrement zIndex). Ensure these changes sync via Firebase and handle multi-select scenarios by applying to all selected shapes. Manage z-index via array sorting before render to avoid Konva's z-index limitations.",
+            "status": "pending",
+            "testStrategy": "Create multiple shapes, use layering buttons in DetailPane, verify stacking order visually on canvas; check Firebase sync by reloading and confirming zIndex persists; test multi-select layering operations."
+          },
+          {
+            "id": 3,
+            "title": "Integrate Opacity and Z-Index with AI Commands",
+            "description": "Extend the AI command schema to include optional 'opacity' and 'zIndex' properties, update the system prompt, and modify the commandParser to parse and apply these properties.",
+            "dependencies": [
+              2
+            ],
+            "details": "Extend the AI command schema to include optional 'opacity' and 'zIndex' properties. Update the system prompt for the AI agent with examples of layering commands (e.g., 'create a house with overlapping windows at different z-indexes'). Modify the commandParser in the AI agent to parse and apply these properties when creating or updating shapes. Ensure the AI can generate properly layered compositions, integrating with Task 12's AI agent functionality. Handle edge cases like negative zIndex or opacity out of bounds.",
+            "status": "pending",
+            "testStrategy": "Test AI commands that include opacity and zIndex, verify shapes are created with correct properties and layering; check integration with existing AI functionality from Task 12."
+          }
+        ]
       }
     ],
     "metadata": {
@@ -295,7 +344,7 @@
       ],
       "created": "2025-10-16T15:37:35.414Z",
       "description": "Tasks for master context",
-      "updated": "2025-10-16T22:17:54.834Z"
+      "updated": "2025-10-17T02:36:26.246Z"
     }
   }
 }

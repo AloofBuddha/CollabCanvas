@@ -12,6 +12,7 @@ interface BaseShape {
   x: number
   y: number
   rotation?: number // Rotation in degrees (default 0)
+  opacity?: number // Opacity 0-1 (default 1.0, fully opaque)
   color: string
   createdBy: string
   lockedBy?: string | null // userId of user who has locked this shape

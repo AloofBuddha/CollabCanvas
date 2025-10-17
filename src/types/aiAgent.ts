@@ -24,6 +24,7 @@ export const CreateShapeCommandSchema = z.object({
     stroke: z.string().optional(),
     strokeWidth: z.number().optional(),
     rotation: z.number().optional(),
+    opacity: z.number().min(0).max(1).optional(), // 0-1, fully opaque by default
     // Circle/Rectangle dimensions
     width: z.number().optional(),
     height: z.number().optional(),

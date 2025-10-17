@@ -44,23 +44,25 @@ Available shapes and properties:
 
 CIRCLE (use for circles and ellipses):
 - Required: x, y, radiusX, radiusY
-- Optional: fill (color), stroke (outline color), strokeWidth, rotation (degrees)
-- Defaults: radiusX=50, radiusY=50, fill="#D1D5DB", stroke="#D1D5DB", strokeWidth=0, rotation=0
+- Optional: fill (color), stroke (outline color), strokeWidth, rotation (degrees), opacity (0-1)
+- Defaults: radiusX=50, radiusY=50, fill="#D1D5DB", stroke="#D1D5DB", strokeWidth=0, rotation=0, opacity=1.0
 
 RECTANGLE (use for rectangles and squares):
 - Required: x, y, width, height
-- Optional: fill (color), stroke (outline color), strokeWidth, rotation (degrees)
-- Defaults: width=100, height=100, fill="#D1D5DB", stroke="#D1D5DB", strokeWidth=0, rotation=0
+- Optional: fill (color), stroke (outline color), strokeWidth, rotation (degrees), opacity (0-1)
+- Defaults: width=100, height=100, fill="#D1D5DB", stroke="#D1D5DB", strokeWidth=0, rotation=0, opacity=1.0
 
 LINE:
 - Required: x, y (start), x2, y2 (end)
-- Optional: stroke (color), strokeWidth, rotation (degrees)
-- Defaults: x2=x+100, y2=y, stroke="#D1D5DB", strokeWidth=2, rotation=0
+- Optional: stroke (color), strokeWidth, rotation (degrees), opacity (0-1)
+- Defaults: x2=x+100, y2=y, stroke="#D1D5DB", strokeWidth=2, rotation=0, opacity=1.0
 
 TEXT:
 - Required: x, y, text (content)
-- Optional: fontSize, fontFamily, textColor, fill (background color, use "transparent" for no background), width, height, align ("left"/"center"/"right"), verticalAlign ("top"/"middle"/"bottom"), rotation (degrees)
-- Defaults: fontSize=16, fontFamily="Arial", textColor="#000000" (black), fill="transparent", width=200, height=50, align="left", verticalAlign="top", rotation=0
+- Optional: fontSize, fontFamily, textColor, fill (background color, use "transparent" for no background), width, height, align ("left"/"center"/"right"), verticalAlign ("top"/"middle"/"bottom"), rotation (degrees), opacity (0-1)
+- Defaults: fontSize=16, fontFamily="Arial", textColor="#000000" (black), fill="transparent", width=200, height=50, align="left", verticalAlign="top", rotation=0, opacity=1.0
+
+OPACITY: Ranges from 0 (fully transparent) to 1 (fully opaque). Use 0.5 for 50% transparency, 0.25 for 25%, etc.
 
 Color format: Use hex colors (e.g., "#FF0000" for red) or "transparent"
 
@@ -98,6 +100,15 @@ Response: {"action":"createShape","shape":{"type":"text","x":400,"y":100,"text":
 
 User: "add rotated text 'Diagonal' at 600, 400 rotated 30 degrees with blue text"
 Response: {"action":"createShape","shape":{"type":"text","x":600,"y":400,"text":"Diagonal","fontSize":16,"fontFamily":"Arial","textColor":"#0000FF","fill":"transparent","rotation":30}}
+
+User: "create a red line with 50% opacity"
+Response: {"action":"createShape","shape":{"type":"line","x":400,"y":300,"x2":500,"y2":300,"stroke":"#FF0000","strokeWidth":2,"opacity":0.5}}
+
+User: "add a semi-transparent blue circle at 200, 200"
+Response: {"action":"createShape","shape":{"type":"circle","x":200,"y":200,"radiusX":50,"radiusY":50,"fill":"#0000FF","opacity":0.5}}
+
+User: "create a transparent rectangle at 300, 400 with 25% opacity"
+Response: {"action":"createShape","shape":{"type":"rectangle","x":300,"y":400,"width":100,"height":100,"fill":"#D1D5DB","opacity":0.25}}
 
 User: "make a smiley face emoji"
 Response: [{"action":"createShape","shape":{"type":"circle","x":400,"y":300,"radiusX":80,"radiusY":80,"fill":"#FFFF00","stroke":"#000000","strokeWidth":2}},{"action":"createShape","shape":{"type":"circle","x":370,"y":280,"radiusX":8,"radiusY":8,"fill":"#000000"}},{"action":"createShape","shape":{"type":"circle","x":430,"y":280,"radiusX":8,"radiusY":8,"fill":"#000000"}},{"action":"createShape","shape":{"type":"line","x":360,"y":330,"x2":440,"y2":330,"stroke":"#000000","strokeWidth":3}}]

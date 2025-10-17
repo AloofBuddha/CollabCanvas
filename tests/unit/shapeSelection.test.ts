@@ -14,14 +14,14 @@ describe('useShapeSelection', () => {
 
   describe('Selection State', () => {
     it('should initialize with no selection', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       expect(result.current.selectedShapeId).toBeNull()
       expect(result.current.isDragging).toBe(false)
     })
 
     it('should select shape on left click with select tool', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       const mockEvent = {
         evt: { button: 0 },
@@ -35,7 +35,7 @@ describe('useShapeSelection', () => {
     })
 
     it('should not select shape with rectangle tool', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'rectangle' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'rectangle', userId: 'test-user' }))
       
       const mockEvent = {
         evt: { button: 0 },
@@ -49,7 +49,7 @@ describe('useShapeSelection', () => {
     })
 
     it('should not select shape on middle click', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       const mockEvent = {
         evt: { button: 1 }, // Middle mouse button
@@ -63,7 +63,7 @@ describe('useShapeSelection', () => {
     })
 
     it('should change selection to new shape', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       const mockEvent = {
         evt: { button: 0 },
@@ -83,7 +83,7 @@ describe('useShapeSelection', () => {
     })
 
     it('should deselect when clicking stage', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       const mockClickEvent = {
         evt: { button: 0 },
@@ -109,7 +109,7 @@ describe('useShapeSelection', () => {
     })
 
     it('should not deselect when clicking shape (not stage)', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       const mockClickEvent = {
         evt: { button: 0 },
@@ -137,7 +137,7 @@ describe('useShapeSelection', () => {
 
   describe('Drag State', () => {
     it('should set dragging state on drag start', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       expect(result.current.isDragging).toBe(false)
       
@@ -149,7 +149,7 @@ describe('useShapeSelection', () => {
     })
 
     it('should clear dragging state on drag end', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       act(() => {
         result.current.handleDragStart()
@@ -165,7 +165,7 @@ describe('useShapeSelection', () => {
     })
 
     it('should handle drag lifecycle correctly', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       const mockEvent = {
         evt: { button: 0 },
@@ -200,7 +200,7 @@ describe('useShapeSelection', () => {
   describe('Keyboard Deletion', () => {
     it('should call onDelete when Delete key is pressed', () => {
       const onDelete = vi.fn()
-      const { result } = renderHook(() => useShapeSelection({ onDelete, tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ onDelete, tool: 'select', userId: 'test-user' }))
       
       const mockEvent = {
         evt: { button: 0 },
@@ -224,7 +224,7 @@ describe('useShapeSelection', () => {
 
     it('should call onDelete when Backspace key is pressed', () => {
       const onDelete = vi.fn()
-      const { result } = renderHook(() => useShapeSelection({ onDelete, tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ onDelete, tool: 'select', userId: 'test-user' }))
       
       const mockEvent = {
         evt: { button: 0 },
@@ -246,7 +246,7 @@ describe('useShapeSelection', () => {
 
     it('should not delete when no shape is selected', () => {
       const onDelete = vi.fn()
-      renderHook(() => useShapeSelection({ onDelete, tool: 'select' }))
+      renderHook(() => useShapeSelection({ onDelete, tool: 'select', userId: 'test-user' }))
       
       // Simulate Delete key press
       const deleteEvent = new KeyboardEvent('keydown', { key: 'Delete' })
@@ -259,7 +259,7 @@ describe('useShapeSelection', () => {
 
     it('should not delete when tool is not select', () => {
       const onDelete = vi.fn()
-      const { result } = renderHook(() => useShapeSelection({ onDelete, tool: 'rectangle' }))
+      const { result } = renderHook(() => useShapeSelection({ onDelete, tool: 'rectangle', userId: 'test-user' }))
       
       const mockEvent = {
         evt: { button: 0 },
@@ -281,7 +281,7 @@ describe('useShapeSelection', () => {
 
     it('should prevent default behavior on Delete key', () => {
       const onDelete = vi.fn()
-      const { result } = renderHook(() => useShapeSelection({ onDelete, tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ onDelete, tool: 'select', userId: 'test-user' }))
       
       const mockEvent = {
         evt: { button: 0 },
@@ -303,7 +303,7 @@ describe('useShapeSelection', () => {
     })
 
     it('should not call onDelete if not provided', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       const mockEvent = {
         evt: { button: 0 },
@@ -328,7 +328,7 @@ describe('useShapeSelection', () => {
 
   describe('Multiple Shapes', () => {
     it('should handle selection across multiple shapes', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       const mockEvent = {
         evt: { button: 0 },
@@ -355,7 +355,7 @@ describe('useShapeSelection', () => {
 
     it('should delete correct shape when multiple exist', () => {
       const onDelete = vi.fn()
-      const { result } = renderHook(() => useShapeSelection({ onDelete, tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ onDelete, tool: 'select', userId: 'test-user' }))
       
       const mockEvent = {
         evt: { button: 0 },
@@ -391,13 +391,13 @@ describe('useShapeSelection', () => {
 
   describe('Auto-Selection', () => {
     it('should provide selectShape function', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       expect(typeof result.current.selectShape).toBe('function')
     })
 
     it('should select shape programmatically via selectShape', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       expect(result.current.selectedShapeId).toBeNull()
       
@@ -411,7 +411,7 @@ describe('useShapeSelection', () => {
 
   describe('Edge Cases', () => {
     it('should handle rapid selection changes', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       const mockEvent = {
         evt: { button: 0 },
@@ -427,7 +427,7 @@ describe('useShapeSelection', () => {
     })
 
     it('should handle selection during drag', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       const mockEvent = {
         evt: { button: 0 },
@@ -452,7 +452,7 @@ describe('useShapeSelection', () => {
 
     it('should cleanup event listeners on unmount', () => {
       const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener')
-      const { unmount } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { unmount } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       unmount()
       
@@ -466,7 +466,7 @@ describe('useShapeSelection', () => {
     } as any // eslint-disable-line @typescript-eslint/no-explicit-any
 
     it('should track when selection changes from one shape to another', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       // Select first shape
       act(() => {
@@ -485,7 +485,7 @@ describe('useShapeSelection', () => {
     })
 
     it('should allow checking if a shape is currently selected', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       act(() => {
         result.current.handleShapeClick(mockEvent, 'shape-1')
@@ -500,7 +500,7 @@ describe('useShapeSelection', () => {
     })
 
     it('should deselect when clicking stage even with a selected shape', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       // Select a shape
       act(() => {
@@ -526,7 +526,7 @@ describe('useShapeSelection', () => {
 
   describe('Multi-Select', () => {
     it('should support selecting multiple shapes via drag-to-select', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       // Start selection at (0, 0)
       act(() => {
@@ -565,7 +565,7 @@ describe('useShapeSelection', () => {
 
     it('should delete all selected shapes when Delete key is pressed', () => {
       const onDelete = vi.fn()
-      const { result } = renderHook(() => useShapeSelection({ onDelete, tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ onDelete, tool: 'select', userId: 'test-user' }))
       
       // Start selection
       act(() => {
@@ -599,7 +599,7 @@ describe('useShapeSelection', () => {
 
     it('should deselect all shapes when Escape key is pressed', () => {
       const onDeselectAll = vi.fn()
-      const { result } = renderHook(() => useShapeSelection({ onDeselectAll, tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ onDeselectAll, tool: 'select', userId: 'test-user' }))
       
       // Simulate multi-select
       act(() => {
@@ -633,7 +633,7 @@ describe('useShapeSelection', () => {
 
     it('should clear multi-select when clicking on a single shape', () => {
       const onDeselectAll = vi.fn()
-      const { result } = renderHook(() => useShapeSelection({ onDeselectAll, tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ onDeselectAll, tool: 'select', userId: 'test-user' }))
       
       // Simulate multi-select
       act(() => {
@@ -671,7 +671,7 @@ describe('useShapeSelection', () => {
     })
 
     it('should set selectedShapeId to null when multiple shapes are selected', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       act(() => {
         result.current.startSelection(0, 0)
@@ -708,7 +708,7 @@ describe('useShapeSelection', () => {
     })
 
     it('should handle dragging in any direction for selection box', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       // Drag from bottom-right to top-left
       act(() => {
@@ -724,7 +724,7 @@ describe('useShapeSelection', () => {
     })
 
     it('should not select shapes outside the selection box', () => {
-      const { result } = renderHook(() => useShapeSelection({ tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ tool: 'select', userId: 'test-user' }))
       
       act(() => {
         result.current.startSelection(0, 0)
@@ -752,7 +752,7 @@ describe('useShapeSelection', () => {
 
     it('should clear selection box when clicking empty space with no overlapping shapes', () => {
       const onDeselectAll = vi.fn()
-      const { result } = renderHook(() => useShapeSelection({ onDeselectAll, tool: 'select' }))
+      const { result } = renderHook(() => useShapeSelection({ onDeselectAll, tool: 'select', userId: 'test-user' }))
       
       // Pre-select some shapes
       act(() => {
