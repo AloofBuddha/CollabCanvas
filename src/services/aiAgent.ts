@@ -248,6 +248,89 @@ POSITIONING STRATEGY:
 - Consider the canvas dimensions and viewport when choosing positions
 - For multiple shapes in one command, distribute them across the canvas rather than stacking at the same position
 
+LAYERING AND Z-INDEX:
+- Higher zIndex = shape appears on top
+- Use Date.now() (e.g., 1700000000000) for new shapes to put them on top by default
+- For compositions, use incremental zIndex to control layering:
+  * Background shapes: zIndex = Date.now()
+  * Middle layer shapes: zIndex = Date.now() + 1
+  * Foreground details: zIndex = Date.now() + 2
+- Example: For a house, roof should be zIndex + 1, door/windows zIndex + 2 so they appear in front
+
+LAYOUT COMMANDS:
+You can use updateShape to implement layout operations like align, distribute, and arrange.
+
+CRITICAL ALIGNMENT RULES:
+- "align horizontally" = set all shapes to the SAME Y coordinate (shapes line up in a horizontal row)
+  * ONLY update Y coordinate to the average Y of all selected shapes
+  * KEEP each shape's original X coordinate (so they stay spread out horizontally!)
+  * Example: shapes at (100,200), (300,250), (500,180) → (100,210), (300,210), (500,210)
+
+- "align vertically" = arrange shapes in a vertical column
+  * If shapes have DIFFERENT Y coordinates: set all to same X (average), keep original Y positions
+  * If shapes have the SAME Y coordinate (horizontal line): set all to same X (average) AND distribute vertically with spacing
+  * Example different Y: (100,200), (300,250), (500,180) → (300,200), (300,250), (300,180)
+  * Example same Y: (200,300), (500,300), (800,300) → (500,280), (500,330), (500,380)
+
+- IMPORTANT: Calculate the average position of selected shapes, then apply that average to all shapes
+- This prevents shapes from stacking on top of each other
+- NEVER update both X and Y in an alignment command
+
+User: "align selected shapes horizontally"
+Response: {"action":"updateShape","useSelected":true,"updates":{"y":300}}
+Explanation: ONLY set Y coordinate. X coordinates are NOT changed, so shapes stay spread out horizontally.
+
+User: "align selected shapes vertically"
+Context: circle-1 at (200,300), circle-2 at (500,300), circle-3 at (800,300)
+Selected shapes: circle-1 (200,300), circle-2 (500,300), circle-3 (800,300)
+Response: [{"action":"updateShape","shapeName":"circle-1","updates":{"x":500,"y":280}},{"action":"updateShape","shapeName":"circle-2","updates":{"x":500,"y":330}},{"action":"updateShape","shapeName":"circle-3","updates":{"x":500,"y":380}}]
+Explanation: Shapes are in a horizontal line (same Y=300), so distribute them vertically. Average X = 500, center Y = 330, spacing = 50. Result: vertical column centered at x=500.
+
+User: "distribute selected shapes horizontally"
+Context: 3 shapes selected, canvas width 1920
+Response: [{"action":"updateShape","shapeName":"circle-1","updates":{"x":300}},{"action":"updateShape","shapeName":"circle-2","updates":{"x":960}},{"action":"updateShape","shapeName":"circle-3","updates":{"x":1620}}]
+Explanation: Spread shapes evenly across X-axis, Y positions unchanged
+
+User: "center circle-1 on canvas"
+Context: Canvas is 1920x1080
+Response: {"action":"updateShape","shapeName":"circle-1","updates":{"x":960,"y":540}}
+
+User: "move rectangle-2 50 pixels down"
+Response: {"action":"updateShape","shapeName":"rectangle-2","updates":{"y":"+50"}}
+
+User: "space out selected shapes evenly"
+Context: 3 shapes at y=300, need horizontal spacing
+Response: [{"action":"updateShape","shapeName":"shape-1","updates":{"x":200}},{"action":"updateShape","shapeName":"shape-2","updates":{"x":500}},{"action":"updateShape","shapeName":"shape-3","updates":{"x":800}}]
+
+COMPLEX COMPOSITIONS:
+When creating multi-shape objects (faces, figures, buildings), follow these principles:
+1. Calculate all positions relative to a center point
+2. Use proper z-index so layers stack correctly (background first, details last)
+3. Ensure connecting shapes actually connect (line endpoints match shape positions)
+4. Use consistent spacing and proportions
+
+Example - Stick Figure (properly aligned):
+[
+  {"action":"createShape","shape":{"type":"circle","x":400,"y":200,"radiusX":30,"radiusY":30,"color":"#FFD700","zIndex":1700000000000}},
+  {"action":"createShape","shape":{"type":"line","x":400,"y":230,"x2":400,"y2":320,"stroke":"#8B4513","strokeWidth":4,"zIndex":1700000000001}},
+  {"action":"createShape","shape":{"type":"line","x":400,"y":260,"x2":350,"y2":300,"stroke":"#8B4513","strokeWidth":4,"zIndex":1700000000002}},
+  {"action":"createShape","shape":{"type":"line","x":400,"y":260,"x2":450,"y2":300,"stroke":"#8B4513","strokeWidth":4,"zIndex":1700000000003}},
+  {"action":"createShape","shape":{"type":"line","x":400,"y":320,"x2":370,"y2":400,"stroke":"#8B4513","strokeWidth":4,"zIndex":1700000000004}},
+  {"action":"createShape","shape":{"type":"line","x":400,"y":320,"x2":430,"y2":400,"stroke":"#8B4513","strokeWidth":4,"zIndex":1700000000005}}
+]
+
+Example - Login Form (properly spaced):
+[
+  {"action":"createShape","shape":{"type":"rectangle","x":300,"y":200,"width":400,"height":300,"color":"#FFFFFF","stroke":"#CCCCCC","strokeWidth":2,"zIndex":1700000000000}},
+  {"action":"createShape","shape":{"type":"text","x":400,"y":230,"text":"Login","fontSize":24,"fontFamily":"Arial","textColor":"#333333","color":"transparent","align":"center","zIndex":1700000000001}},
+  {"action":"createShape","shape":{"type":"rectangle","x":350,"y":280,"width":300,"height":40,"color":"#F5F5F5","stroke":"#CCCCCC","strokeWidth":1,"zIndex":1700000000002}},
+  {"action":"createShape","shape":{"type":"text","x":360,"y":295,"text":"Username","fontSize":14,"fontFamily":"Arial","textColor":"#999999","color":"transparent","zIndex":1700000000003}},
+  {"action":"createShape","shape":{"type":"rectangle","x":350,"y":340,"width":300,"height":40,"color":"#F5F5F5","stroke":"#CCCCCC","strokeWidth":1,"zIndex":1700000000004}},
+  {"action":"createShape","shape":{"type":"text","x":360,"y":355,"text":"Password","fontSize":14,"fontFamily":"Arial","textColor":"#999999","color":"transparent","zIndex":1700000000005}},
+  {"action":"createShape","shape":{"type":"rectangle","x":350,"y":400,"width":300,"height":40,"color":"#007BFF","stroke":"#0056B3","strokeWidth":1,"zIndex":1700000000006}},
+  {"action":"createShape","shape":{"type":"text","x":500,"y":415,"text":"Sign In","fontSize":16,"fontFamily":"Arial","textColor":"#FFFFFF","color":"transparent","align":"center","zIndex":1700000000007}}
+]
+
 - Only respond with the JSON command(s), no additional text`
 
 /**
@@ -262,14 +345,14 @@ export async function executeCommand(
     const model = getModel()
     
     // Build context string for the AI
-    const shapesInfo = context.shapes.length > 0 
-      ? context.shapes.map(s => `- ${s.name || s.id} (${s.type})`).join('\n')
+    const shapesInfo = context.shapes.length > 0
+      ? context.shapes.map(s => `- ${s.name || s.id} (${s.type}) at (${Math.round(s.x)}, ${Math.round(s.y)})`).join('\n')
       : 'No shapes on canvas'
-    
+
     const selectedInfo = context.selectedShapeIds.length > 0
-      ? context.shapes.filter(s => context.selectedShapeIds.includes(s.id)).map(s => s.name || s.id).join(', ')
+      ? context.shapes.filter(s => context.selectedShapeIds.includes(s.id)).map(s => `${s.name || s.id} (${Math.round(s.x)}, ${Math.round(s.y)})`).join(', ')
       : 'None'
-    
+
     const contextStr = `
 Canvas: ${context.canvasDimensions.width}x${context.canvasDimensions.height}
 Viewport: x=${context.viewport.x}, y=${context.viewport.y}, zoom=${context.viewport.scale}

@@ -33,7 +33,7 @@ import LoadingSpinner from './LoadingSpinner'
 import AICommandInput from './AIAgent/AICommandInput'
 import { useAIAgent } from '../hooks/useAIAgent'
 import { CanvasContext } from '../types/aiAgent'
-import { Cursor, User, Shape } from '../types'
+import { Cursor, User, Shape, CircleShape, RectangleShape, TextShape, LineShape } from '../types'
 
 type Tool = 'select' | 'rectangle' | 'circle' | 'line' | 'text'
 
@@ -63,7 +63,7 @@ export default function CanvasPage() {
     onShapesUpdated: async (command) => {
       // Find shapes to update
       let shapesToUpdate: Shape[] = []
-      
+
       if (command.useSelected) {
         // Update selected shapes
         shapesToUpdate = Object.values(shapes).filter(s => s.lockedBy === userId)
@@ -87,18 +87,140 @@ export default function CanvasPage() {
           return true
         })
       }
-      
+
       if (shapesToUpdate.length === 0) {
         toast.error('No shapes found to update')
         return
       }
-      
-      // Apply updates to each shape
+
+      // Special handling for alignment commands - calculate proper positions
+      if (command.updates && Object.keys(command.updates).length === 1) {
+        const updateKey = Object.keys(command.updates)[0] as keyof typeof command.updates
+        const updateValue = command.updates[updateKey]
+
+        // Check if this looks like an alignment command (single coordinate update to a number)
+        if ((updateKey === 'x' || updateKey === 'y') && typeof updateValue === 'number' && !isNaN(updateValue)) {
+          // Helpers to approximate shape dimensions for spacing calculations
+          const getApproxWidth = (s: Shape): number => {
+            if (s.type === 'circle') {
+              const circleShape = s as CircleShape
+              const rx = circleShape.radiusX
+              return rx * 2
+            }
+            if (s.type === 'rectangle') {
+              const rectShape = s as RectangleShape
+              return rectShape.width
+            }
+            if (s.type === 'text') {
+              const textShape = s as TextShape
+              return textShape.width
+            }
+            if (s.type === 'line') {
+              const lineShape = s as LineShape
+              const x2 = lineShape.x2
+              return Math.max(1, Math.abs(x2 - s.x))
+            }
+            return 100
+          }
+
+          const getApproxHeight = (s: Shape): number => {
+            if (s.type === 'circle') {
+              const circleShape = s as CircleShape
+              const ry = circleShape.radiusY
+              return ry * 2
+            }
+            if (s.type === 'rectangle') {
+              const rectShape = s as RectangleShape
+              return rectShape.height
+            }
+            if (s.type === 'text') {
+              const textShape = s as TextShape
+              return textShape.height
+            }
+            if (s.type === 'line') {
+              const lineShape = s as LineShape
+              const y2 = lineShape.y2
+              return Math.max(1, Math.abs(y2 - s.y))
+            }
+            return 100
+          }
+          // For vertical alignment (setting same X), if all shapes have same Y, distribute vertically
+          if (updateKey === 'x') {
+            const allYValues = shapesToUpdate.map(s => s.y)
+            const uniqueYValues = new Set(allYValues)
+
+            // If all shapes have the same Y (horizontal line), distribute them vertically
+            if (uniqueYValues.size === 1) {
+              const centerY = allYValues[0] // They all have the same Y
+              const maxH = Math.max(...shapesToUpdate.map(getApproxHeight))
+              const spacing = maxH + 20 // 20px gap
+              const totalHeight = (shapesToUpdate.length - 1) * spacing
+              const startY = centerY - totalHeight / 2
+
+              // Create individual update commands for each shape
+              for (let i = 0; i < shapesToUpdate.length; i++) {
+                const shape = shapesToUpdate[i]
+                const newY = startY + (i * spacing)
+                const updatedShape = { ...shape, x: updateValue, y: newY }
+                await handleShapeUpdate(updatedShape)
+              }
+
+              toast.success(`Vertically aligned ${shapesToUpdate.length} shape${shapesToUpdate.length > 1 ? 's' : ''}`)
+              return
+            }
+          }
+
+          // For horizontal alignment (setting same Y), if all shapes have same X, distribute horizontally
+          if (updateKey === 'y') {
+            const allXValues = shapesToUpdate.map(s => s.x)
+            const uniqueXValues = new Set(allXValues)
+
+            // If all shapes have the same X (vertical line), distribute them horizontally
+            if (uniqueXValues.size === 1) {
+              const centerX = allXValues[0] // They all have the same X
+              const maxW = Math.max(...shapesToUpdate.map(getApproxWidth))
+              const spacing = maxW + 20 // 20px gap
+              const totalWidth = (shapesToUpdate.length - 1) * spacing
+              const startX = centerX - totalWidth / 2
+
+              // Create individual update commands for each shape
+              for (let i = 0; i < shapesToUpdate.length; i++) {
+                const shape = shapesToUpdate[i]
+                const newX = startX + (i * spacing)
+                const updatedShape = { ...shape, x: newX, y: updateValue }
+                await handleShapeUpdate(updatedShape)
+              }
+
+              toast.success(`Horizontally aligned ${shapesToUpdate.length} shape${shapesToUpdate.length > 1 ? 's' : ''}`)
+              return
+            }
+          }
+        }
+      }
+
+      // Default update logic for non-alignment commands
       for (const shape of shapesToUpdate) {
-        const updatedShape = { ...shape, ...command.updates }
+        // Process relative updates (e.g., "+50" means add 50 to current value)
+        const processedUpdates: Record<string, unknown> = {}
+        for (const [key, value] of Object.entries(command.updates)) {
+          if (typeof value === 'string' && (value.startsWith('+') || value.startsWith('-'))) {
+            // Relative update: "+50" or "-20"
+            const delta = parseFloat(value)
+            const currentValue = (shape as unknown as Record<string, unknown>)[key]
+            if (typeof currentValue === 'number') {
+              processedUpdates[key] = currentValue + delta
+            } else {
+              processedUpdates[key] = value // Fallback to original value if not a number
+            }
+          } else {
+            processedUpdates[key] = value
+          }
+        }
+
+        const updatedShape = { ...shape, ...processedUpdates }
         await handleShapeUpdate(updatedShape)
       }
-      
+
       toast.success(`Updated ${shapesToUpdate.length} shape${shapesToUpdate.length > 1 ? 's' : ''}`)
     },
     onShapesDeleted: async (command) => {

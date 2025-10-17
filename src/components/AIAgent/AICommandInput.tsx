@@ -4,7 +4,7 @@
  * Text area and execute button for AI commands
  */
 
-import { KeyboardEvent } from 'react'
+import { KeyboardEvent, useEffect, useRef } from 'react'
 import { Loader2, Send } from 'lucide-react'
 
 interface AICommandInputProps {
@@ -22,6 +22,13 @@ export default function AICommandInput({
   onExecute,
   isDetailPaneOpen = false,
 }: AICommandInputProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Auto-focus the textarea when component mounts
+  useEffect(() => {
+    textareaRef.current?.focus()
+  }, [isExecuting])
+
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     // Execute on Enter (without Shift)
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -41,6 +48,7 @@ export default function AICommandInput({
       <div className="flex items-center gap-2 p-3">
         {/* Text Input */}
         <textarea
+          ref={textareaRef}
           value={currentCommand}
           onChange={(e) => onCommandChange(e.target.value)}
           onKeyDown={handleKeyDown}
