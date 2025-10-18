@@ -1,4 +1,4 @@
-import { MousePointer2, Square, Circle, Pen, Type } from 'lucide-react'
+import { MousePointer2, Square, Circle, Pen, Type, HelpCircle } from 'lucide-react'
 import AIAgentButton from './AIAgent/AIAgentButton'
 
 type Tool = 'select' | 'rectangle' | 'circle' | 'line' | 'text'
@@ -8,9 +8,10 @@ interface ToolbarProps {
   onSelectTool: (tool: Tool) => void
   isAIAgentOpen: boolean
   onToggleAIAgent: () => void
+  onShowKeyboardShortcuts: () => void
 }
 
-export default function Toolbar({ selectedTool, onSelectTool, isAIAgentOpen, onToggleAIAgent }: ToolbarProps) {
+export default function Toolbar({ selectedTool, onSelectTool, isAIAgentOpen, onToggleAIAgent, onShowKeyboardShortcuts }: ToolbarProps) {
   const tools: { id: Tool; icon: typeof Square; label: string }[] = [
     { id: 'select', icon: MousePointer2, label: 'Select' },
     { id: 'rectangle', icon: Square, label: 'Rectangle' },
@@ -59,6 +60,19 @@ export default function Toolbar({ selectedTool, onSelectTool, isAIAgentOpen, onT
         
         {/* AI Agent Button */}
         <AIAgentButton isActive={isAIAgentOpen} onClick={onToggleAIAgent} />
+        
+        {/* Divider */}
+        <div className="w-px h-10 bg-gray-200 mx-1" />
+        
+        {/* Keyboard Shortcuts Button */}
+        <button
+          onClick={onShowKeyboardShortcuts}
+          className="flex items-center justify-center w-10 h-10 rounded-md text-gray-600 hover:bg-gray-100 transition-colors"
+          title="Keyboard Shortcuts (Press ?)"
+          aria-label="Show keyboard shortcuts"
+        >
+          <HelpCircle size={20} />
+        </button>
       </div>
     </div>
   )

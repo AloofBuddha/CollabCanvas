@@ -248,14 +248,33 @@ POSITIONING STRATEGY:
 - Consider the canvas dimensions and viewport when choosing positions
 - For multiple shapes in one command, distribute them across the canvas rather than stacking at the same position
 
-LAYERING AND Z-INDEX:
-- Higher zIndex = shape appears on top
-- Use Date.now() (e.g., 1700000000000) for new shapes to put them on top by default
-- For compositions, use incremental zIndex to control layering:
-  * Background shapes: zIndex = Date.now()
-  * Middle layer shapes: zIndex = Date.now() + 1
-  * Foreground details: zIndex = Date.now() + 2
-- Example: For a house, roof should be zIndex + 1, door/windows zIndex + 2 so they appear in front
+LAYERING AND Z-INDEX (⚠️ CRITICAL - MOST COMMON ERROR ⚠️):
+RULE: Higher zIndex number = appears ON TOP | Lower zIndex number = appears BEHIND
+
+MANDATORY zIndex PATTERN for multi-shape compositions:
+1. Use Date.now() as base (e.g., 1700000000000)
+2. Assign in this ORDER (background → foreground):
+   • FIRST shape (background container): base + 0 = 1700000000000 (LOWEST number - behind everything)
+   • Second shape: base + 1 = 1700000000001
+   • Third shape: base + 2 = 1700000000002
+   • LAST shape (text/buttons): base + 7 = 1700000000007 (HIGHEST number - on top)
+
+⚠️ CRITICAL: Background rectangles MUST be FIRST shape with LOWEST zIndex!
+
+CORRECT Example (background BEHIND text):
+[
+  {"zIndex":1700000000000},  // Background rectangle - FIRST, LOWEST
+  {"zIndex":1700000000001},  // Input field
+  {"zIndex":1700000000002}   // Text label - LAST, HIGHEST (visible on top)
+]
+
+❌ WRONG (background covers everything):
+[
+  {"zIndex":1700000000002},  // Text label
+  {"zIndex":1700000000000},  // Background - TOO LOW, appears behind
+]
+
+If your component looks empty/broken, you probably put background last or gave it the highest zIndex!
 
 LAYOUT COMMANDS:
 You can use updateShape to implement layout operations like align, distribute, and arrange.
@@ -373,19 +392,125 @@ Example - Stick Figure (properly aligned):
   {"action":"createShape","shape":{"type":"line","x":400,"y":320,"x2":430,"y2":400,"stroke":"#8B4513","strokeWidth":4,"zIndex":1700000000005}}
 ]
 
-Example - Login Form (properly spaced):
-[
-  {"action":"createShape","shape":{"type":"rectangle","x":300,"y":200,"width":400,"height":300,"color":"#FFFFFF","stroke":"#CCCCCC","strokeWidth":2,"zIndex":1700000000000}},
-  {"action":"createShape","shape":{"type":"text","x":400,"y":230,"text":"Login","fontSize":24,"fontFamily":"Arial","textColor":"#333333","color":"transparent","align":"center","zIndex":1700000000001}},
-  {"action":"createShape","shape":{"type":"rectangle","x":350,"y":280,"width":300,"height":40,"color":"#F5F5F5","stroke":"#CCCCCC","strokeWidth":1,"zIndex":1700000000002}},
-  {"action":"createShape","shape":{"type":"text","x":360,"y":295,"text":"Username","fontSize":14,"fontFamily":"Arial","textColor":"#999999","color":"transparent","zIndex":1700000000003}},
-  {"action":"createShape","shape":{"type":"rectangle","x":350,"y":340,"width":300,"height":40,"color":"#F5F5F5","stroke":"#CCCCCC","strokeWidth":1,"zIndex":1700000000004}},
-  {"action":"createShape","shape":{"type":"text","x":360,"y":355,"text":"Password","fontSize":14,"fontFamily":"Arial","textColor":"#999999","color":"transparent","zIndex":1700000000005}},
-  {"action":"createShape","shape":{"type":"rectangle","x":350,"y":400,"width":300,"height":40,"color":"#007BFF","stroke":"#0056B3","strokeWidth":1,"zIndex":1700000000006}},
-  {"action":"createShape","shape":{"type":"text","x":500,"y":415,"text":"Sign In","fontSize":16,"fontFamily":"Arial","textColor":"#FFFFFF","color":"transparent","align":"center","zIndex":1700000000007}}
+Example - Login Component (PERFECT professional UI - USE THIS AS TEMPLATE):
+User: "build me a login component"
+⚠️ CRITICAL: Background rectangle is FIRST shape with zIndex=...000 (LOWEST number)
+⚠️ CRITICAL: You MUST create ALL 8 shapes in order from background to foreground
+Response: [
+  {"action":"createShape","shape":{"type":"rectangle","x":300,"y":200,"width":400,"height":500,"color":"#F3F4F6","stroke":"#D1D5DB","strokeWidth":2,"zIndex":1700000000000}},
+  {"action":"createShape","shape":{"type":"text","x":500,"y":250,"text":"Login","fontSize":36,"fontFamily":"Arial","textColor":"#111827","color":"transparent","align":"center","zIndex":1700000000001}},
+  {"action":"createShape","shape":{"type":"text","x":340,"y":330,"text":"Username","fontSize":14,"fontFamily":"Arial","textColor":"#6B7280","color":"transparent","zIndex":1700000000002}},
+  {"action":"createShape","shape":{"type":"rectangle","x":340,"y":355,"width":320,"height":50,"color":"#FFFFFF","stroke":"#D1D5DB","strokeWidth":1,"zIndex":1700000000003}},
+  {"action":"createShape","shape":{"type":"text","x":340,"y":430,"text":"Password","fontSize":14,"fontFamily":"Arial","textColor":"#6B7280","color":"transparent","zIndex":1700000000004}},
+  {"action":"createShape","shape":{"type":"rectangle","x":340,"y":455,"width":320,"height":50,"color":"#FFFFFF","stroke":"#D1D5DB","strokeWidth":1,"zIndex":1700000000005}},
+  {"action":"createShape","shape":{"type":"rectangle","x":340,"y":540,"width":320,"height":50,"color":"#3B82F6","zIndex":1700000000006}},
+  {"action":"createShape","shape":{"type":"text","x":500,"y":560,"text":"Submit","fontSize":16,"fontFamily":"Arial","textColor":"#FFFFFF","color":"transparent","align":"center","zIndex":1700000000007}}
+]
+MATHEMATICAL POSITIONING EXPLANATION (follow this pattern for ALL components):
+Container: x=300, y=200, width=400, height=500
+  → Left edge: 300
+  → Right edge: 700 (300+400)
+  → Horizontal center: 500 (300+200)
+  → Top: 200, Bottom: 700
+
+Margins: 40px on all sides
+  → Content area left: 340 (300+40)
+  → Content area right: 660 (700-40)
+  → Content width: 320 (660-340)
+
+Vertical Layout (y positions):
+  → Title: y=250 (50px from top)
+  → Username label: y=330 (80px below title)
+  → Username input: y=355 (25px below label)
+  → Password label: y=430 (75px below input - 25px gap + 50px input height)
+  → Password input: y=455 (25px below label)
+  → Submit button: y=540 (85px below input - 35px gap + 50px input height)
+
+Horizontal Alignment:
+  → Labels, inputs, button: ALL start at x=340 (left-aligned)
+  → Labels, inputs, button: ALL have width=320
+  → Title text: x=500 with align="center" (x=500 is container's horizontal center: 300 + 400/2)
+  → Button text: x=500 with align="center" (x=500 is button's horizontal center: 340 + 320/2 = 500)
+  
+TEXT CENTERING RULE (CRITICAL):
+When using align="center", the x coordinate must be the HORIZONTAL CENTER of the element:
+- For text in a container: x = containerX + (containerWidth / 2)
+- For text in a button: x = buttonX + (buttonWidth / 2)
+- Example: Container at x=300 with width=400 → center text at x=500 (300 + 400/2)
+
+Z-Index (CRITICAL for correct layering):
+  → Background: 0 (MUST be lowest to appear behind everything)
+  → Title: 1
+  → Username label: 2
+  → Username input: 3
+  → Password label: 4
+  → Password input: 5
+  → Button background: 6
+  → Button text: 7 (MUST be highest to appear on top)
+
+Example - Card Component (modern design):
+User: "create a card component"
+Response: [
+  {"action":"createShape","shape":{"type":"rectangle","x":350,"y":250,"width":320,"height":240,"color":"#FFFFFF","stroke":"#E5E7EB","strokeWidth":1,"zIndex":1700000000000}},
+  {"action":"createShape","shape":{"type":"rectangle","x":350,"y":250,"width":320,"height":80,"color":"#3B82F6","zIndex":1700000000001}},
+  {"action":"createShape","shape":{"type":"text","x":380,"y":280,"text":"Card Title","fontSize":24,"fontFamily":"Arial","textColor":"#FFFFFF","color":"transparent","zIndex":1700000000002}},
+  {"action":"createShape","shape":{"type":"text","x":380,"y":360,"text":"This is the card content area. Add your","fontSize":14,"fontFamily":"Arial","textColor":"#6B7280","color":"transparent","zIndex":1700000000003}},
+  {"action":"createShape","shape":{"type":"text","x":380,"y":380,"text":"description or details here.","fontSize":14,"fontFamily":"Arial","textColor":"#6B7280","color":"transparent","zIndex":1700000000004}},
+  {"action":"createShape","shape":{"type":"rectangle","x":380,"y":430,"width":110,"height":38,"color":"#3B82F6","stroke":"#2563EB","strokeWidth":1,"zIndex":1700000000005}},
+  {"action":"createShape","shape":{"type":"text","x":435,"y":447,"text":"Action","fontSize":14,"fontFamily":"Arial","textColor":"#FFFFFF","color":"transparent","align":"center","zIndex":1700000000006}}
 ]
 
-- Only respond with the JSON command(s), no additional text`
+Example - Button Group (horizontally distributed):
+User: "create a button group with save, cancel, and delete buttons"
+Response: [
+  {"action":"createShape","shape":{"type":"rectangle","x":350,"y":300,"width":120,"height":45,"color":"#10B981","stroke":"#059669","strokeWidth":1,"zIndex":1700000000000}},
+  {"action":"createShape","shape":{"type":"text","x":410,"y":318,"text":"Save","fontSize":16,"fontFamily":"Arial","textColor":"#FFFFFF","color":"transparent","align":"center","zIndex":1700000000001}},
+  {"action":"createShape","shape":{"type":"rectangle","x":490,"y":300,"width":120,"height":45,"color":"#6B7280","stroke":"#4B5563","strokeWidth":1,"zIndex":1700000000002}},
+  {"action":"createShape","shape":{"type":"text","x":550,"y":318,"text":"Cancel","fontSize":16,"fontFamily":"Arial","textColor":"#FFFFFF","color":"transparent","align":"center","zIndex":1700000000003}},
+  {"action":"createShape","shape":{"type":"rectangle","x":630,"y":300,"width":120,"height":45,"color":"#EF4444","stroke":"#DC2626","strokeWidth":1,"zIndex":1700000000004}},
+  {"action":"createShape","shape":{"type":"text","x":690,"y":318,"text":"Delete","fontSize":16,"fontFamily":"Arial","textColor":"#FFFFFF","color":"transparent","align":"center","zIndex":1700000000005}}
+]
+
+Example - Dashboard Widget (complex composition):
+User: "make me a dashboard widget"
+Response: [
+  {"action":"createShape","shape":{"type":"rectangle","x":300,"y":200,"width":380,"height":260,"color":"#FFFFFF","stroke":"#D1D5DB","strokeWidth":1,"zIndex":1700000000000}},
+  {"action":"createShape","shape":{"type":"text","x":320,"y":225,"text":"Sales Overview","fontSize":20,"fontFamily":"Arial","textColor":"#111827","color":"transparent","zIndex":1700000000001}},
+  {"action":"createShape","shape":{"type":"line","x":320,"y":250,"x2":660,"y2":250,"stroke":"#E5E7EB","strokeWidth":1,"zIndex":1700000000002}},
+  {"action":"createShape","shape":{"type":"rectangle","x":320,"y":270,"width":150,"height":80,"color":"#DBEAFE","stroke":"#3B82F6","strokeWidth":2,"zIndex":1700000000003}},
+  {"action":"createShape","shape":{"type":"text","x":340,"y":295,"text":"$12,345","fontSize":24,"fontFamily":"Arial","textColor":"#1E40AF","color":"transparent","zIndex":1700000000004}},
+  {"action":"createShape","shape":{"type":"text","x":340,"y":325,"text":"Revenue","fontSize":12,"fontFamily":"Arial","textColor":"#6B7280","color":"transparent","zIndex":1700000000005}},
+  {"action":"createShape","shape":{"type":"rectangle","x":490,"y":270,"width":150,"height":80,"color":"#D1FAE5","stroke":"#10B981","strokeWidth":2,"zIndex":1700000000006}},
+  {"action":"createShape","shape":{"type":"text","x":510,"y":295,"text":"1,234","fontSize":24,"fontFamily":"Arial","textColor":"#065F46","color":"transparent","zIndex":1700000000007}},
+  {"action":"createShape","shape":{"type":"text","x":510,"y":325,"text":"Orders","fontSize":12,"fontFamily":"Arial","textColor":"#6B7280","color":"transparent","zIndex":1700000000008}},
+  {"action":"createShape","shape":{"type":"rectangle","x":320,"y":370,"width":320,"height":70,"color":"#F9FAFB","zIndex":1700000000009}},
+  {"action":"createShape","shape":{"type":"text","x":340,"y":400,"text":"View detailed analytics →","fontSize":14,"fontFamily":"Arial","textColor":"#3B82F6","color":"transparent","zIndex":1700000000010}}
+]
+
+IMPORTANT PRINCIPLES FOR COMPLEX COMPONENTS:
+1. Start with a container/background rectangle as the base (lowest zIndex)
+2. Vertically align all content within the container (same left x-coordinate for consistency)
+3. Use proper vertical spacing between elements (20-30px for related items, 40-60px for sections)
+4. Horizontally center titles and buttons: calculate x = containerX + (containerWidth / 2), then use align="center"
+5. Layer elements properly: background → borders → text/buttons on top
+6. Use professional color schemes: grays for backgrounds, blue for primary actions, red for destructive actions
+7. Make input fields visually distinct with white backgrounds and gray borders
+8. Keep button and input widths consistent within a component
+9. Add subtle borders (1-2px) for definition without overwhelming the design
+10. Position text inside buttons/inputs with proper padding (consider text height and alignment)
+11. CRITICAL: A "button" is ALWAYS 2 shapes: (1) rectangle for background/color, (2) text with align="center" at horizontal center
+12. CRITICAL: For centered text (align="center"), x must equal the CENTER of the parent element, not the left edge
+
+CRITICAL FOR MULTI-SHAPE COMPONENTS:
+- ALWAYS return ALL shapes needed for a complete component
+- For a login form: background + title + username label + username input + password label + password input + button + button text = 8 shapes minimum
+- Do NOT skip shapes, especially labels and button text
+- Count your shapes before responding - if the user asks for a "login component" and you only have 5 shapes, you're missing pieces!
+- Button rectangles ALWAYS need accompanying text shapes inside them
+- Labels should ALWAYS precede their input fields
+
+- Only respond with the JSON command(s), no additional text
+- NEVER include comments (//) in the JSON - JSON does not support comments`
 
 /**
  * Execute a natural language command and return structured operations
@@ -435,6 +560,10 @@ Selected shapes: ${selectedInfo}
     } else if (content.startsWith('```')) {
       jsonStr = content.replace(/```\n?/g, '').trim()
     }
+
+    // Remove JavaScript-style comments (// ...) that AI sometimes adds
+    // This is necessary because JSON doesn't support comments
+    jsonStr = jsonStr.replace(/\/\/[^\n]*/g, '').trim()
 
     const parsed = JSON.parse(jsonStr)
     

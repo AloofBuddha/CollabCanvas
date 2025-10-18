@@ -24,6 +24,7 @@ interface UseShapeDraggingProps {
   onCursorMove?: (cursor: Cursor) => void
   onShapeCreated?: (shape: Shape) => void
   onDragEnd?: (shape: Shape) => void // Called on drag end to persist to Firestore
+  onDragStart?: () => void // Called before drag starts (for history tracking)
 }
 
 export function useShapeDragging({
@@ -34,6 +35,7 @@ export function useShapeDragging({
   onCursorMove,
   onShapeCreated,
   onDragEnd,
+  onDragStart,
 }: UseShapeDraggingProps) {
   const { addShape, shapes } = useShapeStore()
   
@@ -52,6 +54,9 @@ export function useShapeDragging({
       e.target.stopDrag()
       return
     }
+    
+    // Push current state to history before starting drag
+    onDragStart?.()
     
     // Check if Alt is pressed - create duplicate immediately, then drag original
     if (isAltPressed.current && draggedShape) {

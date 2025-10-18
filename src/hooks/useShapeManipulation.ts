@@ -24,6 +24,8 @@ interface UseShapeManipulationProps {
   selectedShapeId: string | null
   updateShape: (id: string, updates: Partial<Shape>) => void
   onShapeUpdate?: (shape: Shape) => void
+  onManipulationStart?: () => void // For history tracking (before manipulation)
+  onManipulationEnd?: () => void // For history tracking (after manipulation)
   stageRef: React.RefObject<Konva.Stage>
   stageScale: number
 }
@@ -40,6 +42,8 @@ interface ManipulationState {
 export function useShapeManipulation({
   updateShape,
   onShapeUpdate,
+  onManipulationStart,
+  onManipulationEnd,
   stageScale,
 }: UseShapeManipulationProps) {
   const { shapes } = useShapeStore()
@@ -131,6 +135,9 @@ export function useShapeManipulation({
     const pos = getPointerPosition(stage)
     if (!pos) return false
     
+    // Push current state to history before starting manipulation
+    onManipulationStart?.()
+    
     // Prevent default drag behavior
     e.cancelBubble = true
     
@@ -144,7 +151,7 @@ export function useShapeManipulation({
     })
     
     return true
-  }, [])
+  }, [onManipulationStart])
   
   /**
    * Update manipulation during mouse move
@@ -216,7 +223,10 @@ export function useShapeManipulation({
       originalShape: null,
       shapeId: null,
     })
-  }, [manipulationState.isManipulating, manipulationState.shapeId, shapes, onShapeUpdate])
+    
+    // Track history after manipulation completes
+    onManipulationEnd?.()
+  }, [manipulationState.isManipulating, manipulationState.shapeId, shapes, onShapeUpdate, onManipulationEnd])
   
   /**
    * Get cursor style for current hover zone

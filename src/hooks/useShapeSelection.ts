@@ -8,6 +8,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Konva from 'konva'
 import { Shape } from '../types'
+import useShapeStore from '../stores/useShapeStore'
 
 interface UseShapeSelectionProps {
   onDelete?: (shapeIds: string[]) => void
@@ -15,6 +16,8 @@ interface UseShapeSelectionProps {
   onDeselectAll?: () => void
   onToolChange?: (tool: 'select') => void
   onMultiSelectBlocked?: () => void // Called when multi-select is blocked by locked shapes
+  onShapeLock?: (shapeId: string) => void // For select all
+  onBatchShapeLock?: (shapeIds: string[]) => void // For select all
   tool: 'select' | 'rectangle' | 'circle' | 'line' | 'text'
   userId?: string | null // Current user's ID to check for locked shapes
 }
@@ -26,7 +29,7 @@ export interface SelectionBox {
   height: number
 }
 
-export function useShapeSelection({ onDelete, onDeselect, onDeselectAll, onToolChange, onMultiSelectBlocked, tool, userId }: UseShapeSelectionProps) {
+export function useShapeSelection({ onDelete, onDeselect, onDeselectAll, onToolChange, onMultiSelectBlocked, onShapeLock, onBatchShapeLock, tool, userId }: UseShapeSelectionProps) {
   const [selectedShapeIds, setSelectedShapeIds] = useState<Set<string>>(new Set())
   const [isDragging, setIsDragging] = useState(false)
   const [isSelecting, setIsSelecting] = useState(false)
@@ -44,6 +47,30 @@ export function useShapeSelection({ onDelete, onDeselect, onDeselectAll, onToolC
         activeElement.tagName === 'SELECT'
       )
 
+      // Ctrl/Cmd+A - select all shapes
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
+      const modKey = isMac ? e.metaKey : e.ctrlKey
+      if (modKey && e.key.toLowerCase() === 'a') {
+        e.preventDefault()
+        
+        // Get all shape IDs from useShapeStore
+        const { shapes } = useShapeStore.getState()
+        const allShapeIds = Object.keys(shapes)
+        
+        if (allShapeIds.length > 0) {
+          // Select all shapes locally
+          setSelectedShapeIds(new Set(allShapeIds))
+          
+          // Lock all shapes in Firebase for multi-select
+          if (allShapeIds.length > 1 && onBatchShapeLock) {
+            onBatchShapeLock(allShapeIds)
+          } else if (allShapeIds.length === 1) {
+            onShapeLock?.(allShapeIds[0])
+          }
+        }
+        return
+      }
+      
       // Escape key - deselect all shapes first, then switch to select tool
       if (e.key === 'Escape') {
         e.preventDefault()
@@ -73,7 +100,7 @@ export function useShapeSelection({ onDelete, onDeselect, onDeselectAll, onToolC
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedShapeIds, onDelete, onDeselectAll, onToolChange, tool])
+  }, [selectedShapeIds, onDelete, onDeselectAll, onToolChange, onShapeLock, onBatchShapeLock, tool])
 
   const handleShapeClick = (e: Konva.KonvaEventObject<MouseEvent>, shapeId: string) => {
     const evt = e.evt

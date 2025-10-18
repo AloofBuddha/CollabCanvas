@@ -3,6 +3,7 @@ import { Stage, Layer, Rect, Group, Text } from 'react-konva'
 import Konva from 'konva'
 import toast from 'react-hot-toast'
 import useShapeStore from '../stores/useShapeStore'
+import useHistoryStore from '../stores/useHistoryStore'
 import useUserStore from '../stores/useUserStore'
 import useCursorStore from '../stores/useCursorStore'
 import RemoteCursor from './RemoteCursor'
@@ -16,6 +17,7 @@ import { useCanvasZoom } from '../hooks/useCanvasZoom'
 import { useCursorTracking } from '../hooks/useCursorTracking'
 import { useShapeSelection } from '../hooks/useShapeSelection'
 import { useShapeManipulation } from '../hooks/useShapeManipulation'
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 import { getCursorStyle } from '../utils/canvasUtils'
 import { Cursor, Shape } from '../types'
 import { detectManipulationZone, getPointerPosition } from '../utils/shapeManipulation'
@@ -38,6 +40,7 @@ interface CanvasProps {
   onBatchShapeLock?: (shapeIds: string[]) => void
   onBatchShapeUnlock?: (shapeIds: string[]) => void
   onDetailPaneVisibilityChange?: (isOpen: boolean) => void
+  onToggleKeyboardShortcuts?: () => void
 }
 
 export default function Canvas({
@@ -52,6 +55,7 @@ export default function Canvas({
   onBatchShapeLock,
   onBatchShapeUnlock,
   onDetailPaneVisibilityChange,
+  onToggleKeyboardShortcuts,
 }: CanvasProps) {
   const stageRef = useRef<Konva.Stage>(null)
   const [stageScale, setStageScale] = useState(1)
@@ -72,8 +76,15 @@ export default function Canvas({
   }, [currentCursor])
   
   const { shapes, updateShape } = useShapeStore()
+  const { pushState } = useHistoryStore()
   const { userId } = useUserStore()
   const { remoteCursors } = useCursorStore()
+  
+  // Callback to push current state to history (before manual shape operations)
+  const handlePushHistory = useCallback(() => {
+    pushState(shapes)
+  }, [shapes, pushState])
+  
 
   // Track Alt key state for duplication
   useEffect(() => {
@@ -146,8 +157,49 @@ export default function Canvas({
         duration: 3000,
       })
     },
+    onShapeLock,
+    onBatchShapeLock,
     tool,
     userId,
+  })
+  
+  // Keyboard shortcuts with access to selection state
+  useKeyboardShortcuts({
+    selectedShapeIds,
+    onUndo: () => toast.success('Undo'),
+    onRedo: () => toast.success('Redo'),
+    onDuplicate: () => toast.success('Duplicated selected shapes'),
+    onDeselectAll: () => {
+      // Trigger Escape key to deselect (handled by useShapeSelection)
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    },
+    onPersistShapes: async (newShapes) => {
+      // Smart diff-based persistence for undo/redo
+      const currentShapes = shapes
+      const currentIds = new Set(Object.keys(currentShapes))
+      const newIds = new Set(Object.keys(newShapes))
+      
+      // Find shapes to delete (in current but not in new)
+      const toDelete = Array.from(currentIds).filter(id => !newIds.has(id))
+      
+      // Find shapes to create/update (in new)
+      // IMPORTANT: Clear all locks before persisting restored shapes
+      const toUpdate = Object.values(newShapes).map(shape => ({
+        ...shape,
+        lockedBy: null, // Clear locks from history
+      }))
+      
+      // Execute operations
+      await Promise.all([
+        ...toDelete.map(id => onShapeDeleted?.(id)),
+        ...toUpdate.map(shape => onShapeUpdate?.(shape))
+      ])
+    },
+    onPersistShape: (shape) => {
+      // Persist single shape after nudge
+      onShapeUpdate?.(shape)
+    },
+    onToggleHelp: onToggleKeyboardShortcuts,
   })
   
   // Handle shape creation and auto-select
@@ -197,6 +249,7 @@ export default function Canvas({
     onCursorMove, // Track cursor position during drag
     onShapeCreated, // For creating duplicates
     onDragEnd: onShapeUpdate, // Persist to Firestore on drag end
+    onDragStart: handlePushHistory, // Push history before drag
   })
   
   const { handleWheel } = useCanvasZoom({
@@ -218,6 +271,8 @@ export default function Canvas({
     selectedShapeId,
     updateShape,
     onShapeUpdate, // Persist to Firestore on manipulation end
+    onManipulationStart: handlePushHistory, // Push history before manipulation
+    onManipulationEnd: () => pushState(shapes), // Push history after manipulation
     stageRef,
     stageScale,
   })
@@ -490,6 +545,9 @@ export default function Canvas({
         onShapeUpdate?.(updatedShape)
       }
     })
+    
+    // Push state to history after multi-drag completes
+    pushState(shapes)
   }
 
   // Combined drag handlers - only used for single shape drag now
@@ -507,6 +565,8 @@ export default function Canvas({
   const handleCombinedDragEnd = (shape: Shape) => {
     handleSelectionDragEnd()
     handleDragEnd(shape)
+    // Push state to history after drag completes
+    pushState(shapes)
     // Note: Keep shape locked after drag - only unlock on deselect
   }
   

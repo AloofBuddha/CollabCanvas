@@ -31,6 +31,7 @@ import Toolbar from './Toolbar'
 import Header from './Header'
 import LoadingSpinner from './LoadingSpinner'
 import AICommandInput from './AIAgent/AICommandInput'
+import KeyboardShortcutsGuide from './KeyboardShortcutsGuide'
 import { useAIAgent } from '../hooks/useAIAgent'
 import { CanvasContext } from '../types/aiAgent'
 import { Cursor, User, Shape, CircleShape, RectangleShape, TextShape, LineShape } from '../types'
@@ -47,8 +48,11 @@ export default function CanvasPage() {
   const [onlineUsers, setOnlineUsers] = useState<User[]>([])
   const [isPresenceReady, setIsPresenceReady] = useState(false)
   const [isDetailPaneOpen, setIsDetailPaneOpen] = useState(false)
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false)
   const updateCursorRef = useRef<((cursor: Cursor) => void) | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
+  
+  // Note: Keyboard shortcuts are handled in Canvas component where it has access to selection state
   
   // AI Agent
   const aiAgent = useAIAgent({
@@ -678,6 +682,7 @@ export default function CanvasPage() {
           onBatchShapeLock={handleBatchShapeLock}
           onBatchShapeUnlock={handleBatchShapeUnlock}
           onDetailPaneVisibilityChange={setIsDetailPaneOpen}
+          onToggleKeyboardShortcuts={() => setShowKeyboardShortcuts((prev) => !prev)}
         />
         
         {/* AI Command Input (above toolbar) */}
@@ -697,7 +702,13 @@ export default function CanvasPage() {
           onSelectTool={setSelectedTool}
           isAIAgentOpen={aiAgent.isOpen}
           onToggleAIAgent={aiAgent.toggle}
+          onShowKeyboardShortcuts={() => setShowKeyboardShortcuts(true)}
         />
+        
+        {/* Keyboard Shortcuts Guide */}
+        {showKeyboardShortcuts && (
+          <KeyboardShortcutsGuide onClose={() => setShowKeyboardShortcuts(false)} />
+        )}
       </div>
     </div>
   )
