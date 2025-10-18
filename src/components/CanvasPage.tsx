@@ -299,6 +299,25 @@ export default function CanvasPage() {
   })
   const isFirstLoadRef = useRef(true)
 
+  // Handle Escape key to close AI agent and reset to select tool
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && aiAgent.isOpen) {
+        // Check if user is typing in an input/textarea
+        const target = e.target as HTMLElement
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+          return
+        }
+        
+        aiAgent.close()
+        setSelectedTool('select')
+      }
+    }
+    
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [aiAgent.isOpen, aiAgent.close])
+
   // Initialize cursor sync and presence
   useEffect(() => {
     if (!userId) {
