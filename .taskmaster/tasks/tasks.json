@@ -163,7 +163,7 @@
         "id": 12,
         "title": "Implement AI Canvas Agent for Natural Language Commands",
         "description": "Develop an AI-powered agent that interprets natural language commands to create, manipulate, and layout shapes on the canvas, supporting at least 8+ commands across creation, manipulation, layout, and complex operations like generating a login form. Integrate with the Grok API for command processing and ensure all operations sync to Firestore for real-time collaboration, targeting sub-3 second response times, atomic operations, and multi-user support to align with 25-point rubric requirements. The AI agent will be accessible via a toolbar button in the bottom toolbar, opening a text area for commands that executes on Enter or button click, with loading states, success/failure handling via toast notifications, and context awareness of all shapes, canvas dimensions, and user viewport.",
-        "status": "in-progress",
+        "status": "done",
         "dependencies": [
           2,
           4,
@@ -230,7 +230,7 @@
               4
             ],
             "details": "Implement user-friendly error messages via existing toast notification system for invalid commands or API failures. Add a command history UI for undo/redo, stored locally. Optimize for sub-3 second responses with rate limiting on API calls. Enhance multi-user sync via Firestore, ensuring atomicity and resolving conflicts. Update UI to reflect changes smoothly, including shape locking during execution.",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": "Manual test: Trigger errors, verify toast messages; use history for undo/redo; test performance and multi-user collaboration. Unit test: Mock API failures and check error handling. Ensure all commands are tested individually before final polish."
           }
         ]
@@ -260,7 +260,7 @@
         "description": "Add keyboard shortcuts for nudging selected shapes with arrow keys (1px or 10px with Shift), duplicating shapes with Cmd/Ctrl+D, selecting all shapes with Cmd/Ctrl+A, and deselecting with Escape. Update the README to document all available shortcuts.",
         "details": "This task involves enhancing the canvas interaction by adding global keyboard event listeners to handle the specified shortcuts. Use React's useEffect hook in the main Canvas component (from Task 5) to attach event listeners to the window for keydown events, ensuring they work regardless of focus. For arrow key nudging: Check if shapes are selected (using the selectedShapes array from Task 11), then update their positions by 1px (or 10px if Shift is held) in the direction of the arrow key, updating the useShapeStore accordingly and syncing to Firestore if applicable. Prevent default browser behavior for these keys to avoid page scrolling. For duplication (Cmd/Ctrl+D): Clone the selected shapes by creating new shape objects with incremented positions (e.g., offset by 10px), add them to the store, and select the new shapes. For select all (Cmd/Ctrl+A): Set all shape IDs to the selectedShapes array. For deselect (Escape): Clear the selectedShapes array. Ensure cross-platform compatibility by checking for 'metaKey' (Cmd on Mac) or 'ctrlKey' (Ctrl on Windows/Linux). Integrate with existing shape movement logic from Task 6 for consistency. Update the README.md file in the project root to include a new section listing all shortcuts, such as arrow keys for nudging, Cmd/Ctrl+D for duplicate, etc., with brief descriptions. Consider accessibility by ensuring shortcuts don't conflict with screen readers or other tools.\n<info added on 2025-10-17T21:08:54.757Z>\nSuccessfully implemented comprehensive keyboard shortcuts system!\n\nCompleted Features:\n\n1. Undo/Redo System with Zustand\n   Created useHistoryStore with past/future state arrays\n   Max 50 history states to prevent memory issues\n   Integrated with all shape modification operations (drag, resize, rotate, nudge)\n   History pushed before operations start (not during)\n\n2. Keyboard Shortcuts Implementation\n   Ctrl/Cmd+Z: Undo\n   Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y: Redo\n   Arrow Keys: Nudge selected shapes 1px\n   Shift+Arrow Keys: Nudge selected shapes 10px\n   Ctrl/Cmd+D: Duplicate selected shapes\n   Ctrl/Cmd+A: Select all shapes\n   Escape: Deselect all shapes\n   ? or Shift+/: Toggle keyboard shortcuts guide\n\n3. Keyboard Shortcuts Guide Modal\n   Beautiful modal with categorized shortcuts\n   Displays platform-specific keys (⌘ for Mac, Ctrl for Windows/Linux)\n   Toggle via toolbar button or ? key\n   Organized by category: General, Selection, Manipulation, Navigation, Tools\n\n4. Toolbar Integration\n   Added help icon button (HelpCircle from lucide-react)\n   Opens keyboard shortcuts guide\n   Positioned after AI agent button with divider\n\nTechnical Implementation:\nuseHistoryStore.ts: Zustand store for undo/redo state management\nuseKeyboardShortcuts.ts: Comprehensive keyboard handler hook\nKeyboardShortcutsGuide.tsx: Modal component with keyboard shortcuts\nIntegrated history tracking into useShapeDragging and useShapeManipulation hooks\nAll shape operations now push history before modifications\n\nAll Linting Passes: 0 errors, 0 warnings\n\nRemaining: Write tests for undo/redo and keyboard shortcuts functionality\n</info added on 2025-10-17T21:08:54.757Z>",
         "testStrategy": "Perform manual tests in the application: Create multiple shapes on the canvas. Test arrow key nudging by selecting shapes and pressing arrow keys (verify 1px movement) and Shift+arrow (verify 10px movement), checking position updates in the store and visual rendering. Test duplication by selecting shapes, pressing Cmd/Ctrl+D, and confirming new shapes appear offset and are selected. Test select all with Cmd/Ctrl+A, ensuring all shapes are highlighted; test deselect with Escape, verifying no shapes are selected. Verify persistence by reloading the page after changes. Run unit tests for any new functions added to the stores, mocking keyboard events with Vitest. Check README for accurate documentation of shortcuts.",
-        "status": "in-progress",
+        "status": "done",
         "dependencies": [
           "4",
           "5",
@@ -344,7 +344,7 @@
       ],
       "created": "2025-10-16T15:37:35.414Z",
       "description": "Tasks for master context",
-      "updated": "2025-10-17T20:58:51.979Z"
+      "updated": "2025-10-18T00:56:18.361Z"
     }
   }
 }

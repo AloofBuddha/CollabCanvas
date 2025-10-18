@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook } from '@testing-library/react'
+import { renderHook, act } from '@testing-library/react'
 import { useShapeDragging } from '../../src/hooks/useShapeDragging'
 import { Shape } from '../../src/types'
 import useShapeStore from '../../src/stores/useShapeStore'
@@ -245,7 +245,9 @@ describe('useShapeDragging', () => {
       } as any // eslint-disable-line @typescript-eslint/no-explicit-any
 
       // Start drag with Alt - duplicate created immediately
-      result.current.handleDragStart(dragEvent, mockShape)
+      act(() => {
+        result.current.handleDragStart(dragEvent, mockShape)
+      })
 
       // Duplicate should be created at original position
       expect(onShapeCreated).toHaveBeenCalled()
@@ -264,7 +266,9 @@ describe('useShapeDragging', () => {
 
       // Now drag the original shape (duplicate stays behind)
       const dragMoveEvent = createMockDragEvent(200, 250)
-      result.current.handleDragMove(dragMoveEvent, mockShape)
+      act(() => {
+        result.current.handleDragMove(dragMoveEvent, mockShape)
+      })
 
       // Original should be at new position
       const originalAfter = useShapeStore.getState().shapes['shape-1']

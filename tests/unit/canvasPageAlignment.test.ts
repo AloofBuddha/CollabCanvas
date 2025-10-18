@@ -534,6 +534,9 @@ describe('Canvas Page Alignment Functionality', () => {
 
   describe('Error Handling', () => {
     it('should handle alignment when no shapes are selected', async () => {
+      // Suppress expected console.error
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       const { executeCommand } = await import('../../src/services/aiAgent')
 
       vi.mocked(executeCommand).mockRejectedValue(new Error('No shapes found to update'))
@@ -553,9 +556,14 @@ describe('Canvas Page Alignment Functionality', () => {
       })
 
       expect(mockOnError).toHaveBeenCalledWith('No shapes found to update')
+
+      consoleErrorSpy.mockRestore()
     })
 
     it('should handle invalid alignment commands gracefully', async () => {
+      // Suppress expected console.error
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       const { executeCommand } = await import('../../src/services/aiAgent')
 
       vi.mocked(executeCommand).mockRejectedValue(new Error('Invalid alignment command'))
@@ -575,9 +583,14 @@ describe('Canvas Page Alignment Functionality', () => {
       })
 
       expect(mockOnError).toHaveBeenCalledWith('Invalid alignment command')
+
+      consoleErrorSpy.mockRestore()
     })
 
     it('should handle distribute when no shapes are selected', async () => {
+      // Suppress expected console.error
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       const { executeCommand } = await import('../../src/services/aiAgent')
 
       vi.mocked(executeCommand).mockRejectedValue(new Error('No shapes found to distribute'))
@@ -597,9 +610,14 @@ describe('Canvas Page Alignment Functionality', () => {
       })
 
       expect(mockOnError).toHaveBeenCalledWith('No shapes found to distribute')
+
+      consoleErrorSpy.mockRestore()
     })
 
     it('should handle invalid distribute commands gracefully', async () => {
+      // Suppress expected console.error
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       const { executeCommand } = await import('../../src/services/aiAgent')
 
       vi.mocked(executeCommand).mockRejectedValue(new Error('Invalid distribute command'))
@@ -619,6 +637,8 @@ describe('Canvas Page Alignment Functionality', () => {
       })
 
       expect(mockOnError).toHaveBeenCalledWith('Invalid distribute command')
+
+      consoleErrorSpy.mockRestore()
     })
   })
 })

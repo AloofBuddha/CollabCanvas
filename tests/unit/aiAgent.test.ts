@@ -138,6 +138,9 @@ describe('AI Agent Service', () => {
 
   describe('Error Handling', () => {
     it('should handle AI error responses gracefully', async () => {
+      // Suppress expected console.error
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       const mockErrorResponse = {
         action: 'error',
         message: 'Creating a dog out of lines is not a supported command. Please specify shapes and their properties.'
@@ -150,9 +153,14 @@ describe('AI Agent Service', () => {
       await expect(
         executeCommand('make a dog out of lines', mockContext)
       ).rejects.toThrow('Creating a dog out of lines is not a supported command')
+
+      consoleErrorSpy.mockRestore()
     })
 
     it('should handle generic error field', async () => {
+      // Suppress expected console.error
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       const mockErrorResponse = {
         error: 'Something went wrong'
       }
@@ -164,9 +172,14 @@ describe('AI Agent Service', () => {
       await expect(
         executeCommand('invalid command', mockContext)
       ).rejects.toThrow('Something went wrong')
+
+      consoleErrorSpy.mockRestore()
     })
 
     it('should handle invalid JSON', async () => {
+      // Suppress expected console.error
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       mockInvoke.mockResolvedValue({
         content: 'This is not JSON'
       })
@@ -174,9 +187,14 @@ describe('AI Agent Service', () => {
       await expect(
         executeCommand('create something', mockContext)
       ).rejects.toThrow()
+
+      consoleErrorSpy.mockRestore()
     })
 
     it('should provide user-friendly message for Zod validation errors', async () => {
+      // Suppress expected console.error
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       // Return a response that doesn't match the schema
       const invalidResponse = {
         action: 'unknownAction',
@@ -190,15 +208,22 @@ describe('AI Agent Service', () => {
       await expect(
         executeCommand('create something', mockContext)
       ).rejects.toThrow('AI response format was invalid. Please try rephrasing your command.')
+
+      consoleErrorSpy.mockRestore()
     })
 
     it('should handle missing API key', async () => {
+      // Suppress expected console.error
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       // Mock missing API key
       vi.stubEnv('VITE_OPENAI_API_KEY', '')
 
       await expect(
         executeCommand('create a circle', mockContext)
       ).rejects.toThrow('VITE_OPENAI_API_KEY is not set')
+
+      consoleErrorSpy.mockRestore()
     })
   })
 

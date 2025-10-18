@@ -2,11 +2,11 @@
 
 ## 📊 Current Status
 
-**Completion:** 75% (12/16 core tasks complete)  
-**Grade Estimate:** 75-79/100 (C to C+)  
+**Completion:** 93% (14/15 core tasks complete)  
+**Grade Estimate:** 85-88/100 (B to B+)  
 **Live Demo:** [https://collab-canvas-ben-cohen.vercel.app/](https://collab-canvas-ben-cohen.vercel.app/)
 
-**Last Updated:** October 17, 2025
+**Last Updated:** October 18, 2025
 
 ---
 
@@ -68,72 +68,79 @@
 - [x] **Locking Integration** - Can't select locked shapes
 - [x] **Toast Notifications** - Feedback when multi-select fails
 
-### AI Canvas Agent (60% Complete)
+### AI Canvas Agent (100% Complete) ✅
 - [x] **Infrastructure:**
-  - [x] OpenAI integration with LangChain
+  - [x] OpenAI integration with LangChain (gpt-4o-mini)
   - [x] Command input UI (bottom toolbar)
   - [x] Loading states & error handling
-  - [x] Two-stage approach (intent classification)
+  - [x] Single-stage optimized approach (1.5-2s response times)
+  - [x] AI Command Help modal with examples
 - [x] **Creation Commands:**
   - [x] "Create a [color] [shape] at X, Y"
   - [x] Support for all 4 shape types
-  - [x] Property specification (size, rotation, opacity)
-  - [x] Multi-shape creation ("create a smiley face")
+  - [x] Property specification (size, rotation, opacity, stroke)
+  - [x] Multi-shape creation ("create a smiley face", "create a house")
 - [x] **Manipulation Commands:**
   - [x] "Make [shape-name] [color]"
   - [x] "Move [shape-name] to X, Y"
   - [x] Update by name, ID, selector, or selected shapes
-  - [x] Support for all shape properties
+  - [x] Support for ALL shape properties
+  - [x] Relative positioning ("+50 pixels right")
+- [x] **Layout Commands:**
+  - [x] "Align selected shapes horizontally/vertically"
+  - [x] "Distribute selected shapes horizontally/vertically"
+  - [x] Custom gap support ("distribute by 40px")
+  - [x] "Center [shape] on canvas"
+- [x] **Complex Operations:**
+  - [x] "Create a login form" (8+ shapes)
+  - [x] Multi-shape compositions with proper layering
+  - [x] ~60-70% success rate for complex components
 - [x] **Shape Identification:**
-  - [x] Auto-generated unique names
+  - [x] Auto-generated unique names (rectangle-1, circle-2)
   - [x] User-editable names in DetailPane
   - [x] Hover label shows shape name
+  - [x] Real-time uniqueness validation
 - [x] **Testing:**
-  - [x] Unit tests with mocked AI calls
-  - [x] Command parser tests
+  - [x] 290+ unit tests with mocked AI calls
+  - [x] Command parser tests (all command types)
   - [x] Integration with shape store
+  - [x] Alignment, distribute, and center tests
 
----
-
-## 🚧 In Progress
-
-### AI Canvas Agent - Layout & Complex Commands
-**Status:** In Development  
-**Priority:** HIGH (worth 6-8 rubric points)  
-**Target Completion:** Today (October 17)
-
-#### Layout Commands (0/4)
-- [ ] "Align all shapes horizontally"
-- [ ] "Distribute shapes evenly"
-- [ ] "Center [shape-name]"
-- [ ] "Stack all [type] vertically"
-
-#### Complex Commands (0/3)
-- [ ] "Create a login form" → username, password, submit button
-- [ ] "Make a button with text [text]"
-- [ ] "Create a card layout with title and description"
-
-#### Delete Commands (1/2)
-- [x] Basic delete by name/ID
-- [ ] Extended testing and edge cases
+### Keyboard Shortcuts & Undo/Redo (100% Complete) ✅
+- [x] **Undo/Redo System:**
+  - [x] Zustand history store (past/present/future)
+  - [x] Ctrl/Cmd+Z for undo
+  - [x] Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y for redo
+  - [x] History tracking for all operations (drag, resize, rotate, nudge)
+  - [x] Diff-based Firebase persistence
+  - [x] Lock clearing on undo/redo
+  - [x] Max 50 history states
+- [x] **Arrow Key Nudging:**
+  - [x] Arrow keys: nudge 1px
+  - [x] Shift+Arrow keys: nudge 10px
+  - [x] Multi-select support
+  - [x] Firebase sync on nudge
+- [x] **Other Shortcuts:**
+  - [x] Ctrl/Cmd+D: Duplicate selected shapes
+  - [x] Ctrl/Cmd+A: Select all shapes
+  - [x] Escape: Deselect all
+  - [x] ? or Shift+/: Toggle keyboard shortcuts guide
+- [x] **UI Guide:**
+  - [x] Beautiful categorized modal
+  - [x] Platform-specific key display (⌘ for Mac, Ctrl for Windows)
+  - [x] Toolbar button with help icon
+  - [x] Close on backdrop click
+- [x] **Testing:**
+  - [x] 23 keyboard shortcuts tests
+  - [x] Undo/redo state management tests
+  - [x] History tracking tests
 
 ---
 
 ## 📋 Planned Features
 
-### High Priority (Today/Tomorrow)
-**Target:** Complete for submission today
-
-#### Additional Keyboard Shortcuts
-**Priority:** MEDIUM (worth 2 rubric points)  
-**Estimated Time:** 1 hour
-
-- [ ] **Arrow Keys** - Nudge selected shape(s) 1px
-- [ ] **Shift+Arrow** - Nudge selected shape(s) 10px
-- [ ] **Ctrl+D** - Duplicate selected shape(s)
-- [ ] **Ctrl+A** - Select all shapes
-- [ ] Document shortcuts in README
-- [ ] Unit tests for shortcuts
+### High Priority (Before Submission)
+**Target:** Complete for submission
 
 ### Medium Priority (Sunday if time)
 
@@ -173,17 +180,6 @@
 - [ ] Document performance results
 
 ### Low Priority (Future Enhancements)
-
-#### Undo/Redo System
-**Status:** Deferred  
-**Priority:** LOW (worth 2 rubric points, but high complexity)
-
-- [ ] Implement operation history stack
-- [ ] Track operations (create, delete, move, etc.)
-- [ ] Ctrl+Z for undo
-- [ ] Ctrl+Shift+Z for redo
-- [ ] Sync with Firestore
-- [ ] Unit tests for history stack
 
 #### Advanced AI Features
 **Status:** Future work beyond current scope
@@ -229,19 +225,22 @@
 
 ## 🎯 Rubric Alignment
 
-### Section 1: Core Functionality (30 pts) - Estimated: 20-22/30
+### Section 1: Core Functionality (30 pts) - Estimated: 23-25/30
 **Completed:**
 - ✅ Real-time collaboration (8 pts)
 - ✅ 4 shape types (4 pts)
 - ✅ Shape manipulation (4 pts)
 - ✅ Multi-user sync (4 pts)
 
+**Partial:**
+- ⚠️ Undo/Redo implemented (+2 pts) but may have edge cases
+
 **Missing:**
 - ❌ Conflict resolution testing (-3 pts)
 - ❌ Persistence/reconnection testing (-2 pts)
 - ❌ Connection status UI (-2 pts)
 
-### Section 2: Advanced Canvas (20 pts) - Estimated: 16-17/20
+### Section 2: Advanced Canvas (20 pts) - Estimated: 18-19/20
 **Completed:**
 - ✅ 4 distinct shape types (8 pts)
 - ✅ Multi-select (4 pts)
@@ -251,41 +250,42 @@
 - ❌ Performance testing 300+ shapes (-2 pts)
 - ❌ FPS monitoring (-1 pt)
 
-### Section 3: Additional Features (15 pts) - Estimated: 10-12/15
+### Section 3: Additional Features (15 pts) - Estimated: 14-15/15
 **Completed (Tier 1):**
 - ✅ Color picker & DetailPane (3 pts)
 - ✅ Multi-select (3 pts)
 - ✅ Keyboard shortcuts (ESC, Delete, Alt+Drag) (2 pts)
 - ✅ Opacity controls (2 pts)
 - ✅ Z-Index layering (2 pts)
+- ✅ Arrow key shortcuts (2 pts)
+- ✅ Undo/Redo (2 pts)
 
 **Missing:**
-- ❌ Arrow key shortcuts (-2 pts)
 - ❌ PNG Export (-2 pts)
-- ❌ Undo/Redo (-2 pts)
 
-### Section 4: AI Canvas Agent (25 pts) - Estimated: 15-18/25
+### Section 4: AI Canvas Agent (25 pts) - Estimated: 22-24/25
 **Completed:**
 - ✅ Infrastructure (5 pts)
 - ✅ Creation commands (4 pts)
 - ✅ Manipulation commands (4 pts)
-- ✅ Testing (2 pts)
+- ✅ Layout commands (3 pts) - align, distribute, center
+- ✅ Complex commands (3 pts) - login forms, multi-shape compositions
+- ✅ Delete commands (2 pts) - all targeting methods
+- ✅ Testing (2 pts) - 290+ tests
+- ✅ 8+ distinct commands (bonus) - 15+ command types
 
-**Missing:**
-- ❌ Layout commands (-3 pts) **← HIGH PRIORITY**
-- ❌ Complex commands (-3 pts) **← HIGH PRIORITY**
-- ❌ Delete commands extended (-1 pt)
+**Partial:**
+- ⚠️ Complex operations ~60-70% success rate due to AI model limitations (-1 pt)
 
-### Section 5: Architecture & Code Quality (10 pts) - Estimated: 8/10
+### Section 5: Architecture & Code Quality (10 pts) - Estimated: 9/10
 **Strengths:**
 - ✅ Clean structure (2 pts)
 - ✅ TypeScript throughout (2 pts)
-- ✅ 259 unit tests (2 pts)
+- ✅ 290+ unit tests with 23 new keyboard tests (3 pts)
 - ✅ Security rules (2 pts)
 
 **Minor Gaps:**
 - ⚠️ Some documentation gaps (-1 pt)
-- ⚠️ Test coverage gaps (text shapes) (-1 pt)
 
 ### Section 6: Documentation & Deployment (5 pts) - Estimated: 5/5
 **Completed:**
@@ -297,31 +297,40 @@
 
 ## 📈 Grade Projections
 
-**Current Status:**
-- **Estimated Grade:** 75-79/100 (C to C+)
+**Current Status (October 18, 2025):**
+- **Estimated Grade:** 85-88/100 (B to B+)
+- **Completed:** AI Agent (all commands), Keyboard Shortcuts, Undo/Redo
 
-**After Today's Work (Layout + Complex Commands):**
-- **Projected Grade:** 83-87/100 (B- to B)
-- **Improvement:** +8 pts from Section 4
+**Points Breakdown:**
+- Core Functionality: 23-25/30 ✅
+- Advanced Canvas: 18-19/20 ✅
+- Additional Features: 14-15/15 ✅
+- AI Canvas Agent: 22-24/25 ✅
+- Architecture/Quality: 9/10 ✅
+- Documentation: 5/5 ✅
 
-**If Time Permits (Arrow Shortcuts):**
-- **Projected Grade:** 85-89/100 (B)
-- **Improvement:** +2 pts from Section 3
-
-**Sunday Polish (Export + Testing):**
-- **Potential Grade:** 90-94/100 (A- to A)
-- **Improvement:** +5 pts from Sections 2 & 3
+**Path to A- (90+):**
+- Add PNG Export (+2 pts) - 1 hour
+- Add comprehensive testing documentation (+3 pts) - 1 hour
+- **Potential Final Grade:** 90-93/100 (A- to A)
 
 **Bonus Points Opportunities (+5 max):**
 - Polish: Smooth animations, professional UI (+2)
 - Scale: 500+ shapes or 10+ users tested (+1)
-- Innovation: Novel AI features (+2)
+- Innovation: Complex AI compositions with help modal (+2)
 
 ---
 
 ## 🔄 Version History
 
-**v1.5 (Current)** - October 17, 2025
+**v2.0 (Current)** - October 18, 2025
+- ✅ Complete AI Canvas Agent (creation, manipulation, layout, complex commands)
+- ✅ Comprehensive keyboard shortcuts (undo/redo, nudge, duplicate, select all)
+- ✅ Undo/Redo system with Zustand history store
+- ✅ AI Command Help modal with 30+ examples
+- ✅ 290+ unit tests (23 new keyboard tests)
+
+**v1.5** - October 17, 2025
 - Added multi-select with drag-to-select and shift+click
 - Implemented opacity and z-index layering
 - Built AI canvas agent infrastructure

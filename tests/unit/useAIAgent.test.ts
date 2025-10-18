@@ -214,6 +214,9 @@ describe('useAIAgent Hook', () => {
   })
 
   it('should handle errors gracefully', async () => {
+    // Suppress expected console.error
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
     const { executeCommand } = await import('../../src/services/aiAgent')
 
     vi.mocked(executeCommand).mockRejectedValue(new Error('AI service unavailable'))
@@ -242,6 +245,8 @@ describe('useAIAgent Hook', () => {
     expect(mockOnError).toHaveBeenCalledWith('AI service unavailable')
     expect(mockOnShapesCreated).not.toHaveBeenCalled()
     expect(result.current.isExecuting).toBe(false)
+
+    consoleErrorSpy.mockRestore()
   })
 
   it('should not execute if command is empty', async () => {
