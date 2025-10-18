@@ -10,6 +10,7 @@ import RemoteCursor from './RemoteCursor'
 import ShapeRenderer, { NewShapeRenderer } from './ShapeRenderer'
 import DetailPane from './DetailPane'
 import MultiSelectBox from './MultiSelectBox'
+import GridBackground from './GridBackground'
 import { useCanvasPanning } from '../hooks/useCanvasPanning'
 import { useShapeCreation } from '../hooks/useShapeCreation'
 import { useShapeDragging } from '../hooks/useShapeDragging'
@@ -663,6 +664,15 @@ export default function Canvas({
         onClick={handleStageClickWithUnlock}
         draggable={false}
       >
+        {/* Grid Background Layer */}
+        <GridBackground
+          width={window.innerWidth}
+          height={window.innerHeight - HEADER_HEIGHT}
+          scale={stageScale}
+          offsetX={stageRef.current?.x() || 0}
+          offsetY={stageRef.current?.y() || 0}
+        />
+        
         <Layer>
           {/* Render all existing shapes (sorted by zIndex for layering) */}
           {Object.values(shapes)

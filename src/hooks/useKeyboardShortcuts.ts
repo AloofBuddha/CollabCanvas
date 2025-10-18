@@ -160,20 +160,36 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) 
           if (!shape) return // Shape doesn't exist
           // Note: We allow nudging even if shape is locked by current user
           
-          let updates: { x?: number; y?: number } = {}
+          let updates: { x?: number; y?: number; x2?: number; y2?: number } = {}
           
           switch (e.key) {
             case 'ArrowUp':
               updates = { y: shape.y - nudgeDistance }
+              // For lines, also move the end point
+              if (shape.type === 'line') {
+                updates.y2 = shape.y2 - nudgeDistance
+              }
               break
             case 'ArrowDown':
               updates = { y: shape.y + nudgeDistance }
+              // For lines, also move the end point
+              if (shape.type === 'line') {
+                updates.y2 = shape.y2 + nudgeDistance
+              }
               break
             case 'ArrowLeft':
               updates = { x: shape.x - nudgeDistance }
+              // For lines, also move the end point
+              if (shape.type === 'line') {
+                updates.x2 = shape.x2 - nudgeDistance
+              }
               break
             case 'ArrowRight':
               updates = { x: shape.x + nudgeDistance }
+              // For lines, also move the end point
+              if (shape.type === 'line') {
+                updates.x2 = shape.x2 + nudgeDistance
+              }
               break
           }
           

@@ -304,6 +304,54 @@ describe('useKeyboardShortcuts', () => {
       )
     })
 
+    it('should nudge lines by moving both start and end points', () => {
+      const { addShape } = useShapeStore.getState()
+      const line: Shape = {
+        id: 'line-1',
+        type: 'line',
+        x: 100,
+        y: 100,
+        x2: 200,
+        y2: 200,
+        color: '#000000',
+        strokeWidth: 2,
+        createdBy: 'test-user',
+        lockedBy: null,
+        zIndex: Date.now(),
+      }
+      addShape(line)
+      
+      const selectedShapeIds = new Set(['line-1'])
+      renderHook(() => useKeyboardShortcuts({ ...mockCallbacks, selectedShapeIds }))
+      
+      // Nudge right - both x and x2 should increase
+      act(() => {
+        window.dispatchEvent(createKeyboardEvent('ArrowRight'))
+      })
+      
+      expect(mockCallbacks.onPersistShape).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'line-1', x: 101, x2: 201 })
+      )
+      
+      // Clear mock and get updated shape
+      vi.clearAllMocks()
+      const updatedShape = useShapeStore.getState().shapes['line-1']
+      if (updatedShape.type !== 'line') throw new Error('Expected line shape')
+      
+      // Nudge down - both y and y2 should increase by 10 (shift key)
+      act(() => {
+        window.dispatchEvent(createKeyboardEvent('ArrowDown', { shiftKey: true }))
+      })
+      
+      expect(mockCallbacks.onPersistShape).toHaveBeenCalledWith(
+        expect.objectContaining({ 
+          id: 'line-1', 
+          y: updatedShape.y + 10, 
+          y2: updatedShape.y2 + 10 
+        })
+      )
+    })
+
     it('should not nudge when no shapes are selected', () => {
       renderHook(() => useKeyboardShortcuts({ ...mockCallbacks, selectedShapeIds: new Set() }))
       

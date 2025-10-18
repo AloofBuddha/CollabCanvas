@@ -17,5 +17,36 @@ export default defineConfig({
     css: true,
     testTimeout: 10000,
   },
+  build: {
+    chunkSizeWarningLimit: 2000,
+     rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core frameworks
+          react: ['react', 'react-dom'],
+
+          // Graphics / canvas
+          konva: ['konva', 'react-konva'],
+
+              // Firebase (split by used modules)
+          firebase: [
+            'firebase/app',
+            'firebase/auth',
+            'firebase/firestore',
+            'firebase/database',
+          ],
+
+          // LangChain & OpenAI (explicit submodules)
+          ai: [
+            '@langchain/openai',
+            '@langchain/core',
+          ],
+
+          // Utility / state management
+          utils: ['zustand', 'zod', 'react-hot-toast', 'lucide-react'],
+        },
+      },
+    },
+  },
 })
 
