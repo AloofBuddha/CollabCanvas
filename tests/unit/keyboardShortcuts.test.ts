@@ -420,7 +420,7 @@ describe('useKeyboardShortcuts', () => {
       expect(mockCallbacks.onDuplicate).not.toHaveBeenCalled()
     })
 
-    it('should offset duplicated shapes by 20px', () => {
+    it('should duplicate shapes at the same position (no offset)', () => {
       const { addShape } = useShapeStore.getState()
       addShape(createTestCircle())
       
@@ -435,8 +435,8 @@ describe('useKeyboardShortcuts', () => {
       const duplicatedShape = Object.values(shapes).find(s => s.id !== 'shape-1')
       
       expect(duplicatedShape).toBeDefined()
-      expect(duplicatedShape?.x).toBe(120) // 100 + 20
-      expect(duplicatedShape?.y).toBe(120) // 100 + 20
+      expect(duplicatedShape?.x).toBe(100) // Same position as original
+      expect(duplicatedShape?.y).toBe(100) // Same position as original
     })
 
     it('should not copy lock state when duplicating', () => {

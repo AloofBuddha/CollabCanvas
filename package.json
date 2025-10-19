@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@langchain/openai": "^0.6.16",
+    "@types/stats.js": "^0.17.4",
     "dotenv": "^16.4.5",
     "firebase": "^10.12.2",
     "konva": "^9.3.14",
@@ -26,6 +27,7 @@
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.6.0",
     "react-konva": "^18.2.10",
+    "stats.js": "^0.17.0",
     "zod": "^3.25.76",
     "zustand": "^4.5.2"
   },

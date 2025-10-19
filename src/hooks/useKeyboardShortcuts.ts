@@ -10,7 +10,8 @@ import { Shape } from '../types'
  * - Ctrl/Cmd+Z: Undo
  * - Ctrl/Cmd+Shift+Z: Redo
  * - Arrow keys: Nudge selected shapes (1px or 10px with Shift)
- * - Ctrl/Cmd+D: Duplicate selected shapes
+ * - Ctrl/Cmd+D: Duplicate selected shapes (creates copies at same position, keeps original selected)
+ * - Alt+Drag: Duplicate single shape while dragging
  * - Ctrl/Cmd+A: Select all shapes
  * - Escape: Deselect all shapes
  */
@@ -108,28 +109,34 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) 
       }
 
       // Duplicate (Ctrl/Cmd+D)
+      // Creates duplicates at the SAME position, keeping original selection
+      // User can then drag the originals away
       if (modKey && e.key.toLowerCase() === 'd') {
         e.preventDefault()
         if (selectedShapeIds.size > 0) {
           // Push current state to history
           pushState(shapes)
           
-          const newShapes: string[] = []
           selectedShapeIds.forEach((id) => {
             const shape = shapes[id]
             if (shape) {
               const newShape = {
                 ...shape,
                 id: `shape-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                x: shape.x + 20, // Offset by 20px
-                y: shape.y + 20,
+                // NO offset - duplicates appear at exact same position
                 lockedBy: null, // Don't copy lock state
               }
               addShape(newShape)
-              newShapes.push(newShape.id)
+              
+              // Persist the duplicate to Firebase
+              if (callbacks.onPersistShape) {
+                callbacks.onPersistShape(newShape)
+              }
             }
           })
           
+          // Original selection remains selected
+          // Duplicates are created underneath
           callbacks.onDuplicate?.()
         }
         return
