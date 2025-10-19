@@ -24,6 +24,7 @@ interface ShapeRendererProps {
   isLockedByMe: boolean
   isLockedByOther: boolean
   isManipulating: boolean
+  isResizing: boolean // True when actively resizing the shape
   isHoveringManipulationZone: boolean // True when hovering over resize/rotate handles
   isInMultiSelect: boolean // True when shape is part of a multi-selection
   stageScale: number
@@ -44,6 +45,7 @@ export default function ShapeRenderer({
   isLockedByMe,
   isLockedByOther,
   isManipulating,
+  isResizing,
   isHoveringManipulationZone,
   isInMultiSelect,
   stageScale,
@@ -320,7 +322,8 @@ export default function ShapeRenderer({
     <Fragment key={shape.id}>
       {renderShape()}
       {/* Show dimension label for selected shape (but not for multi-select) */}
-      {isSelected && isLockedByMe && !isManipulating && !isInMultiSelect && (
+      {/* Show during resize, but hide during drag/rotate */}
+      {isSelected && isLockedByMe && (!isManipulating || isResizing) && !isInMultiSelect && (
         <ShapeDimensionLabel 
           key={`${shape.id}-label`}
           shape={shape} 

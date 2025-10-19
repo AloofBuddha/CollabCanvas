@@ -256,9 +256,19 @@ export function useShapeManipulation({
     return 'move'
   }, [hoveredZone, hoveredShapeId, manipulationState])
   
+  // Check if currently resizing (corner or edge manipulation)
+  const isResizing = manipulationState.isManipulating && 
+    manipulationState.zone !== null &&
+    (manipulationState.zone.includes('corner') || 
+     manipulationState.zone.includes('edge') ||
+     manipulationState.zone === 'start-point' ||
+     manipulationState.zone === 'end-point')
+  
   return {
     isManipulating: manipulationState.isManipulating,
     isRotating: manipulationState.isManipulating && manipulationState.zone?.includes('rotate') || false,
+    isResizing,
+    manipulationZone: manipulationState.zone,
     hoveredZone,
     currentCursor,
     handleShapeMouseMove,

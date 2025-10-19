@@ -26,6 +26,7 @@ import {
 import useUserStore from '../stores/useUserStore'
 import useCursorStore from '../stores/useCursorStore'
 import useShapeStore from '../stores/useShapeStore'
+import useHistoryStore from '../stores/useHistoryStore'
 import Canvas from './Canvas'
 import Toolbar from './Toolbar'
 import Header from './Header'
@@ -64,6 +65,14 @@ export default function CanvasPage() {
       for (const shape of newShapes) {
         await handleShapeCreated(shape)
       }
+      
+      // Push state to history AFTER all AI shapes are created
+      setTimeout(() => {
+        const { shapes: currentShapes } = useShapeStore.getState()
+        const { pushState } = useHistoryStore.getState()
+        pushState(currentShapes)
+      }, 0)
+      
       toast.success(`Created ${newShapes.length} shape${newShapes.length > 1 ? 's' : ''}!`)
     },
     onShapesUpdated: async (command) => {
@@ -104,7 +113,11 @@ export default function CanvasPage() {
       const hasXUpdate = 'x' in command.updates && typeof command.updates.x === 'number'
       const hasYUpdate = 'y' in command.updates && typeof command.updates.y === 'number'
       
-      if (command.updates && (hasXUpdate || hasYUpdate)) {
+      // CRITICAL: If BOTH x and y are present, this is a MOVE command, not alignment!
+      // Only treat as alignment/distribute if ONLY x OR ONLY y is present
+      const isMoveCommand = hasXUpdate && hasYUpdate
+      
+      if (command.updates && (hasXUpdate || hasYUpdate) && !isMoveCommand) {
         // Determine which coordinate is being updated (prefer x if both exist)
         const updateKey = hasXUpdate ? 'x' : 'y'
         const updateValue = command.updates[updateKey] as number
@@ -231,29 +244,41 @@ export default function CanvasPage() {
       }
 
       // Default update logic for all update commands (including center commands)
-      for (const shape of shapesToUpdate) {
-        // Process relative updates (e.g., "+50" means add 50 to current value)
-        const processedUpdates: Record<string, unknown> = {}
-        for (const [key, value] of Object.entries(command.updates)) {
-          if (typeof value === 'string' && (value.startsWith('+') || value.startsWith('-'))) {
-            // Relative update: "+50" or "-20"
-            const delta = parseFloat(value)
-            const currentValue = (shape as unknown as Record<string, unknown>)[key]
-            if (typeof currentValue === 'number') {
-              processedUpdates[key] = currentValue + delta
+      try {
+        for (const shape of shapesToUpdate) {
+          // Process relative updates (e.g., "+50" means add 50 to current value)
+          const processedUpdates: Record<string, unknown> = {}
+          for (const [key, value] of Object.entries(command.updates)) {
+            if (typeof value === 'string' && (value.startsWith('+') || value.startsWith('-'))) {
+              // Relative update: "+50" or "-20"
+              const delta = parseFloat(value)
+              const currentValue = (shape as unknown as Record<string, unknown>)[key]
+              if (typeof currentValue === 'number') {
+                processedUpdates[key] = currentValue + delta
+              } else {
+                processedUpdates[key] = value // Fallback to original value if not a number
+              }
             } else {
-              processedUpdates[key] = value // Fallback to original value if not a number
+              processedUpdates[key] = value
             }
-          } else {
-            processedUpdates[key] = value
           }
+
+          const updatedShape = { ...shape, ...processedUpdates }
+          await handleShapeUpdate(updatedShape)
         }
 
-        const updatedShape = { ...shape, ...processedUpdates }
-        await handleShapeUpdate(updatedShape)
+        // Push state to history AFTER all AI updates are applied
+        setTimeout(() => {
+          const { shapes: currentShapes } = useShapeStore.getState()
+          const { pushState } = useHistoryStore.getState()
+          pushState(currentShapes)
+        }, 0)
+        
+        toast.success(`Updated ${shapesToUpdate.length} shape${shapesToUpdate.length > 1 ? 's' : ''}`)
+      } catch (error) {
+        console.error('Failed to update shapes:', error)
+        toast.error('Failed to update shapes')
       }
-
-      toast.success(`Updated ${shapesToUpdate.length} shape${shapesToUpdate.length > 1 ? 's' : ''}`)
     },
     onShapesDeleted: async (command) => {
       // Find shapes to delete
@@ -292,6 +317,13 @@ export default function CanvasPage() {
       for (const shape of shapesToDelete) {
         await handleShapeDeleted(shape.id)
       }
+      
+      // Push state to history AFTER all AI deletions are complete
+      setTimeout(() => {
+        const { shapes: currentShapes } = useShapeStore.getState()
+        const { pushState } = useHistoryStore.getState()
+        pushState(currentShapes)
+      }, 0)
       
       toast.success(`Deleted ${shapesToDelete.length} shape${shapesToDelete.length > 1 ? 's' : ''}`)
     },
@@ -499,15 +531,11 @@ export default function CanvasPage() {
 
   // Handle shape updates - persist to both databases
   const handleShapeUpdate = useCallback(async (shape: Shape) => {
-    try {
-      // Update both databases to ensure consistency
-      await Promise.all([
-        saveShape(shape),          // Firestore for persistence
-        syncShapeToRTDB(shape),    // RTDB for real-time sync
-      ])
-    } catch (error) {
-      console.error('Failed to update shape:', error)
-    }
+    // Update both databases to ensure consistency
+    await Promise.all([
+      saveShape(shape),          // Firestore for persistence
+      syncShapeToRTDB(shape),    // RTDB for real-time sync
+    ])
   }, [])
 
   // Handle shape lock (when user selects or starts dragging)

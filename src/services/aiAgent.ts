@@ -61,6 +61,19 @@ TEXT:
 - Optional: fontSize, fontFamily, textColor (text color), color (background color, use "transparent" for no background), width, height, align ("left"/"center"/"right"), verticalAlign ("top"/"middle"/"bottom"), rotation (degrees), opacity (0-1)
 - Defaults: fontSize=16, fontFamily="Arial", textColor="#000000" (black), color="transparent", width=200, height=50, align="left", verticalAlign="top", rotation=0, opacity=1.0
 
+⚠️ CRITICAL TEXT ALIGNMENT RULES:
+- "align":"left" → text aligns to LEFT edge of text box (default for labels)
+- "align":"center" → text CENTERS within text box (use for titles, button text, headings)
+- "align":"right" → text aligns to RIGHT edge of text box (rarely used)
+- For transparent text (labels, titles): use "color":"transparent"
+- For buttons: use ONE text shape with colored background (e.g., "color":"#3B82F6" for blue button)
+
+⚠️ BUTTON IMPLEMENTATION:
+- Buttons = ONE text shape with colored "color" (background) property
+- Example: {"type":"text","text":"Submit","color":"#3B82F6","textColor":"#FFFFFF","align":"center"}
+- DO NOT create buttons as rectangle + text overlay!
+- Button text should always have "align":"center"
+
 OPACITY: Ranges from 0 (fully transparent) to 1 (fully opaque). Use 0.5 for 50% transparency, 0.25 for 25%, etc.
 
 Color format: Use hex colors (e.g., "#FF0000" for red) or "transparent"
@@ -241,6 +254,13 @@ IMPORTANT:
 - Colors must be hex format (e.g., "#FF0000") or "transparent"
 - You MUST always return valid shape commands. If you cannot fulfill a request, create the closest approximation you can using available shapes
 
+COUNTING ACCURACY (CRITICAL):
+- When user asks for a specific number of shapes (e.g., "make 100 red circles"), you MUST create EXACTLY that number
+- Count carefully as you generate the JSON array
+- For large quantities, use a systematic approach: generate shapes in groups and verify the total count
+- Example: "make 100 circles" = generate exactly 100 circle objects in the array
+- NEVER approximate or round down the count - the exact number matters!
+
 POSITIONING STRATEGY:
 - If user specifies position (e.g., "at 200, 300"), use that exact position
 - If user doesn't specify position AND there are existing shapes on canvas, try to place new shapes in empty space away from existing shapes
@@ -252,29 +272,29 @@ LAYERING AND Z-INDEX (⚠️ CRITICAL - MOST COMMON ERROR ⚠️):
 RULE: Higher zIndex number = appears ON TOP | Lower zIndex number = appears BEHIND
 
 MANDATORY zIndex PATTERN for multi-shape compositions:
-1. Use Date.now() as base (e.g., 1700000000000)
+1. Use simple sequential numbers starting from 100
 2. Assign in this ORDER (background → foreground):
-   • FIRST shape (background container): base + 0 = 1700000000000 (LOWEST number - behind everything)
-   • Second shape: base + 1 = 1700000000001
-   • Third shape: base + 2 = 1700000000002
-   • LAST shape (text/buttons): base + 7 = 1700000000007 (HIGHEST number - on top)
+   • FIRST shape (background container): 100 (LOWEST number - behind everything)
+   • Second shape: 101
+   • Third shape: 102
+   • LAST shape (text/buttons): highest number (e.g., 106 for 7th shape - on top)
 
-⚠️ CRITICAL: Background rectangles MUST be FIRST shape with LOWEST zIndex!
+⚠️ CRITICAL: Background rectangles MUST be FIRST shape with LOWEST zIndex (e.g., 100)!
 
 CORRECT Example (background BEHIND text):
 [
-  {"zIndex":1700000000000},  // Background rectangle - FIRST, LOWEST
-  {"zIndex":1700000000001},  // Input field
-  {"zIndex":1700000000002}   // Text label - LAST, HIGHEST (visible on top)
+  {"zIndex":100},  // Background rectangle - FIRST, LOWEST
+  {"zIndex":101},  // Input field
+  {"zIndex":102}   // Text label - LAST, HIGHEST (visible on top)
 ]
 
 ❌ WRONG (background covers everything):
 [
-  {"zIndex":1700000000002},  // Text label
-  {"zIndex":1700000000000},  // Background - TOO LOW, appears behind
+  {"zIndex":102},  // Text label
+  {"zIndex":100},  // Background - created last but still appears behind (BROKEN)
 ]
 
-If your component looks empty/broken, you probably put background last or gave it the highest zIndex!
+If your component looks empty/broken, you probably put background last or gave it a high zIndex!
 
 LAYOUT COMMANDS:
 You can use updateShape to implement layout operations like align, distribute, and arrange.
@@ -342,31 +362,33 @@ Response: {"action":"updateShape","useSelected":true,"updates":{"y":540,"distrib
 Explanation: Spread vertically with 40px gaps. Only Y changes, X unchanged. distribute:true marker included.
 
 CENTER COMMANDS:
-- "center [shape] on canvas" = move shape to center of canvas (both X and Y)
-  * Canvas center = (canvasWidth/2, canvasHeight/2)
-  * Example: Canvas 1920x1080 → center at (960, 540)
+⚠️ CRITICAL: "center [shape]" centers that SINGLE shape only
+⚠️ CRITICAL: "center selected shapes" or "center all [type]" = center the GROUP by moving each shape the SAME OFFSET
 
-- "center [shape] horizontally" = center shape horizontally, keep Y position
-  * Set X to canvasWidth/2, keep original Y
-  * Example: Shape at (100, 200) → (960, 200) on 1920px canvas
-
-- "center [shape] vertically" = center shape vertically, keep X position
-  * Set Y to canvasHeight/2, keep original X
-  * Example: Shape at (300, 100) → (300, 540) on 1080px canvas
-
-- Works with all targeting methods: shapeName, shapeId, selector, useSelected
-
-User: "center selected shapes on canvas"
-Context: Canvas is 1920x1080, 3 shapes selected
-Response: [{"action":"updateShape","shapeName":"circle-1","updates":{"x":960,"y":540}},{"action":"updateShape","shapeName":"rectangle-1","updates":{"x":960,"y":540}},{"action":"updateShape","shapeName":"text-1","updates":{"x":960,"y":540}}]
+SINGLE SHAPE CENTER:
+- "center [shape] on canvas" = move ONE shape to canvas center (x=canvasWidth/2, y=canvasHeight/2)
+- "center [shape] horizontally" = move ONE shape to horizontal center (x=canvasWidth/2, keep Y)
+- "center [shape] vertically" = move ONE shape to vertical center (y=canvasHeight/2, keep X)
 
 User: "center circle-1 on canvas"
-Context: Canvas is 1920x1080
+Context: Canvas is 1920x1080, circle-1 at (100, 100)
 Response: {"action":"updateShape","shapeName":"circle-1","updates":{"x":960,"y":540}}
 
+MULTIPLE SHAPES CENTER (PRESERVE RELATIVE POSITIONS):
+- Calculate the group's center point (average of all X's, average of all Y's)
+- Calculate offset needed to move group center to canvas center
+- Apply the SAME offset to ALL shapes to keep them together
+
+User: "center selected shapes on canvas"
+Context: Canvas 1920x1080, 3 shapes: shape-1(100,200), shape-2(200,200), shape-3(150,300)
+Group center: avgX=150, avgY=233. Need to move to canvas center (960,540)
+Offset: deltaX=810, deltaY=307
+Response: [{"action":"updateShape","shapeName":"shape-1","updates":{"x":910,"y":507}},{"action":"updateShape","shapeName":"shape-2","updates":{"x":1010,"y":507}},{"action":"updateShape","shapeName":"shape-3","updates":{"x":960,"y":607}}]
+
 User: "center all rectangles horizontally"
-Context: Canvas width 1920
-Response: {"action":"updateShape","selector":{"type":"rectangle"},"updates":{"x":960}}
+Context: Canvas width 1920, 2 rectangles: rect-1(100,200), rect-2(300,200)
+Group center X: avgX=200. Need to move to 960. Offset: deltaX=760
+Response: [{"action":"updateShape","shapeName":"rect-1","updates":{"x":860}},{"action":"updateShape","shapeName":"rect-2","updates":{"x":1060}}]
 
 User: "move rectangle-2 50 pixels down"
 Response: {"action":"updateShape","shapeName":"rectangle-2","updates":{"y":"+50"}}
@@ -384,28 +406,68 @@ When creating multi-shape objects (faces, figures, buildings), follow these prin
 
 Example - Stick Figure (properly aligned):
 [
-  {"action":"createShape","shape":{"type":"circle","x":400,"y":200,"radiusX":30,"radiusY":30,"color":"#FFD700","zIndex":1700000000000}},
-  {"action":"createShape","shape":{"type":"line","x":400,"y":230,"x2":400,"y2":320,"stroke":"#8B4513","strokeWidth":4,"zIndex":1700000000001}},
-  {"action":"createShape","shape":{"type":"line","x":400,"y":260,"x2":350,"y2":300,"stroke":"#8B4513","strokeWidth":4,"zIndex":1700000000002}},
-  {"action":"createShape","shape":{"type":"line","x":400,"y":260,"x2":450,"y2":300,"stroke":"#8B4513","strokeWidth":4,"zIndex":1700000000003}},
-  {"action":"createShape","shape":{"type":"line","x":400,"y":320,"x2":370,"y2":400,"stroke":"#8B4513","strokeWidth":4,"zIndex":1700000000004}},
-  {"action":"createShape","shape":{"type":"line","x":400,"y":320,"x2":430,"y2":400,"stroke":"#8B4513","strokeWidth":4,"zIndex":1700000000005}}
+  {"action":"createShape","shape":{"type":"circle","x":400,"y":200,"radiusX":30,"radiusY":30,"color":"#FFD700","zIndex":100}},
+  {"action":"createShape","shape":{"type":"line","x":400,"y":230,"x2":400,"y2":320,"stroke":"#8B4513","strokeWidth":4,"zIndex":101}},
+  {"action":"createShape","shape":{"type":"line","x":400,"y":260,"x2":350,"y2":300,"stroke":"#8B4513","strokeWidth":4,"zIndex":102}},
+  {"action":"createShape","shape":{"type":"line","x":400,"y":260,"x2":450,"y2":300,"stroke":"#8B4513","strokeWidth":4,"zIndex":103}},
+  {"action":"createShape","shape":{"type":"line","x":400,"y":320,"x2":370,"y2":400,"stroke":"#8B4513","strokeWidth":4,"zIndex":104}},
+  {"action":"createShape","shape":{"type":"line","x":400,"y":320,"x2":430,"y2":400,"stroke":"#8B4513","strokeWidth":4,"zIndex":105}}
 ]
 
 Example - Login Component (PERFECT professional UI - USE THIS AS TEMPLATE):
-User: "build me a login component"
-⚠️ CRITICAL: Background rectangle is FIRST shape with zIndex=...000 (LOWEST number)
-⚠️ CRITICAL: You MUST create ALL 8 shapes in order from background to foreground
+User: "build me a login component" or "create a login form"
+
+⚠️ ULTRA CRITICAL - FOLLOW THIS EXACT PATTERN ⚠️:
+
+1. SHAPE STRUCTURE (7 shapes total, NOT 8):
+   • Shape #1: Background container (gray rectangle)
+   • Shape #2: Title text "Login" (transparent background, centered)
+   • Shape #3: Username label (transparent background)
+   • Shape #4: Username input field (white rectangle)
+   • Shape #5: Password label (transparent background)
+   • Shape #6: Password input field (white rectangle)
+   • Shape #7: Submit BUTTON (ONE text shape with BLUE background) ← NOT a rectangle + text!
+
+2. TEXT POSITIONING (CRITICAL):
+   • Title "Login": x should be at HORIZONTAL CENTER of container, width=full container width
+   • Labels: x should be at LEFT edge of input fields, width=auto (just enough for text)
+   • Submit button: x should be at LEFT edge of input fields, width=same as input fields
+
+3. BUTTON IMPLEMENTATION (MOST IMPORTANT):
+   • Buttons are ONE text shape with colored background
+   • Submit button = text shape with "color":"#3B82F6" (blue background), NOT a separate rectangle!
+   • Button text color: "textColor":"#FFFFFF" (white)
+   • Button alignment: "align":"center" AND "verticalAlign":"middle"
+
+4. TEXT ALIGNMENT:
+   • "align":"center" for title and button text (centers horizontally within the text box)
+   • "verticalAlign":"middle" for title and button text (centers vertically within the text box)
+   • "align":"left" for labels (default)
+
+5. Z-INDEX (CRITICAL FOR LAYERING):
+   • Use simple sequential numbers: 100, 101, 102, 103, etc.
+   • Background MUST have the LOWEST number (e.g., 100) to appear behind everything
+   • Each subsequent shape increments by 1
+   • Higher number = appears on top
+
 Response: [
-  {"action":"createShape","shape":{"type":"rectangle","x":300,"y":200,"width":400,"height":500,"color":"#F3F4F6","stroke":"#D1D5DB","strokeWidth":2,"zIndex":1700000000000}},
-  {"action":"createShape","shape":{"type":"text","x":500,"y":250,"text":"Login","fontSize":36,"fontFamily":"Arial","textColor":"#111827","color":"transparent","align":"center","zIndex":1700000000001}},
-  {"action":"createShape","shape":{"type":"text","x":340,"y":330,"text":"Username","fontSize":14,"fontFamily":"Arial","textColor":"#6B7280","color":"transparent","zIndex":1700000000002}},
-  {"action":"createShape","shape":{"type":"rectangle","x":340,"y":355,"width":320,"height":50,"color":"#FFFFFF","stroke":"#D1D5DB","strokeWidth":1,"zIndex":1700000000003}},
-  {"action":"createShape","shape":{"type":"text","x":340,"y":430,"text":"Password","fontSize":14,"fontFamily":"Arial","textColor":"#6B7280","color":"transparent","zIndex":1700000000004}},
-  {"action":"createShape","shape":{"type":"rectangle","x":340,"y":455,"width":320,"height":50,"color":"#FFFFFF","stroke":"#D1D5DB","strokeWidth":1,"zIndex":1700000000005}},
-  {"action":"createShape","shape":{"type":"rectangle","x":340,"y":540,"width":320,"height":50,"color":"#3B82F6","zIndex":1700000000006}},
-  {"action":"createShape","shape":{"type":"text","x":500,"y":560,"text":"Submit","fontSize":16,"fontFamily":"Arial","textColor":"#FFFFFF","color":"transparent","align":"center","zIndex":1700000000007}}
+  {"action":"createShape","shape":{"type":"rectangle","x":300,"y":200,"width":400,"height":500,"color":"#F3F4F6","stroke":"#D1D5DB","strokeWidth":2,"zIndex":100}},
+  {"action":"createShape","shape":{"type":"text","x":300,"y":250,"width":400,"height":50,"text":"Login","fontSize":36,"fontFamily":"Arial","textColor":"#111827","color":"transparent","align":"center","verticalAlign":"middle","zIndex":101}},
+  {"action":"createShape","shape":{"type":"text","x":340,"y":330,"width":100,"height":20,"text":"Username","fontSize":14,"fontFamily":"Arial","textColor":"#6B7280","color":"transparent","align":"left","zIndex":102}},
+  {"action":"createShape","shape":{"type":"rectangle","x":340,"y":355,"width":320,"height":50,"color":"#FFFFFF","stroke":"#D1D5DB","strokeWidth":1,"zIndex":103}},
+  {"action":"createShape","shape":{"type":"text","x":340,"y":430,"width":100,"height":20,"text":"Password","fontSize":14,"fontFamily":"Arial","textColor":"#6B7280","color":"transparent","align":"left","zIndex":104}},
+  {"action":"createShape","shape":{"type":"rectangle","x":340,"y":455,"width":320,"height":50,"color":"#FFFFFF","stroke":"#D1D5DB","strokeWidth":1,"zIndex":105}},
+  {"action":"createShape","shape":{"type":"text","x":340,"y":540,"width":320,"height":50,"text":"Submit","fontSize":16,"fontFamily":"Arial","textColor":"#FFFFFF","color":"#3B82F6","align":"center","verticalAlign":"middle","zIndex":106}}
 ]
+
+VERIFICATION CHECKLIST (check each item):
+✓ Background is FIRST shape with zIndex=100 (LOWEST - appears behind everything)
+✓ Only 7 shapes created (NOT 8 - submit is ONE text shape, not rectangle + text)
+✓ "Login" text: width=400, x=300, align="center", verticalAlign="middle"
+✓ Submit button: ONE text shape with color="#3B82F6" (blue background), NOT a rectangle
+✓ Submit button: textColor="#FFFFFF", align="center", verticalAlign="middle"
+✓ Username/Password labels: transparent background, align="left"
+✓ zIndex increments: 100, 101, 102, 103, 104, 105, 106
 MATHEMATICAL POSITIONING EXPLANATION (follow this pattern for ALL components):
 Container: x=300, y=200, width=400, height=500
   → Left edge: 300
@@ -451,40 +513,36 @@ Z-Index (CRITICAL for correct layering):
 Example - Card Component (modern design):
 User: "create a card component"
 Response: [
-  {"action":"createShape","shape":{"type":"rectangle","x":350,"y":250,"width":320,"height":240,"color":"#FFFFFF","stroke":"#E5E7EB","strokeWidth":1,"zIndex":1700000000000}},
-  {"action":"createShape","shape":{"type":"rectangle","x":350,"y":250,"width":320,"height":80,"color":"#3B82F6","zIndex":1700000000001}},
-  {"action":"createShape","shape":{"type":"text","x":380,"y":280,"text":"Card Title","fontSize":24,"fontFamily":"Arial","textColor":"#FFFFFF","color":"transparent","zIndex":1700000000002}},
-  {"action":"createShape","shape":{"type":"text","x":380,"y":360,"text":"This is the card content area. Add your","fontSize":14,"fontFamily":"Arial","textColor":"#6B7280","color":"transparent","zIndex":1700000000003}},
-  {"action":"createShape","shape":{"type":"text","x":380,"y":380,"text":"description or details here.","fontSize":14,"fontFamily":"Arial","textColor":"#6B7280","color":"transparent","zIndex":1700000000004}},
-  {"action":"createShape","shape":{"type":"rectangle","x":380,"y":430,"width":110,"height":38,"color":"#3B82F6","stroke":"#2563EB","strokeWidth":1,"zIndex":1700000000005}},
-  {"action":"createShape","shape":{"type":"text","x":435,"y":447,"text":"Action","fontSize":14,"fontFamily":"Arial","textColor":"#FFFFFF","color":"transparent","align":"center","zIndex":1700000000006}}
+  {"action":"createShape","shape":{"type":"rectangle","x":350,"y":250,"width":320,"height":240,"color":"#FFFFFF","stroke":"#E5E7EB","strokeWidth":1,"zIndex":100}},
+  {"action":"createShape","shape":{"type":"rectangle","x":350,"y":250,"width":320,"height":80,"color":"#3B82F6","zIndex":101}},
+  {"action":"createShape","shape":{"type":"text","x":350,"y":250,"width":320,"height":80,"text":"Card Title","fontSize":24,"fontFamily":"Arial","textColor":"#FFFFFF","color":"transparent","align":"center","verticalAlign":"middle","zIndex":102}},
+  {"action":"createShape","shape":{"type":"text","x":380,"y":360,"width":260,"height":20,"text":"This is the card content area. Add your","fontSize":14,"fontFamily":"Arial","textColor":"#6B7280","color":"transparent","zIndex":103}},
+  {"action":"createShape","shape":{"type":"text","x":380,"y":380,"width":260,"height":20,"text":"description or details here.","fontSize":14,"fontFamily":"Arial","textColor":"#6B7280","color":"transparent","zIndex":104}},
+  {"action":"createShape","shape":{"type":"text","x":380,"y":430,"width":110,"height":38,"text":"Action","fontSize":14,"fontFamily":"Arial","textColor":"#FFFFFF","color":"#3B82F6","align":"center","verticalAlign":"middle","zIndex":105}}
 ]
 
 Example - Button Group (horizontally distributed):
 User: "create a button group with save, cancel, and delete buttons"
 Response: [
-  {"action":"createShape","shape":{"type":"rectangle","x":350,"y":300,"width":120,"height":45,"color":"#10B981","stroke":"#059669","strokeWidth":1,"zIndex":1700000000000}},
-  {"action":"createShape","shape":{"type":"text","x":410,"y":318,"text":"Save","fontSize":16,"fontFamily":"Arial","textColor":"#FFFFFF","color":"transparent","align":"center","zIndex":1700000000001}},
-  {"action":"createShape","shape":{"type":"rectangle","x":490,"y":300,"width":120,"height":45,"color":"#6B7280","stroke":"#4B5563","strokeWidth":1,"zIndex":1700000000002}},
-  {"action":"createShape","shape":{"type":"text","x":550,"y":318,"text":"Cancel","fontSize":16,"fontFamily":"Arial","textColor":"#FFFFFF","color":"transparent","align":"center","zIndex":1700000000003}},
-  {"action":"createShape","shape":{"type":"rectangle","x":630,"y":300,"width":120,"height":45,"color":"#EF4444","stroke":"#DC2626","strokeWidth":1,"zIndex":1700000000004}},
-  {"action":"createShape","shape":{"type":"text","x":690,"y":318,"text":"Delete","fontSize":16,"fontFamily":"Arial","textColor":"#FFFFFF","color":"transparent","align":"center","zIndex":1700000000005}}
+  {"action":"createShape","shape":{"type":"text","x":350,"y":300,"width":120,"height":45,"text":"Save","fontSize":16,"fontFamily":"Arial","textColor":"#FFFFFF","color":"#10B981","align":"center","verticalAlign":"middle","zIndex":100}},
+  {"action":"createShape","shape":{"type":"text","x":490,"y":300,"width":120,"height":45,"text":"Cancel","fontSize":16,"fontFamily":"Arial","textColor":"#FFFFFF","color":"#6B7280","align":"center","verticalAlign":"middle","zIndex":101}},
+  {"action":"createShape","shape":{"type":"text","x":630,"y":300,"width":120,"height":45,"text":"Delete","fontSize":16,"fontFamily":"Arial","textColor":"#FFFFFF","color":"#EF4444","align":"center","verticalAlign":"middle","zIndex":102}}
 ]
 
 Example - Dashboard Widget (complex composition):
 User: "make me a dashboard widget"
 Response: [
-  {"action":"createShape","shape":{"type":"rectangle","x":300,"y":200,"width":380,"height":260,"color":"#FFFFFF","stroke":"#D1D5DB","strokeWidth":1,"zIndex":1700000000000}},
-  {"action":"createShape","shape":{"type":"text","x":320,"y":225,"text":"Sales Overview","fontSize":20,"fontFamily":"Arial","textColor":"#111827","color":"transparent","zIndex":1700000000001}},
-  {"action":"createShape","shape":{"type":"line","x":320,"y":250,"x2":660,"y2":250,"stroke":"#E5E7EB","strokeWidth":1,"zIndex":1700000000002}},
-  {"action":"createShape","shape":{"type":"rectangle","x":320,"y":270,"width":150,"height":80,"color":"#DBEAFE","stroke":"#3B82F6","strokeWidth":2,"zIndex":1700000000003}},
-  {"action":"createShape","shape":{"type":"text","x":340,"y":295,"text":"$12,345","fontSize":24,"fontFamily":"Arial","textColor":"#1E40AF","color":"transparent","zIndex":1700000000004}},
-  {"action":"createShape","shape":{"type":"text","x":340,"y":325,"text":"Revenue","fontSize":12,"fontFamily":"Arial","textColor":"#6B7280","color":"transparent","zIndex":1700000000005}},
-  {"action":"createShape","shape":{"type":"rectangle","x":490,"y":270,"width":150,"height":80,"color":"#D1FAE5","stroke":"#10B981","strokeWidth":2,"zIndex":1700000000006}},
-  {"action":"createShape","shape":{"type":"text","x":510,"y":295,"text":"1,234","fontSize":24,"fontFamily":"Arial","textColor":"#065F46","color":"transparent","zIndex":1700000000007}},
-  {"action":"createShape","shape":{"type":"text","x":510,"y":325,"text":"Orders","fontSize":12,"fontFamily":"Arial","textColor":"#6B7280","color":"transparent","zIndex":1700000000008}},
-  {"action":"createShape","shape":{"type":"rectangle","x":320,"y":370,"width":320,"height":70,"color":"#F9FAFB","zIndex":1700000000009}},
-  {"action":"createShape","shape":{"type":"text","x":340,"y":400,"text":"View detailed analytics →","fontSize":14,"fontFamily":"Arial","textColor":"#3B82F6","color":"transparent","zIndex":1700000000010}}
+  {"action":"createShape","shape":{"type":"rectangle","x":300,"y":200,"width":380,"height":260,"color":"#FFFFFF","stroke":"#D1D5DB","strokeWidth":1,"zIndex":100}},
+  {"action":"createShape","shape":{"type":"text","x":320,"y":225,"width":340,"height":25,"text":"Sales Overview","fontSize":20,"fontFamily":"Arial","textColor":"#111827","color":"transparent","zIndex":101}},
+  {"action":"createShape","shape":{"type":"line","x":320,"y":250,"x2":660,"y2":250,"stroke":"#E5E7EB","strokeWidth":1,"zIndex":102}},
+  {"action":"createShape","shape":{"type":"rectangle","x":320,"y":270,"width":150,"height":80,"color":"#DBEAFE","stroke":"#3B82F6","strokeWidth":2,"zIndex":103}},
+  {"action":"createShape","shape":{"type":"text","x":320,"y":270,"width":150,"height":40,"text":"$12,345","fontSize":24,"fontFamily":"Arial","textColor":"#1E40AF","color":"transparent","align":"center","verticalAlign":"middle","zIndex":104}},
+  {"action":"createShape","shape":{"type":"text","x":320,"y":310,"width":150,"height":40,"text":"Revenue","fontSize":12,"fontFamily":"Arial","textColor":"#6B7280","color":"transparent","align":"center","verticalAlign":"middle","zIndex":105}},
+  {"action":"createShape","shape":{"type":"rectangle","x":490,"y":270,"width":150,"height":80,"color":"#D1FAE5","stroke":"#10B981","strokeWidth":2,"zIndex":106}},
+  {"action":"createShape","shape":{"type":"text","x":490,"y":270,"width":150,"height":40,"text":"1,234","fontSize":24,"fontFamily":"Arial","textColor":"#065F46","color":"transparent","align":"center","verticalAlign":"middle","zIndex":107}},
+  {"action":"createShape","shape":{"type":"text","x":490,"y":310,"width":150,"height":40,"text":"Orders","fontSize":12,"fontFamily":"Arial","textColor":"#6B7280","color":"transparent","align":"center","verticalAlign":"middle","zIndex":108}},
+  {"action":"createShape","shape":{"type":"rectangle","x":320,"y":370,"width":320,"height":70,"color":"#F9FAFB","zIndex":109}},
+  {"action":"createShape","shape":{"type":"text","x":320,"y":370,"width":320,"height":70,"text":"View detailed analytics →","fontSize":14,"fontFamily":"Arial","textColor":"#3B82F6","color":"transparent","align":"center","verticalAlign":"middle","zIndex":110}}
 ]
 
 IMPORTANT PRINCIPLES FOR COMPLEX COMPONENTS:

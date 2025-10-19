@@ -40,6 +40,7 @@ export function parseCommand(command: Command, userId: string): Shape[] {
  */
 function createShapeFromCommand(command: CreateShapeCommand, userId: string): Shape {
   const { shape } = command
+  
   const baseShape = {
     id: generateShapeId(),
     name: shape.name || generateShapeName(shape.type), // Use provided name or auto-generate

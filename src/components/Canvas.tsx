@@ -10,6 +10,7 @@ import RemoteCursor from './RemoteCursor'
 import ShapeRenderer, { NewShapeRenderer } from './ShapeRenderer'
 import DetailPane from './DetailPane'
 import MultiSelectBox from './MultiSelectBox'
+import GridBackground from './GridBackground'
 import { useCanvasPanning } from '../hooks/useCanvasPanning'
 import { useShapeCreation } from '../hooks/useShapeCreation'
 import { useShapeDragging } from '../hooks/useShapeDragging'
@@ -80,10 +81,11 @@ export default function Canvas({
   const { userId } = useUserStore()
   const { remoteCursors } = useCursorStore()
   
-  // Callback to push current state to history (before manual shape operations)
-  const handlePushHistory = useCallback(() => {
-    pushState(shapes)
-  }, [shapes, pushState])
+  // Initialize history with current state on mount
+  useEffect(() => {
+    const currentShapes = useShapeStore.getState().shapes
+    pushState(currentShapes)
+  }, [pushState])
   
 
   // Track Alt key state for duplication
@@ -134,6 +136,13 @@ export default function Canvas({
     onDelete: (shapeIds: string[]) => {
       // Delete all selected shapes
       shapeIds.forEach(id => onShapeDeleted?.(id))
+      
+      // Push state to history AFTER shapes are removed from store
+      // Use setTimeout to ensure store is updated first
+      setTimeout(() => {
+        const newShapes = useShapeStore.getState().shapes
+        pushState(newShapes)
+      }, 0)
     },
     onDeselect: (shapeId) => {
       // Unlock the shape when deselected
@@ -215,7 +224,13 @@ export default function Canvas({
     const lockedShape = { ...shape, lockedBy: userId }
     onShapeCreated?.(lockedShape)
     selectShape(shape.id)
-    // No need to call onShapeLock separately - shape is already locked
+    
+    // Push state to history AFTER shape is added to store
+    // Use setTimeout to ensure store is updated first
+    setTimeout(() => {
+      const newShapes = useShapeStore.getState().shapes
+      pushState(newShapes)
+    }, 0)
   }
   
   const {
@@ -248,8 +263,15 @@ export default function Canvas({
     updateShape,
     onCursorMove, // Track cursor position during drag
     onShapeCreated, // For creating duplicates
-    onDragEnd: onShapeUpdate, // Persist to Firestore on drag end
-    onDragStart: handlePushHistory, // Push history before drag
+    onDragEnd: (shape) => {
+      // Persist to Firestore
+      onShapeUpdate?.(shape)
+      // Push state to history AFTER drag ends
+      setTimeout(() => {
+        const newShapes = useShapeStore.getState().shapes
+        pushState(newShapes)
+      }, 0)
+    },
   })
   
   const { handleWheel } = useCanvasZoom({
@@ -259,6 +281,7 @@ export default function Canvas({
   // Shape manipulation (resize & rotate)
   const {
     isManipulating,
+    isResizing,
     hoveredZone,
     currentCursor: manipulationCursor,
     handleShapeMouseMove: handleManipulationMouseMove,
@@ -271,8 +294,14 @@ export default function Canvas({
     selectedShapeId,
     updateShape,
     onShapeUpdate, // Persist to Firestore on manipulation end
-    onManipulationStart: handlePushHistory, // Push history before manipulation
-    onManipulationEnd: () => pushState(shapes), // Push history after manipulation
+    onManipulationEnd: () => {
+      // Push state to history AFTER manipulation ends
+      // Use setTimeout to ensure store is updated first
+      setTimeout(() => {
+        const newShapes = useShapeStore.getState().shapes
+        pushState(newShapes)
+      }, 0)
+    },
     stageRef,
     stageScale,
   })
@@ -546,8 +575,11 @@ export default function Canvas({
       }
     })
     
-    // Push state to history after multi-drag completes
-    pushState(shapes)
+    // Push state to history AFTER multi-drag ends
+    setTimeout(() => {
+      const newShapes = useShapeStore.getState().shapes
+      pushState(newShapes)
+    }, 0)
   }
 
   // Combined drag handlers - only used for single shape drag now
@@ -565,8 +597,6 @@ export default function Canvas({
   const handleCombinedDragEnd = (shape: Shape) => {
     handleSelectionDragEnd()
     handleDragEnd(shape)
-    // Push state to history after drag completes
-    pushState(shapes)
     // Note: Keep shape locked after drag - only unlock on deselect
   }
   
@@ -616,7 +646,9 @@ export default function Canvas({
   const handleDetailPaneUpdate = useCallback((updates: Partial<Shape>) => {
     if (!selectedShapeId) return
     
-    const currentShape = shapesRef.current[selectedShapeId]
+    // Get fresh shapes from store
+    const currentShapes = useShapeStore.getState().shapes
+    const currentShape = currentShapes[selectedShapeId]
     if (!currentShape) return
     
     // Merge updates with current shape
@@ -627,7 +659,14 @@ export default function Canvas({
     
     // Sync to Firebase with the fully updated shape
     onShapeUpdateRef.current?.(updatedShape)
-  }, [selectedShapeId])
+    
+    // Push state to history AFTER update is applied
+    // Use setTimeout to ensure store is updated first
+    setTimeout(() => {
+      const newShapes = useShapeStore.getState().shapes
+      pushState(newShapes)
+    }, 0)
+  }, [selectedShapeId, pushState])
   
   const handleCloseDetailPane = () => {
     const currentSelectedId = selectedShapeId
@@ -649,19 +688,8 @@ export default function Canvas({
 
   return (
     <div
-      className="w-full h-full relative"
-      style={{ 
-        cursor: currentCursor,
-        backgroundColor: '#ffffff',
-        backgroundImage: `
-          linear-gradient(to right, #f0f0f0 1px, transparent 1px),
-          linear-gradient(to bottom, #f0f0f0 1px, transparent 1px),
-          linear-gradient(to right, #e0e0e0 1px, transparent 1px),
-          linear-gradient(to bottom, #e0e0e0 1px, transparent 1px)
-        `,
-        backgroundSize: '20px 20px, 20px 20px, 100px 100px, 100px 100px',
-        backgroundPosition: '0 0, 0 0, 0 0, 0 0'
-      }}
+      className="w-full h-full bg-canvas-bg relative"
+      style={{ cursor: currentCursor }}
     >
       <Stage
         ref={stageRef}
@@ -674,6 +702,14 @@ export default function Canvas({
         onClick={handleStageClickWithUnlock}
         draggable={false}
       >
+        {/* Grid Background Layer */}
+        <GridBackground
+          width={window.innerWidth}
+          height={window.innerHeight - HEADER_HEIGHT}
+          scale={stageScale}
+          offsetX={stageRef.current?.x() || 0}
+          offsetY={stageRef.current?.y() || 0}
+        />
         
         <Layer>
           {/* Render all existing shapes (sorted by zIndex for layering) */}
@@ -703,6 +739,7 @@ export default function Canvas({
                 isLockedByMe={isLockedByMe}
                 isLockedByOther={isLockedByOther && !isInMultiSelect} // Hide border for multi-select, show for others' locks
                 isManipulating={isManipulating}
+                isResizing={isResizing}
                 isHoveringManipulationZone={showManipulationUI && hoveredZone !== null && hoveredZone !== 'center'}
                 isInMultiSelect={isInMultiSelect}
                 stageScale={stageScale}

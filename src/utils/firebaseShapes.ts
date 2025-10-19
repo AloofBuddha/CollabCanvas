@@ -222,9 +222,8 @@ export async function lockShape(shapeId: string, userId: string): Promise<void> 
  * Unlock a shape (clear lockedBy field in both Firestore and RTDB)
  */
 export async function unlockShape(shapeId: string): Promise<void> {
-  const shapeRef = doc(db, SHAPES_COLLECTION, shapeId)
-  // Use setDoc with merge to ensure we set lockedBy to null explicitly
-  await setDoc(shapeRef, { lockedBy: null }, { merge: true })
+  // Use updateDoc to only update the lockedBy field (safer than setDoc)
+  await updateShapeFields(shapeId, { lockedBy: null })
   
   // Also update in RTDB if the shape exists there
   const rtdbShapeRef = ref(rtdb, `shapes/${shapeId}`)
@@ -242,11 +241,15 @@ export async function unlockShape(shapeId: string): Promise<void> {
 export async function unlockUserShapes(userId: string, shapes: Record<string, Shape>): Promise<void> {
   const shapesToUnlock = Object.values(shapes).filter(shape => shape.lockedBy === userId)
   
-  // Unlock in Firestore
-  const firestorePromises = shapesToUnlock.map(shape => {
-    const shapeRef = doc(db, SHAPES_COLLECTION, shape.id)
-    return setDoc(shapeRef, { lockedBy: null }, { merge: true })
-  })
+  // Unlock in Firestore using batch update (safer and more efficient)
+  if (shapesToUnlock.length > 0) {
+    await batchUpdateShapeFields(
+      shapesToUnlock.map(shape => ({
+        shapeId: shape.id,
+        fields: { lockedBy: null }
+      }))
+    )
+  }
   
   // Unlock in RTDB
   const rtdbPromises = shapesToUnlock.map(shape => {
@@ -254,7 +257,7 @@ export async function unlockUserShapes(userId: string, shapes: Record<string, Sh
     return set(rtdbShapeRef, { ...shape, lockedBy: null })
   })
   
-  await Promise.all([...firestorePromises, ...rtdbPromises])
+  await Promise.all(rtdbPromises)
 }
 
 /**
@@ -264,11 +267,15 @@ export async function unlockUserShapes(userId: string, shapes: Record<string, Sh
 export async function unlockAllShapes(shapes: Record<string, Shape>): Promise<void> {
   const lockedShapes = Object.values(shapes).filter(shape => shape.lockedBy !== null)
   
-  // Unlock in Firestore
-  const firestorePromises = lockedShapes.map(shape => {
-    const shapeRef = doc(db, SHAPES_COLLECTION, shape.id)
-    return setDoc(shapeRef, { lockedBy: null }, { merge: true })
-  })
+  // Unlock in Firestore using batch update (safer and more efficient)
+  if (lockedShapes.length > 0) {
+    await batchUpdateShapeFields(
+      lockedShapes.map(shape => ({
+        shapeId: shape.id,
+        fields: { lockedBy: null }
+      }))
+    )
+  }
   
   // Unlock in RTDB
   const rtdbPromises = lockedShapes.map(shape => {
@@ -277,7 +284,7 @@ export async function unlockAllShapes(shapes: Record<string, Shape>): Promise<vo
     return set(rtdbShapeRef, sanitizedShape)
   })
   
-  await Promise.all([...firestorePromises, ...rtdbPromises])
+  await Promise.all(rtdbPromises)
 }
 
 // ============================================================================
