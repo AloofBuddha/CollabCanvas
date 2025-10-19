@@ -273,7 +273,8 @@ export async function unlockAllShapes(shapes: Record<string, Shape>): Promise<vo
   // Unlock in RTDB
   const rtdbPromises = lockedShapes.map(shape => {
     const rtdbShapeRef = ref(rtdb, `shapes/${shape.id}`)
-    return set(rtdbShapeRef, { ...shape, lockedBy: null })
+    const sanitizedShape = sanitizeForFirebase({ ...shape, lockedBy: null } as unknown as Record<string, unknown>)
+    return set(rtdbShapeRef, sanitizedShape)
   })
   
   await Promise.all([...firestorePromises, ...rtdbPromises])

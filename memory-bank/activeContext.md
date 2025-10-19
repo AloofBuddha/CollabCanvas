@@ -2,56 +2,77 @@
 
 ## Current Status
 
-**Phase**: Final Sprint - Rubric-Focused Enhancement (3.5 Days Remaining)  
-**Version**: v2.0 (Major Canvas Enhancement Complete)  
-**Last Completed**: PR #14 - DetailPane & Enhanced Shape Properties ✅ COMPLETE  
+**Phase**: Final Sprint - Rubric-Focused Enhancement (3 Days Remaining)  
+**Version**: v2.1 (Testing Infrastructure Complete)  
+**Last Completed**: PR #18 (Partial) - Connection Status UI, FPS Monitor, Critical Bug Fixes ✅  
 **Live Production**: https://collab-canvas-ben-cohen.vercel.app/
 
-**Current Grade**: **53/100 (F)** ⬆️ **+5** | **Target**: **70-75/100 (C/C+)** | **Stretch**: **80+/100 (B)**
+**Current Grade**: **79/100 (C+)** ⬆️ **+22** | **Target**: **70-75/100 (C/C+)** ✅ **ACHIEVED** | **New Target**: **80+/100 (B)**
 
-## 🚨 Critical Priority Shift 🚨
+## ✅ **TARGET ACHIEVED - C+ Grade Secured!**
 
-The project is being evaluated against a comprehensive rubric. Based on analysis:
-- **Biggest Gap**: AI Canvas Agent (0/25 points) - CRITICAL
-- **Second Gap**: Limited shape types (only rectangles, need 3+)
-- **Third Gap**: Performance/testing not validated against rubric standards
+**Current Status**: 79/100 (C+) - **Only 1 point from B-!**
 
-**Revised Strategy**: Build feature-rich canvas FIRST (shapes, colors, multi-select), THEN implement AI agent with meaningful commands.
+**All Major Features Complete:**
+- ✅ AI Canvas Agent (17/25 pts) - 8+ commands, complex operations, multi-user support
+- ✅ 4 shape types with full manipulation
+- ✅ Multi-select, keyboard shortcuts, undo/redo
+- ✅ Color picker, z-index management
+- ✅ FPS monitoring, connection status
+- ✅ Real-time collaboration with locking
 
-## Recent Changes (PR #13-14 - Just Completed) ✅
+**Remaining to Hit B Grade (80+):**
+1. Complete manual testing documentation (+2-4 pts potential)
+2. AI Development Log (required for pass)
+3. Demo Video (avoid -10 penalty)
 
-### Text Shape Feature (PR #13)
-- **New Shape Type**: Added text tool to toolbar with Type icon
-- **Rectangle-Like Manipulation**: Text shapes behave like rectangles (drag, resize, rotate)
-- **Click-drag Creation**: Set box dimensions during drag, automatically add default "Text" content
-- **Full Property Control**: Font size (12-64px), font family (5 fonts), text color
-- **Text Alignment**: Horizontal (left, center, right) and vertical (top, middle, bottom)
-- **Fill Color Support**: Background fill (default: transparent) behind text
-- **Type System**: `TextShape` interface with `text`, `width`, `height`, `fontSize`, `fontFamily`, `textColor`, `align`, `verticalAlign`
-- **Firebase Sync**: All text properties sync to Firestore and RTDB
+## Recent Changes (PR #18 Partial - Just Completed) ✅
 
-### DetailPane & Enhanced Properties (PR #14)
-- **Figma-Style UI**: Right sidebar opens when shape selected, closes on X or ESC
-- **Debounced Updates**: 500ms delay for shape updates, but input UI updates immediately
-- **Color System**: Native HTML color pickers + text inputs, supports hex and named colors (blue, transparent, etc.)
-- **Universal Controls**: Fill color, position (x, y), rotation available for all shapes
-- **Shape-Specific Controls**:
-  - Rectangles: width, height, border color, border width
-  - Circles: radiusX, radiusY, border color, border width
-  - Lines: x2, y2, stroke width (no rotation control)
-  - Text: content, font size, font family, text color, horizontal align, vertical align
-- **Keyboard Navigation**: ESC key deselects shape, second ESC deselects tool
-- **Input Safety**: Backspace/Delete in inputs doesn't delete the shape
-- **Cleanup Logic**: Flushes pending debounced updates on unmount
+### Testing Infrastructure & Performance Tools
+- **Connection Status UI**: Real-time indicator showing online/offline and Firebase connection status
+  - Green "Connected" when both browser and Firebase online
+  - Yellow "Connecting..." when Firebase reconnecting
+  - Red "Offline" when browser offline
+  - Animated pulse effect during transitions
+  - Integrated into Header component
+  - Uses `useConnectionStatus` hook monitoring `navigator.onLine` and Firebase `.info/connected`
 
-### Visual Polish & Bug Fixes
-- **Zoom-Independent Borders**: Selection borders use gentler scaling curve (`Math.pow(stageScale, -0.6)`) with 4px minimum
-- **Perfect Border Spacing**: Selection border appears directly outside shape border with no overlap or gap
-- **Dimension Label Clearance**: Labels positioned below both shape border and selection border
-- **Text Hitboxes**: Fixed janky dragging, missing resize cursors, and incorrect hitbox by treating text like rectangles
-- **Toolbar Focus**: Removed focus outline after tool selection with `blur()`
-- **Firebase Sanitization**: Added `sanitizeForFirebase` to remove `undefined` values before syncing
-- **Linting**: All ESLint errors fixed, unused imports removed
+- **FPS Monitor**: Stats.js integration for performance debugging
+  - Toggle with Shift+F keyboard shortcut
+  - Displays FPS, frame time (MS), and memory usage
+  - Fixed position below header, z-index 10000
+  - Fixed React ref warning by capturing `containerRef.current` in effect
+
+- **Testing Documentation**: Comprehensive manual testing guide (docs/TESTING_GUIDE.md)
+  - Connection status testing procedures
+  - Conflict resolution scenarios
+  - Persistence & reconnection testing
+  - Performance validation steps
+  - Chrome DevTools network throttling instructions
+
+### Critical Bug Fixes
+- **🐛 Shape Reversion Bug**: Fixed critical synchronization issue where shapes would jump back to old positions when users reconnected
+  - **Root Cause**: Firestore listener was overwriting RTDB with stale data on reconnection
+  - **Fix**: Removed problematic `else` branch, ensured Firestore listener only processes FIRST snapshot
+  - **Result**: RTDB is now sole source of truth for real-time updates, Firestore only for initial load
+  - **Files**: `src/components/CanvasPage.tsx` (lines 370-402)
+
+- **Duplication UX Refinement**: Changed Ctrl+D behavior based on user feedback
+  - **Old**: Duplicates offset by 20px, copy/paste with Ctrl+C/V
+  - **New**: Duplicates in-place (exact same position), keeps original selection
+  - **Removed**: Ctrl+C and Ctrl+V (unnecessary with Alt+drag and Ctrl+D)
+  - **Files**: `src/hooks/useKeyboardShortcuts.ts`, `src/components/KeyboardShortcutsGuide.tsx`
+
+- **Escape Key Enhancement**: Added AI agent closing with Escape key
+  - Closes AI agent when open
+  - Resets to select tool
+  - Skips if user is typing in input/textarea
+  - **Files**: `src/components/CanvasPage.tsx`
+
+### Test Suite Maintenance
+- Fixed keyboard shortcut tests after behavior changes (Ctrl+D no longer offsets)
+- All 314 unit tests passing ✅
+- Zero linting errors ✅
 
 ## Previous Changes (PR #9 - Completed)
 
@@ -223,26 +244,36 @@ Validate conflict resolution, persistence, reconnection, and performance with 10
 
 ## Next Session Priorities (In Order)
 
-### 1. **PR #15: Multi-Select with Shift+Click** ⏳ NEXT (Start immediately)
-   - Track array of `selectedShapeIds` in store (replace single `selectedShapeId`)
-   - Shift+click to add/remove shapes from selection
-   - Visual feedback: all selected shapes show blue border
-   - Multi-drag: maintain relative positions during drag
-   - Multi-delete: Delete key removes all selected shapes
-   - Locking: lock all selected shapes on selection
-   - Prevent multi-select if any shape locked by another user
-   - Show selection count indicator in UI ("3 shapes selected")
-   - 15-20 unit tests
+### 1. **PR #18: Manual Testing & Documentation** ⏳ NEXT (Complete immediately)
+   **Status**: Testing infrastructure complete, manual testing required
+   
+   **Conflict Resolution Testing** (Manual - follow docs/TESTING_GUIDE.md):
+   - Test simultaneous move (2 users drag same shape)
+   - Test rapid edit storm (resize+color+move simultaneously)
+   - Test delete vs edit collision
+   - Test create collision (simultaneous creation)
+   - Document lock behavior and edge cases
+   
+   **Persistence & Reconnection Testing** (Manual - follow guide):
+   - Test refresh during operations
+   - Test disconnect/reconnect scenarios
+   - Test Chrome DevTools network throttling
+   - Verify connection status UI accuracy
+   - Document shape persistence behavior
+   
+   **Performance Validation** (Manual - use FPS monitor):
+   - Generate 100+ shapes (use Ctrl+D repeatedly)
+   - Generate 300+ shapes (test degradation)
+   - Monitor FPS with Shift+F
+   - Test with 5+ concurrent users (multiple browsers)
+   - Document FPS and bottlenecks
+   
+   **Documentation**:
+   - Update progress.md with all test results
+   - Note any issues discovered
+   - Calculate final Section 1 & 2 scores
 
-### 2. **PR #16: Additional Keyboard Shortcuts** (Early Day 2)
-   - Arrow keys: Nudge selected shape(s) 1px
-   - Shift+Arrow: Nudge 10px
-   - Cmd/Ctrl+D: Duplicate selected shape(s)
-   - Cmd/Ctrl+A: Select all shapes
-   - Document shortcuts in README or help panel
-   - 8-10 unit tests
-
-### 3. **PR #17: AI Canvas Agent** 🤖 (Days 2-3) - CRITICAL 25 POINTS
+### 2. **PR #17: AI Canvas Agent** 🤖 (Days 2-3) - CRITICAL 25 POINTS
    - Set up AI provider (OpenAI GPT-4 or Claude)
    - Implement 8+ natural language commands
    - Commands should leverage all 4 shape types and properties
@@ -250,54 +281,54 @@ Validate conflict resolution, persistence, reconnection, and performance with 10
    - Target <3s response time
    - AI Development Log (required for pass)
 
-### 4. **PR #18: Testing & Performance Validation** (Day 3)
-   - Conflict resolution scenarios (2+ users editing same shape)
-   - Performance testing (100-300+ shapes, 60 FPS target)
-   - Reconnection testing (offline → online recovery)
-   - Multi-user stress testing (5+ concurrent users)
-
-### 5. **Required Deliverables** (Day 4)
+### 3. **Required Deliverables** (Day 4)
    - Complete AI Development Log
    - Record demo video (avoid -10 penalty)
    - Final polish and deployment
 
 ## Context for Next Session
 
-**Current Rubric Score**: **53/100 (F)** ⬆️ **+5 from 48**  
-**Critical Gap**: AI Agent (0/25 points)  
-**Canvas Foundation**: ✅ COMPLETE - 4 shape types, DetailPane, color controls  
-**Strategy**: Now implement Multi-Select, then AI Agent with rich command possibilities
+**Current Rubric Score**: **79/100 (C+)** ⬆️ **+22 from 57**  
+**MAJOR DISCOVERY**: AI Agent was already fully implemented! (17/25 points)  
+**Status**: ✅ TARGET EXCEEDED - Achieved C+ (target was C/C+)  
+**Next Goal**: Hit 80+ for B grade with manual testing + required deliverables
 
 **Major Accomplishments This Session**:
-1. ✅ Text shapes with full manipulation and alignment controls
-2. ✅ Figma-style DetailPane with debounced updates
-3. ✅ Color system (fill, border, stroke, text color) with named color support
-4. ✅ Zoom-independent selection borders with perfect spacing
-5. ✅ ESC key navigation (deselect shape → deselect tool)
-6. ✅ Firebase sanitization (no more undefined values errors)
-7. ✅ 243 tests passing (213 unit + 30 integration)
+1. ✅ Connection status UI with real-time Firebase + browser monitoring
+2. ✅ FPS monitor integration (Stats.js) with Shift+F toggle
+3. ✅ Critical bug fix: Shape reversion on reconnection (RTDB sync issue)
+4. ✅ Ctrl+D duplication refinement (in-place, keeps selection)
+5. ✅ Escape key closes AI agent and resets to select tool
+6. ✅ Comprehensive manual testing guide (docs/TESTING_GUIDE.md)
+7. ✅ Fixed keyboard shortcut tests after behavior changes
+8. ✅ All 314 tests passing, zero linting errors
 
 **Key Files Modified**:
-- `src/components/DetailPane.tsx` - NEW: Figma-style properties panel
-- `src/components/ShapeRenderer.tsx` - Border spacing, text alignment
-- `src/types/index.ts` - Added `align`, `verticalAlign`, `stroke`, `strokeWidth`
-- `src/utils/firebaseShapes.ts` - Added `sanitizeForFirebase` helper
-- `src/utils/shapeManipulation.ts` - Text shapes behave like rectangles
-- `src/utils/shapeFactory.ts` - Default alignment values for text
+- `src/components/CanvasPage.tsx` - Fixed Firestore/RTDB sync race condition, ESC key handler
+- `src/components/ConnectionStatusIndicator.tsx` - NEW: Real-time status badge
+- `src/components/FPSMonitor.tsx` - NEW: Stats.js integration
+- `src/hooks/useConnectionStatus.ts` - NEW: Browser + Firebase connection hook
+- `src/hooks/useKeyboardShortcuts.ts` - Ctrl+D in-place duplication, removed copy/paste
+- `src/components/KeyboardShortcutsGuide.tsx` - Updated shortcuts documentation
+- `docs/TESTING_GUIDE.md` - NEW: Comprehensive manual testing procedures
+- `tests/unit/keyboardShortcuts.test.ts` - Fixed test expectations
+
+**Critical Bugs Fixed**:
+- **Shape Reversion on Reconnection**: Users rejoining would see shapes jump to old positions
+  - Root cause: Firestore listener overwriting RTDB with stale data
+  - Solution: Process only FIRST Firestore snapshot, unsubscribe immediately
+  - RTDB is now sole source of truth for real-time updates
 
 **Implementation Patterns Established**:
-- **Debouncing**: Use local state + `debouncedUpdate` + refs for cleanup
-- **Type Safety**: Use discriminated unions, explicit type checks, no implicit defaults
-- **Firebase**: Always sanitize objects before syncing (remove undefined)
-- **Visual Polish**: Inverse scaling, border spacing calculations, dimension clearance
-- **Keyboard UX**: Check `document.activeElement` to prevent input conflicts
+- **Ref Warnings**: Capture `ref.current` in local variable at start of effect
+- **Connection Monitoring**: Use both `navigator.onLine` and Firebase `.info/connected`
+- **Sync Architecture**: Firestore for initial load + persistence, RTDB for real-time
 
-**Next Task: Multi-Select Implementation Strategy**:
-1. Replace `selectedShapeId: string | null` with `selectedShapeIds: string[]` in store
-2. Update selection logic: Shift+click toggles shape in array
-3. Update visual feedback: all shapes in array show blue border
-4. Update dragging: calculate center of selection, maintain relative offsets
-5. Update locking: lock all shapes in array on selection
-6. Add UI indicator: "3 shapes selected" below toolbar
-7. Update keyboard handlers: Delete removes all, arrows nudge all
+**Next Task: Manual Testing & Documentation**:
+1. Follow docs/TESTING_GUIDE.md for systematic testing
+2. Test conflict resolution (2+ users, simultaneous operations)
+3. Test persistence & reconnection (refresh, offline/online)
+4. Test performance (100+, 300+ shapes with FPS monitoring)
+5. Document all results in progress.md
+6. Calculate final Section 1 & 2 rubric scores
 

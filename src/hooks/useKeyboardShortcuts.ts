@@ -120,7 +120,8 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) 
           selectedShapeIds.forEach((id) => {
             const shape = shapes[id]
             if (shape) {
-              const newShape = {
+              // Explicitly type as Shape to ensure all properties (including type) are preserved
+              const newShape: Shape = {
                 ...shape,
                 id: `shape-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                 // NO offset - duplicates appear at exact same position
