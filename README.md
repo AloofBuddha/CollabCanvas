@@ -41,7 +41,9 @@ Try it out! Create an account and test real-time collaboration by opening the ap
 - ✅ **Vertical Scroll:** Mouse wheel
 - ✅ **Delete:** Delete or Backspace key
 - ✅ **Deselect:** ESC key or click canvas background
-- ✅ **Duplicate:** Alt+drag any shape
+- ✅ **Undo/Redo:** Ctrl+Z / Ctrl+Shift+Z (full history system)
+- ✅ **Keyboard Shortcuts:** Arrow nudging, Ctrl+D, Ctrl+A, ? for help
+- 🐛 **Known Issue:** Ctrl+D and Alt+drag duplication have persistence bugs, undo/redo doesn't handle creation and deletion predictably
 
 ### Authentication
 - ✅ **Email/Password:** Secure signup and login
@@ -65,12 +67,21 @@ Try it out! Create an account and test real-time collaboration by opening the ap
 - **Click+Drag (canvas):** Create selection rectangle
 - **Delete / Backspace:** Delete selected shape(s)
 - **ESC:** Deselect all shapes (press again to deselect tool)
-- **Alt+Drag:** Duplicate shape while dragging
+- **Ctrl+A / Cmd+A:** Select all shapes
+- **Ctrl+D / Cmd+D:** Duplicate selected shape(s) ⚠️ *persistence bug for multiple*
+- **Alt+Drag:** Duplicate shape while dragging ⚠️ *single shape only*
+
+### Shape Manipulation
+- **Arrow Keys:** Nudge selected shape(s) 1px
+- **Shift+Arrow:** Nudge selected shape(s) 10px
+- **Ctrl+Z / Cmd+Z:** Undo last action
+- **Ctrl+Shift+Z / Cmd+Shift+Z:** Redo action
+- **Ctrl+Y / Cmd+Y:** Redo action (alternative)
 
 ### Canvas Navigation
 - **Middle-Click+Drag:** Pan canvas
 - **Mouse Wheel:** Vertical scroll
-- **Ctrl+Wheel:** Zoom in/out
+- **Ctrl+Wheel / Cmd+Wheel:** Zoom in/out
 - **Space+Drag:** Pan canvas (alternative)
 
 ### Text Editing
@@ -78,13 +89,8 @@ Try it out! Create an account and test real-time collaboration by opening the ap
 - **ESC (while editing):** Exit edit mode
 - **Click outside:** Exit edit mode
 
-### Coming Soon
-- **Arrow Keys:** Nudge selected shape(s) 1px
-- **Shift+Arrow:** Nudge selected shape(s) 10px
-- **Ctrl+D:** Duplicate selected shape(s)
-- **Ctrl+A:** Select all shapes
-- **Ctrl+Z:** Undo (future)
-- **Ctrl+Shift+Z:** Redo (future)
+### Help
+- **? or Shift+/:** Toggle keyboard shortcuts guide
 
 ---
 
@@ -191,29 +197,36 @@ firebase deploy --only database:rules
 
 ## 📋 Development Status
 
-**Current Progress:** 75% Complete (12/16 core tasks)  
-**Test Coverage:** 259 unit tests + 30 integration tests  
-**Grade Estimate:** 75-79/100 (C to C+, targeting B)
+**Current Progress:** 80% Complete (13/16 core tasks)  
+**Test Coverage:** 280+ unit tests + 30 integration tests  
+**Grade Estimate:** 78-82/100 (C+ to B-, targeting B)
 
 ### Completed Features ✅
-- Core canvas with 4 shape types
-- Real-time multi-user collaboration
+- Core canvas with 4 shape types (rectangle, circle, line, text)
+- Real-time multi-user collaboration with cursor tracking
 - Multi-select system (drag-to-select + shift+click)
-- Opacity and z-index layering
+- Opacity and z-index layering controls
+- Full undo/redo system with 50-state history
+- Comprehensive keyboard shortcuts (arrow nudging, Ctrl+Z/Y, Ctrl+D, Ctrl+A)
+- Keyboard shortcuts guide modal (? key)
 - AI canvas agent infrastructure
 - Shape creation & manipulation commands
-- Comprehensive testing suite
+- Comprehensive testing suite (280+ tests)
+
+### Known Issues 🐛
+- **Duplication Bugs:** Ctrl+D and Alt+drag don't persist to Firestore properly
+  - Ctrl+D: Creates shapes locally but they disappear on drag (missing backend sync)
+  - Alt+drag: Only duplicates single shape, ignores multi-select
+  - Fix in progress: Add `onShapeCreated` callback for persistence
 
 ### In Progress 🚧
-- AI layout commands (align, distribute, center)
-- AI complex commands (login form, button, card)
-- Extended AI testing
+- Fixing duplication persistence bugs
 
 ### Planned 📋
-- Additional keyboard shortcuts (arrow keys, Ctrl+D, Ctrl+A)
 - PNG export functionality
 - Performance testing (300+ shapes)
 - Conflict resolution testing
+- Enhanced multi-select duplication
 
 **Full Details:** See [TASKS.md](./TASKS.md) for complete task list with rubric alignment
 

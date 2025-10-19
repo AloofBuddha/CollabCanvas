@@ -32,8 +32,8 @@ const shortcutGroups: ShortcutGroup[] = [
   {
     title: 'Shape Manipulation',
     shortcuts: [
-      { keys: [isMac ? '⌘' : 'Ctrl', 'D'], description: 'Duplicate selected shapes' },
-      { keys: ['Alt', 'Drag'], description: 'Duplicate while dragging' },
+      { keys: [isMac ? '⌘' : 'Ctrl', 'D'], description: 'Duplicate selected (in place)' },
+      { keys: ['Alt', 'Drag'], description: 'Duplicate while dragging (single shape)' },
       { keys: ['↑', '↓', '←', '→'], description: 'Nudge selected shapes (1px)' },
       { keys: ['Shift', '↑↓←→'], description: 'Nudge selected shapes (10px)' },
       { keys: ['Delete'], description: 'Delete selected shapes' },
@@ -43,18 +43,15 @@ const shortcutGroups: ShortcutGroup[] = [
     title: 'Canvas Navigation',
     shortcuts: [
       { keys: ['Middle Mouse', 'Drag'], description: 'Pan canvas' },
-      { keys: ['Scroll'], description: 'Zoom in/out' },
-      { keys: ['Ctrl', 'Scroll'], description: 'Zoom in/out (alternative)' },
+      { keys: ['Scroll'], description: 'scroll up/downt' },
+      { keys: ['Ctrl', 'Scroll'], description: 'Zoom in/out' },
     ],
   },
   {
-    title: 'Tools',
+    title: 'Development',
     shortcuts: [
-      { keys: ['V'], description: 'Select tool' },
-      { keys: ['R'], description: 'Rectangle tool' },
-      { keys: ['C'], description: 'Circle tool' },
-      { keys: ['L'], description: 'Line tool' },
-      { keys: ['T'], description: 'Text tool' },
+      { keys: ['Shift', 'F'], description: 'Toggle FPS monitor' },
+      { keys: ['?'], description: 'Show this guide' },
     ],
   },
 ]

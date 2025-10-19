@@ -1,5 +1,6 @@
 import { User } from '../types'
 import { getInitials } from '../utils/userUtils'
+import ConnectionStatusIndicator from './ConnectionStatusIndicator'
 
 interface HeaderProps {
   displayName: string
@@ -37,7 +38,10 @@ export default function Header({
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-      <h1 className="text-xl font-bold text-gray-800">CollabCanvas</h1>
+      <div className="flex items-center gap-4">
+        <h1 className="text-xl font-bold text-gray-800">CollabCanvas</h1>
+        <ConnectionStatusIndicator />
+      </div>
       
       <div className="flex items-center gap-4">
         {/* Remote user avatars */}

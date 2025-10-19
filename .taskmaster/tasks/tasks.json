@@ -252,7 +252,73 @@
         "priority": "high",
         "details": "This task focuses on end-to-end testing and optimization of the collaborative canvas application. Begin by setting up a testing environment that simulates multi-user scenarios using multiple browser tabs or instances, authenticated via Firebase Auth (from Task 2). Implement conflict resolution testing by creating scenarios where multiple users edit the same shapes simultaneously, verifying that the last-write-wins strategy (from Task 7) resolves conflicts correctly without data loss; include testing for simultaneous operations, rapid edits, and delete vs edit conflicts. For persistence and reconnection, test localStorage fallback (Task 9) by disconnecting and reconnecting to Firestore, ensuring shapes restore seamlessly and sync upon reconnection; incorporate refresh scenarios, disconnect/reconnect, and network simulation. Develop performance tests with 100+ shapes: generate and render a large number of shapes (rectangles, circles, etc.) using the shape store (Task 4 and 6), and sync them via Firestore (Task 7). Simulate 5+ concurrent users by running parallel sessions, tracking real-time updates and presence (Task 8). Add FPS monitoring by integrating a library like Stats.js or custom code to measure frame rates during canvas rendering (Task 5), logging FPS drops during high-load operations like panning, zooming, or shape manipulations. Identify bottlenecks through profiling tools (e.g., Chrome DevTools Performance tab) and optimize: reduce unnecessary re-renders in React Konva, throttle Firestore writes, optimize shape data structures in Zustand stores, and implement lazy loading for large canvases. Consider edge cases like network latency, offline mode, and memory usage with many shapes. Ensure all optimizations maintain real-time collaboration integrity. Implement a connection status UI to display real-time connection state (e.g., online/offline indicators) for better user feedback during testing and usage. Ensure comprehensive documentation of test results, including metrics for conflict resolution accuracy, persistence reliability, reconnection success rates, FPS under load, sync latency, memory consumption, and before/after optimization improvements.",
         "testStrategy": "Set up automated scripts or manual procedures to run tests in a controlled environment. For conflict resolution: Use 2-3 browser instances logged in as different users; simultaneously edit overlapping shapes (e.g., move/resize the same rectangle), perform rapid edits, and simulate delete vs edit conflicts; verify that the final state matches the last edit via Firestore logs and visual inspection. For persistence/reconnection: Disconnect internet, make changes, reconnect, and confirm shapes persist via localStorage and sync back to Firestore without loss; include refresh scenarios, disconnect/reconnect, and network simulation using tools like Chrome DevTools Network Throttling. For performance: Create a script to generate 100+ shapes programmatically; run with 5+ concurrent users (simulate via multiple tabs or devices); monitor FPS using integrated monitoring (target 30+ FPS under load); use Chrome DevTools to profile CPU/memory usage, identifying and measuring improvements after optimizations (e.g., reduce render time by 20%). Conduct load testing with tools like Artillery or manual multi-tab setups to ensure stability. Document results comprehensively, including before/after metrics for FPS, sync latency, memory consumption, conflict resolution success rates, persistence/reconnection reliability, and any UI feedback from connection status indicators. Run tests on various devices/browsers to ensure cross-platform reliability.",
-        "subtasks": null
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set Up Multi-User Testing Environment",
+            "description": "Establish a testing environment to simulate multi-user scenarios using multiple browser tabs or instances, authenticated via Firebase Auth.",
+            "dependencies": [
+              2
+            ],
+            "details": "Configure multiple browser instances or tabs to run the collaborative canvas application. Ensure each instance is logged in with different Firebase Auth users. Set up scripts or procedures to manage these sessions for testing purposes, including handling authentication states and user data from Firestore.",
+            "status": "done",
+            "testStrategy": "Manual verification: Open multiple tabs, log in as different users, and confirm each session is independent and authenticated."
+          },
+          {
+            "id": 2,
+            "title": "Test Conflict Resolution in Shape Synchronization",
+            "description": "Conduct testing for conflict resolution scenarios including simultaneous operations, rapid edits, and delete vs edit conflicts.",
+            "dependencies": [
+              1,
+              7
+            ],
+            "details": "Create test scenarios where multiple users edit the same shapes at the same time, such as moving, resizing, or deleting shapes. Verify that the last-write-wins strategy resolves conflicts without data loss. Include tests for rapid successive edits and conflicts between delete and edit operations on the same shape.",
+            "status": "pending",
+            "testStrategy": "Use 2-3 browser instances; simultaneously perform edits on overlapping shapes; check Firestore for correct resolution and canvas updates."
+          },
+          {
+            "id": 3,
+            "title": "Test Persistence and Reconnection Handling",
+            "description": "Test localStorage fallback, refresh, disconnect/reconnect, and network simulation for seamless shape restoration and syncing.",
+            "dependencies": [
+              1,
+              9
+            ],
+            "details": "Simulate network disconnections and reconnections by toggling internet connectivity or using browser dev tools. Test refresh scenarios to ensure shapes reload from localStorage and sync with Firestore upon reconnection. Incorporate network latency simulation to verify persistence reliability.",
+            "status": "pending",
+            "testStrategy": "Manual tests: Disconnect network, edit shapes offline, reconnect, and verify sync; refresh page and check shape restoration."
+          },
+          {
+            "id": 4,
+            "title": "Conduct Performance Validation and Optimization",
+            "description": "Validate performance with 100+ shapes and 5+ concurrent users, including FPS monitoring and bottleneck identification/optimization.",
+            "dependencies": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "details": "Generate and render over 100 shapes using the shape store, syncing via Firestore. Simulate 5+ concurrent users with parallel sessions. Integrate FPS monitoring (e.g., Stats.js) to track frame rates during operations like panning, zooming, and manipulations. Use profiling tools to identify bottlenecks and optimize by reducing re-renders, throttling writes, and improving data structures.",
+            "status": "done",
+            "testStrategy": "Automated scripts for generating shapes and simulating users; monitor FPS logs and performance metrics; compare before/after optimizations."
+          },
+          {
+            "id": 5,
+            "title": "Implement Connection Status UI and Document Results",
+            "description": "Add a UI for displaying real-time connection status and document comprehensive test results.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "details": "Implement a connection status indicator (e.g., online/offline icon) in the UI to provide user feedback on network state. Compile documentation of all test results, including metrics on conflict accuracy, persistence reliability, reconnection rates, FPS, sync latency, memory usage, and optimization improvements.",
+            "status": "done",
+            "testStrategy": "Manual UI tests: Toggle connection and verify indicator updates; review documentation for completeness and accuracy."
+          }
+        ]
       },
       {
         "id": 14,
@@ -344,7 +410,7 @@
       ],
       "created": "2025-10-16T15:37:35.414Z",
       "description": "Tasks for master context",
-      "updated": "2025-10-18T00:56:18.361Z"
+      "updated": "2025-10-19T00:33:34.609Z"
     }
   }
 }

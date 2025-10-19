@@ -32,6 +32,7 @@ import Header from './Header'
 import LoadingSpinner from './LoadingSpinner'
 import AICommandInput from './AIAgent/AICommandInput'
 import KeyboardShortcutsGuide from './KeyboardShortcutsGuide'
+import FPSMonitor from './FPSMonitor'
 import { useAIAgent } from '../hooks/useAIAgent'
 import { CanvasContext } from '../types/aiAgent'
 import { Cursor, User, Shape, CircleShape, RectangleShape, TextShape, LineShape } from '../types'
@@ -49,6 +50,7 @@ export default function CanvasPage() {
   const [isPresenceReady, setIsPresenceReady] = useState(false)
   const [isDetailPaneOpen, setIsDetailPaneOpen] = useState(false)
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false)
+  const [showFPSMonitor, setShowFPSMonitor] = useState(false)
   const updateCursorRef = useRef<((cursor: Cursor) => void) | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
   
@@ -386,37 +388,36 @@ export default function CanvasPage() {
 
     // Load shapes from Firestore ONCE, then subscribe to RTDB for real-time updates
     const unsubscribeFirestoreShapes = listenToShapes(async (firestoreShapes) => {
-      // On first load, unlock all shapes (cleanup stale locks from crashed sessions)
+      // Only process the FIRST Firestore snapshot, then immediately unsubscribe
+      // This prevents race conditions where Firestore updates overwrite RTDB
       if (isFirstLoadRef.current) {
-        await unlockAllShapes(firestoreShapes)
         isFirstLoadRef.current = false
         
-        // Re-fetch shapes after unlocking to get the updated state
-        // This ensures RTDB is populated with unlocked shapes
+        // Unlock all shapes (cleanup stale locks from crashed sessions)
+        await unlockAllShapes(firestoreShapes)
+        
+        // Create unlocked shapes locally
         const unlockedShapes = Object.fromEntries(
           Object.entries(firestoreShapes).map(([id, shape]) => [id, { ...shape, lockedBy: null }])
         )
-        setShapes(unlockedShapes)
-        await populateRTDBFromFirestore(unlockedShapes)
-      } else {
-        // Set initial shapes in Zustand
-        setShapes(firestoreShapes)
         
-        // Populate RTDB with Firestore shapes (this makes RTDB the cache)
-        await populateRTDBFromFirestore(firestoreShapes)
-      }
-      
-      // Now subscribe to RTDB for real-time updates
-      // Only do this once (on first Firestore load)
-      if (!unsubscribeRTDBShapes) {
+        // Set shapes in Zustand
+        setShapes(unlockedShapes)
+        
+        // Populate RTDB with Firestore shapes (RTDB becomes the cache)
+        await populateRTDBFromFirestore(unlockedShapes)
+        
+        // Subscribe to RTDB for real-time updates
+        // RTDB is now the source of truth for all position/property updates
         unsubscribeRTDBShapes = listenToRTDBShapes((rtdbShapes) => {
           setShapes(rtdbShapes)
         })
+        
+        // Unsubscribe from Firestore immediately after first load
+        // This prevents Firestore snapshots from overwriting RTDB updates
+        unsubscribeFirestoreShapes()
       }
-      
-      // After initial setup, unsubscribe from Firestore to prevent conflicts with RTDB
-      // RTDB will handle all real-time updates, Firestore is only used for initial load
-      unsubscribeFirestoreShapes()
+      // Note: We don't have an else branch - callback should only run once
     })
 
     return () => {
@@ -441,6 +442,23 @@ export default function CanvasPage() {
       clearRemoteCursors()
     }
   }, [userId, displayName])
+
+  // Keyboard shortcut: Shift+F to toggle FPS monitor
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Shift+F to toggle FPS monitor
+      if (e.shiftKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault()
+        setShowFPSMonitor(prev => !prev)
+        toast.success(showFPSMonitor ? 'FPS monitor hidden' : 'FPS monitor visible', {
+          duration: 2000,
+        })
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [showFPSMonitor])
 
   const handleCursorMove = useCallback((cursor: Cursor) => {
     if (updateCursorRef.current) {
@@ -677,6 +695,9 @@ export default function CanvasPage() {
     <div className="w-screen h-screen bg-canvas-bg flex flex-col">
       {/* Toast Notifications */}
       <Toaster position="top-right" />
+      
+      {/* FPS Monitor (toggle with Shift+F) */}
+      <FPSMonitor visible={showFPSMonitor} />
       
       {/* Header */}
       <Header
