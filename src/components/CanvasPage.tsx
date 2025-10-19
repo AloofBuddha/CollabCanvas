@@ -318,7 +318,7 @@ export default function CanvasPage() {
     
     window.addEventListener('keydown', handleEscape)
     return () => window.removeEventListener('keydown', handleEscape)
-  }, [aiAgent.isOpen, aiAgent.close])
+  }, [aiAgent])
 
   // Initialize cursor sync and presence
   useEffect(() => {
