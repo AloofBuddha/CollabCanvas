@@ -10,7 +10,6 @@ import RemoteCursor from './RemoteCursor'
 import ShapeRenderer, { NewShapeRenderer } from './ShapeRenderer'
 import DetailPane from './DetailPane'
 import MultiSelectBox from './MultiSelectBox'
-import GridBackground from './GridBackground'
 import { useCanvasPanning } from '../hooks/useCanvasPanning'
 import { useShapeCreation } from '../hooks/useShapeCreation'
 import { useShapeDragging } from '../hooks/useShapeDragging'
@@ -650,8 +649,19 @@ export default function Canvas({
 
   return (
     <div
-      className="w-full h-full bg-canvas-bg relative"
-      style={{ cursor: currentCursor }}
+      className="w-full h-full relative"
+      style={{ 
+        cursor: currentCursor,
+        backgroundColor: '#ffffff',
+        backgroundImage: `
+          linear-gradient(to right, #f0f0f0 1px, transparent 1px),
+          linear-gradient(to bottom, #f0f0f0 1px, transparent 1px),
+          linear-gradient(to right, #e0e0e0 1px, transparent 1px),
+          linear-gradient(to bottom, #e0e0e0 1px, transparent 1px)
+        `,
+        backgroundSize: '20px 20px, 20px 20px, 100px 100px, 100px 100px',
+        backgroundPosition: '0 0, 0 0, 0 0, 0 0'
+      }}
     >
       <Stage
         ref={stageRef}
@@ -664,14 +674,6 @@ export default function Canvas({
         onClick={handleStageClickWithUnlock}
         draggable={false}
       >
-        {/* Grid Background Layer */}
-        <GridBackground
-          width={window.innerWidth}
-          height={window.innerHeight - HEADER_HEIGHT}
-          scale={stageScale}
-          offsetX={stageRef.current?.x() || 0}
-          offsetY={stageRef.current?.y() || 0}
-        />
         
         <Layer>
           {/* Render all existing shapes (sorted by zIndex for layering) */}
