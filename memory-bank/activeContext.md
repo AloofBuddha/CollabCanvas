@@ -50,20 +50,37 @@
   - Performance validation steps
   - Chrome DevTools network throttling instructions
 
-### Critical Bug Fixes
-- **🐛 Shape Reversion Bug**: Fixed critical synchronization issue where shapes would jump back to old positions when users reconnected
+### Critical Bug Fixes ✅ FULLY RESOLVED
+- **🐛 Shape Reversion Bug**: ✅ FIXED - Critical synchronization issue where shapes would jump back to old positions when users reconnected
   - **Root Cause**: Firestore listener was overwriting RTDB with stale data on reconnection
   - **Fix**: Removed problematic `else` branch, ensured Firestore listener only processes FIRST snapshot
   - **Result**: RTDB is now sole source of truth for real-time updates, Firestore only for initial load
+  - **Status**: Verified working - shapes persist correctly across disconnection/reconnection
   - **Files**: `src/components/CanvasPage.tsx` (lines 370-402)
 
-- **Duplication UX Refinement**: Changed Ctrl+D behavior based on user feedback
-  - **Old**: Duplicates offset by 20px, copy/paste with Ctrl+C/V
-  - **New**: Duplicates in-place (exact same position), keeps original selection
+- **🐛 Duplication Persistence Bugs**: ✅ FIXED - Ctrl+D and Alt+drag now fully persist to Firebase
+  - **Old Issues**: 
+    - Ctrl+D: Created shapes locally but disappeared on drag (missing backend sync)
+    - Alt+drag: Only worked for single shapes
+  - **New Implementation**: 
+    - Ctrl+D: Duplicates in-place with immediate Firebase persistence via `onPersistShape` callback
+    - Alt+drag: Works for all shapes with proper duplication
+    - Both methods keep original selection for easy manipulation
   - **Removed**: Ctrl+C and Ctrl+V (unnecessary with Alt+drag and Ctrl+D)
+  - **Status**: Verified working - all duplicates persist correctly to Firestore
   - **Files**: `src/hooks/useKeyboardShortcuts.ts`, `src/components/KeyboardShortcutsGuide.tsx`
 
-- **Escape Key Enhancement**: Added AI agent closing with Escape key
+- **🐛 Undo/Redo Robustness**: ✅ FIXED - Reliable history navigation with smart diff-based persistence
+  - **Old Issues**: Undo/redo didn't handle creation and deletion predictably
+  - **New Implementation**: Smart diff-based persistence that compares current vs. target state
+    - Identifies shapes to delete (in current but not in target)
+    - Identifies shapes to create/update (in target)
+    - Clears locks from history snapshots to prevent conflicts
+    - Executes all operations atomically via Promise.all
+  - **Status**: Verified working - undo/redo correctly handles all shape operations including creation, deletion, and modifications
+  - **Files**: `src/components/Canvas.tsx` (lines 185-206), `src/hooks/useKeyboardShortcuts.ts`
+
+- **Escape Key Enhancement**: ✅ COMPLETE - Added AI agent closing with Escape key
   - Closes AI agent when open
   - Resets to select tool
   - Skips if user is typing in input/textarea
@@ -313,11 +330,20 @@ Validate conflict resolution, persistence, reconnection, and performance with 10
 - `docs/TESTING_GUIDE.md` - NEW: Comprehensive manual testing procedures
 - `tests/unit/keyboardShortcuts.test.ts` - Fixed test expectations
 
-**Critical Bugs Fixed**:
-- **Shape Reversion on Reconnection**: Users rejoining would see shapes jump to old positions
+**Critical Bugs Fixed & Verified**:
+- **Shape Reversion on Reconnection**: ✅ RESOLVED - Users rejoining would see shapes jump to old positions
   - Root cause: Firestore listener overwriting RTDB with stale data
   - Solution: Process only FIRST Firestore snapshot, unsubscribe immediately
   - RTDB is now sole source of truth for real-time updates
+  - Status: Verified working across multiple disconnection/reconnection scenarios
+
+- **Duplication Persistence**: ✅ RESOLVED - Ctrl+D and Alt+drag now fully persist to Firebase
+  - Solution: Added `onPersistShape` callback integration in keyboard shortcuts
+  - Status: Verified working - all duplicates persist correctly to Firestore
+
+- **Undo/Redo Robustness**: ✅ RESOLVED - Smart diff-based persistence handles all operations
+  - Solution: Compare current vs. target state, execute atomic create/update/delete operations
+  - Status: Verified working - handles creation, deletion, and modifications reliably
 
 **Implementation Patterns Established**:
 - **Ref Warnings**: Capture `ref.current` in local variable at start of effect
