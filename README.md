@@ -59,6 +59,7 @@ Try it out! Create an account and test real-time collaboration by opening the ap
 - **Canvas Rendering:** React Konva
 - **State Management:** Zustand
 - **Backend:** Firebase (Firestore + Realtime Database + Auth)
+- **AI Agent:** XAI (Grok) via LangChain
 - **Styling:** TailwindCSS
 - **Testing:** Vitest
 

@@ -1,26 +1,27 @@
 /**
  * AI Agent Service
- * 
- * Handles communication with OpenAI via LangChain for natural language commands
+ *
+ * Handles communication with XAI via LangChain for natural language commands
  */
 
 import { ChatOpenAI } from '@langchain/openai'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { AICommandResponseSchema, CanvasContext, AICommandResponse } from '../types/aiAgent'
 
-// Initialize OpenAI model
+// Initialize XAI model
 const getModel = () => {
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY
-  
+  const apiKey = import.meta.env.VITE_XAI_API_KEY
+
   if (!apiKey) {
-    throw new Error('VITE_OPENAI_API_KEY is not set. Make sure it exists in .env.local and restart dev server.')
+    throw new Error('VITE_XAI_API_KEY is not set. Make sure it exists in .env.local and restart dev server.')
   }
-  
+
   return new ChatOpenAI({
-    modelName: 'gpt-4o-mini',
+    modelName: 'grok-4-fast-reasoning',
     temperature: 0.7,
     configuration: {
       apiKey: apiKey,
+      baseURL: 'https://api.x.ai/v1',
     },
   })
 }
@@ -572,7 +573,7 @@ CRITICAL FOR MULTI-SHAPE COMPONENTS:
 
 /**
  * Execute a natural language command and return structured operations
- * Uses OpenAI to parse natural language into canvas operations (create/update/delete shapes)
+ * Uses XAI to parse natural language into canvas operations (create/update/delete shapes)
  */
 export async function executeCommand(
   userCommand: string,

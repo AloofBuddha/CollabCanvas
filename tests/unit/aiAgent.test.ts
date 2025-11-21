@@ -1,8 +1,8 @@
 /**
  * AI Agent Service Tests
- * 
+ *
  * Tests the AI agent's command parsing, error handling, and response validation
- * without making actual API calls to OpenAI
+ * without making actual API calls to XAI
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -41,7 +41,7 @@ describe('AI Agent Service', () => {
     }
     
     // Set default API key for tests
-    vi.stubEnv('VITE_OPENAI_API_KEY', 'test-api-key')
+    vi.stubEnv('VITE_XAI_API_KEY', 'test-api-key')
   })
 
   describe('Single Command Responses', () => {
@@ -217,11 +217,11 @@ describe('AI Agent Service', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       // Mock missing API key
-      vi.stubEnv('VITE_OPENAI_API_KEY', '')
+      vi.stubEnv('VITE_XAI_API_KEY', '')
 
       await expect(
         executeCommand('create a circle', mockContext)
-      ).rejects.toThrow('VITE_OPENAI_API_KEY is not set')
+      ).rejects.toThrow('VITE_XAI_API_KEY is not set')
 
       consoleErrorSpy.mockRestore()
     })

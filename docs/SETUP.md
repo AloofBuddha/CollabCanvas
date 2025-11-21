@@ -54,6 +54,10 @@ VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
 VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
 VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
 VITE_FIREBASE_DATABASE_URL=https://your-project-default-rtdb.firebaseio.com
+
+# XAI API Key (for AI canvas agent feature)
+# Get your API key from: https://console.x.ai
+VITE_XAI_API_KEY=your-xai-api-key-here
 ```
 
 ⚠️ **Important:** Never commit `.env.local` to git. It's already in `.gitignore`.
